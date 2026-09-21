@@ -163,6 +163,7 @@ app.use((req, res, next) => {
 app.use('/api/webhooks/arivu', require('./routes/arivuInboundWebhookRoutes'));
 app.use('/api/internal/webhooks/amds', require('./routes/internal/amdsWebhookRoutes'));
 app.use('/api/payment-gateways/webhooks', require('./routes/paymentGatewayWebhookRoutes'));
+app.use('/api/billing/webhooks', require('./routes/commercialBillingWebhookRoutes'));
 app.use('/api/public/pay', require('./routes/publicPaymentLinkRoutes'));
 
 // Body Parsing
@@ -297,6 +298,7 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/sharing', sharingRoutes);
 app.use('/api/organization', organizationRoutes);
+app.use('/api/billing', require('./routes/commercialBillingRoutes'));
 app.use('/api/deals', dealRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/events', eventRoutes);
@@ -339,6 +341,7 @@ app.use('/api/marketing/reports', marketingReportsRoutes);
 app.use('/api/marketing/subscriptions', marketingSubscriptionRoutes);
 app.use('/api/marketing/assets', marketingAssetRoutes);
 app.use('/api/marketing/blog', marketingBlogRoutes);
+app.use('/api/lms', require('./routes/learningRoutes'));
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/sales-orders', salesOrderRoutes);
 app.use('/api/invoices', invoiceRoutes);

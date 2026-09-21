@@ -68,6 +68,8 @@ const ENABLE_TRIAL_NUDGE_SCHEDULER =
   process.env.ENABLE_TRIAL_NUDGE_SCHEDULER !== 'false';
 const ENABLE_ADDON_TRIAL_EXPIRY_SCHEDULER =
   process.env.ENABLE_ADDON_TRIAL_EXPIRY_SCHEDULER !== 'false';
+const ENABLE_COMMERCIAL_BILLING_PERIOD_SCHEDULER =
+  process.env.ENABLE_COMMERCIAL_BILLING_PERIOD_SCHEDULER !== 'false';
 const ENABLE_RELEASE_NOTE_PUBLISH_SCHEDULER =
   process.env.ENABLE_RELEASE_NOTE_PUBLISH_SCHEDULER !== 'false';
 const ENABLE_ANNOUNCEMENT_LIFECYCLE_SCHEDULER =
@@ -113,6 +115,7 @@ let playbookAlertJob = null;
 let stalledInviteJob = null;
 let trialNudgeJob = null;
 let addonTrialExpiryJob = null;
+let commercialBillingPeriodJob = null;
 let releaseNotePublishJob = null;
 let announcementLifecycleJob = null;
 let internalChatRetentionJob = null;
@@ -773,6 +776,30 @@ function startScheduledJobs() {
     console.log('[scheduledJobs] Addon trial expiry disabled (ENABLE_ADDON_TRIAL_EXPIRY_SCHEDULER=false)');
   }
 
+  if (ENABLE_COMMERCIAL_BILLING_PERIOD_SCHEDULER) {
+    const { tickCommercialBillingPeriods } = require('./commercial/commercialBillingPeriodScheduler');
+    commercialBillingPeriodJob = cron.schedule('15 * * * *', async () => {
+      try {
+        const result = await tickCommercialBillingPeriods();
+        if (
+          result.applied > 0
+          || result.trialsConverted > 0
+          || result.renewals > 0
+          || result.dunning?.invoicesMarked > 0
+        ) {
+          console.log(
+            `[scheduledJobs] Commercial billing periods applied=${result.applied} trials=${result.trialsConverted} renewals=${result.renewals} dunning=${result.dunning?.invoicesMarked || 0}`
+          );
+        }
+      } catch (err) {
+        console.error('[scheduledJobs] Commercial billing period tick failed:', err.message);
+      }
+    }, { scheduled: true, timezone: process.env.DIGEST_TIMEZONE || 'UTC' });
+    console.log('[scheduledJobs]   - Commercial billing periods: hourly at :15');
+  } else {
+    console.log('[scheduledJobs] Commercial billing period scheduler disabled (ENABLE_COMMERCIAL_BILLING_PERIOD_SCHEDULER=false)');
+  }
+
   if (ENABLE_RELEASE_NOTE_PUBLISH_SCHEDULER) {
     const { tickReleaseNotePublish } = require('./releaseNotePublishScheduler');
     releaseNotePublishJob = cron.schedule('*/5 * * * *', async () => {
@@ -997,6 +1024,11 @@ function stopScheduledJobs() {
     addonTrialExpiryJob.stop();
     addonTrialExpiryJob = null;
     console.log('[scheduledJobs] Addon trial expiry job stopped');
+  }
+  if (commercialBillingPeriodJob) {
+    commercialBillingPeriodJob.stop();
+    commercialBillingPeriodJob = null;
+    console.log('[scheduledJobs] Commercial billing period job stopped');
   }
   if (releaseNotePublishJob) {
     releaseNotePublishJob.stop();

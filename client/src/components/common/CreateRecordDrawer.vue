@@ -59,7 +59,7 @@
                       ref="closeButtonRef"
                       type="button"
                       class="relative z-20 ml-auto shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 cursor-pointer"
-                      @click="closeDrawer"
+                      @click="requestClose"
                     >
                       <span class="absolute -inset-2.5" />
                       <span class="sr-only">{{ t('common.closePanel') }}</span>
@@ -228,7 +228,7 @@
                       <button
                         type="button"
                         class="rounded-lg px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                        @click="closeDrawer"
+                        @click="requestClose"
                       >
                         {{ t('actions.cancel') }}
                       </button>
@@ -441,6 +441,14 @@ const props = defineProps({
   useQuickCreateOrder: {
     type: Boolean,
     default: false // If true, use quickCreate array order even in edit mode
+  },
+  /**
+   * When false, create/update succeeds and emits `saved` without opening a record tab.
+   * Used for nested lookup "Create new" flows (e.g. Organization from People form).
+   */
+  openRecordOnSave: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -1512,6 +1520,23 @@ function syncLegacyLookupsIntoDealRelationships() {
   );
 }
 
+const isDrawerDirty = () => hasUnsavedChanges.value;
+
+const requestClose = async () => {
+  if (saving.value) return;
+  if (
+    isDrawerDirty() &&
+    !(await confirmAction({
+      message: t('common.drawerCloseConfirm'),
+      confirmLabel: t('common.drawerDiscardClose'),
+      tone: 'warning',
+    }))
+  ) {
+    return;
+  }
+  closeDrawer();
+};
+
 const closeDrawer = () => {
   if (!saving.value) {
     clearOwnerDraft();
@@ -2174,10 +2199,8 @@ async function handleCommercialLinesSectionUpdated(payload) {
 }
 
 // Handle dialog close (escape/backdrop/portal interactions).
-// If the user already interacted with the drawer content, treat close as accidental.
 const handleDialogClose = () => {
-  if (userHasEdited.value) return;
-  closeDrawer();
+  requestClose();
 };
 
 const updateFormData = (data) => {
@@ -2391,6 +2414,19 @@ const initializeForm = (module) => {
   }
   if (hasPaymentCurrencyField) {
     initialForm.paymentCurrency = orgCurrency;
+  }
+
+  // Quotes create: default Quote Date to today (editable). Local YMD avoids UTC off-by-one.
+  if (moduleKeyLower.value === 'quotes' && !props.record) {
+    const empty =
+      initialForm.quoteDate == null || String(initialForm.quoteDate).trim() === '';
+    if (empty) {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      initialForm.quoteDate = `${y}-${m}-${day}`;
+    }
   }
   
     // If editing, merge with existing record data
@@ -3723,8 +3759,8 @@ const handleSubmit = async () => {
         }
       }
       
-      // Always open the saved record in a new tab
-      if (savedRecord) {
+      // Open the saved record in a new tab (skip when nested lookup create links back to parent form)
+      if (savedRecord && props.openRecordOnSave) {
         const recordId =
           savedRecord.inventoryLocationId ||
           savedRecord.inventoryAdjustmentId ||

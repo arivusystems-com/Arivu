@@ -104,7 +104,9 @@ const showSlaContextBanner = computed(() => {
   return ctx.isOpen === false;
 });
 
-const hasContent = computed(() => hasSlaCycle.value || showSlaContextBanner.value);
+const hasContent = computed(
+  () => metrics.value.length > 0 || showSlaContextBanner.value
+);
 
 const isPaused = computed(() => cycle.value?.status === 'paused');
 

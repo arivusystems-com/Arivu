@@ -66,9 +66,13 @@ async function resolveDefaultOwner(organizationId, preferredOwnerId = null) {
   return owner?._id || null;
 }
 
-function buildCaseId() {
-  const now = new Date();
-  return `CAS-${now.getUTCFullYear()}-${String(Date.now()).slice(-6)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+async function allocateCaseId(organizationId, at = new Date()) {
+  const { allocateRequired } = require('./moduleNumberingService');
+  return allocateRequired({
+    organizationId,
+    moduleKey: 'cases',
+    at,
+  });
 }
 
 async function createCaseFromInboundEmail({
@@ -91,9 +95,10 @@ async function createCaseFromInboundEmail({
   const adjustedCycle = applyStatusToSlaCycle(baseCycle, status);
   const title = String(subject || '').trim() || 'Inbound email';
   const now = new Date();
+  const caseId = await allocateCaseId(organizationId, now);
   const created = await Case.create({
     organizationId,
-    caseId: buildCaseId(),
+    caseId,
     title,
     caseType: defaults.defaultCaseType || defaults.caseType || 'Support Ticket',
     priority: defaults.defaultPriority || defaults.priority || 'Medium',
@@ -168,9 +173,10 @@ async function createCaseFromChannelInteraction({
   const adjustedCycle = applyStatusToSlaCycle(baseCycle, status);
   const now = new Date();
   const title = String(subject || '').trim() || `${channel} interaction`;
+  const caseId = await allocateCaseId(organizationId, now);
   const created = await Case.create({
     organizationId,
-    caseId: buildCaseId(),
+    caseId,
     title,
     caseType: defaults.defaultCaseType || 'Support Ticket',
     priority: defaults.defaultPriority || 'Medium',

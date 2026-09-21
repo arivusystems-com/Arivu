@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { logAuthAccessDebug, warnAuthAccessDebug } from '@/config/arivuDebug.js';
 import { getApiUrlForFetch } from '@/config/apiBase';
-import { isOnPublicShellRoute, isTrialExpiredShelllessRoute } from '@/utils/standaloneRoutes';
+import { isOnPublicShellRoute, isTrialExpiredShelllessRoute, isPortalAuthLifecycleRoute } from '@/utils/standaloneRoutes';
 import { validateUserTypeForApp } from '@/utils/appUserTypeAccess';
 import { identifyProductUser, captureUserLoggedIn, resetPosthog } from '@/config/posthogUser';
 import {
@@ -16,6 +16,18 @@ const PROFILE_REFRESHED_AT_KEY = 'arivu:user-profile-refreshed-at';
 const PROFILE_REFRESH_FRESH_MS = 5 * 60 * 1000;
 const TRIAL_SYNC_FRESH_MS = 30 * 1000;
 const PROD_LOGOUT_REDIRECT_ORIGIN = (import.meta.env.VITE_MAIN_APP_ORIGIN || 'https://app.arivusystems.com').replace(/\/$/, '');
+
+function isPrivilegedAuthUser(user) {
+    if (!user) return false;
+    if (user.isOwner === true) return true;
+    const userType = String(user.userType || '').toUpperCase();
+    if (userType === 'ADMIN' || userType === 'SYSTEM') return true;
+    if (userType === 'EXTERNAL' || userType === 'PORTAL') return false;
+    // STANDARD / INTERNAL / empty: heal system Admin/Owner role names only
+    const role = String(user.role || '').toLowerCase();
+    if (role === 'admin' || role === 'owner' || role === 'administrator') return true;
+    return false;
+}
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -39,14 +51,10 @@ export const useAuthStore = defineStore('auth', {
         },
         isOwner: (state) => state.user?.isOwner || false,
         userRole: (state) => state.user?.role || null,
-        isAdminLike: (state) => {
-            const role = state.user?.role || '';
-            return state.user?.isOwner || role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner';
-        },
+        isAdminLike: (state) => isPrivilegedAuthUser(state.user),
         hasPermission: (state) => {
             return (module, action) => {
-                const role = state.user?.role || '';
-                if (state.user?.isOwner || role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner') return true;
+                if (isPrivilegedAuthUser(state.user)) return true;
                 const normalized = module === 'people' ? 'contacts' : module;
                 return state.user?.permissions?.[normalized]?.[action] || false;
             };
@@ -71,9 +79,13 @@ export const useAuthStore = defineStore('auth', {
             const internalDomains = ['arivusystems.com', 'arivu.com', 'arivu.io'];
             return internalDomains.some(domain => email.toLowerCase().includes(`@${domain}`));
         },
-        isExternalUser: (state) => String(state.user?.userType || 'INTERNAL').toUpperCase() === 'EXTERNAL',
+        isExternalUser: (state) => {
+            const t = String(state.user?.userType || 'STANDARD').toUpperCase();
+            return t === 'EXTERNAL' || t === 'PORTAL';
+        },
         needsPortalSelection: (state) => {
-            if (String(state.user?.userType || 'INTERNAL').toUpperCase() !== 'EXTERNAL') {
+            const t = String(state.user?.userType || 'STANDARD').toUpperCase();
+            if (t !== 'EXTERNAL' && t !== 'PORTAL') {
                 return false;
             }
             if (state.user?.requiresPortalSelection === true) {
@@ -794,10 +806,18 @@ export const useAuthStore = defineStore('auth', {
                 if (this.needsPortalSelection) {
                     return { name: 'portal-select' };
                 }
-                if (this.hasAssignedAppAccess('PORTAL')) {
+                const hasPortal = this.hasAssignedAppAccess('PORTAL');
+                const hasLms = this.hasAssignedAppAccess('LMS') || this.hasAppAccess('LMS');
+                // Prefer Portal when entitled; Academy is a separate surface (locked invariant).
+                if (hasPortal) {
                     return { name: 'portal-dashboard' };
                 }
-                return { name: 'portal-select' };
+                if (hasLms) {
+                    return { name: 'academy-home' };
+                }
+                // Do NOT return portal-select — loops after successful select when PORTAL
+                // org app is suspended / missing from allowedApps.
+                return { name: 'login' };
             }
             const onboardingRedirect = user.onboarding?.redirectTo
                 || this.lastLoginResult?.onboarding?.redirectTo;
@@ -899,7 +919,8 @@ export const useAuthStore = defineStore('auth', {
                     ...this.user,
                     portals: data.portals || [],
                     defaultExternalRoleId: data.defaultExternalRoleId || null,
-                    activeExternalRoleId: data.activeExternalRoleId || this.user.activeExternalRoleId
+                    activeExternalRoleId: data.activeExternalRoleId || this.user.activeExternalRoleId,
+                    requiresPortalSelection: data.requiresPortalSelection === true,
                 };
                 localStorage.setItem('user', JSON.stringify(this.user));
             }
@@ -950,8 +971,7 @@ export const useAuthStore = defineStore('auth', {
         
         // Check if user has a specific permission
         can(module, action) {
-            const role = this.user?.role || '';
-            if (this.user?.isOwner || role.toLowerCase() === 'admin' || role.toLowerCase() === 'owner') return true;
+            if (isPrivilegedAuthUser(this.user)) return true;
             const normalized = module === 'people'
                 ? 'contacts'
                 : module === 'settings-users'
@@ -1167,6 +1187,13 @@ export const useAuthStore = defineStore('auth', {
                         // Update user data while preserving token and allowedApps
                         const token = this.user.token;
                         const existingAllowedApps = this.user.allowedApps;
+                        const existingPortalSession = {
+                            portals: Array.isArray(this.user.portals) ? this.user.portals : [],
+                            requiresPortalSelection: this.user.requiresPortalSelection === true,
+                            activeExternalRoleId: this.user.activeExternalRoleId || null,
+                            activePortal: this.user.activePortal || null,
+                            defaultExternalRoleId: this.user.defaultExternalRoleId || null,
+                        };
                         this.user = {
                             ...incoming,
                             organizationId: incomingOrgId,
@@ -1177,6 +1204,18 @@ export const useAuthStore = defineStore('auth', {
                                 organization: incomingOrgObject || this.organization
                             }),
                             entitledAddons: incoming.entitledAddons ?? this.user?.entitledAddons ?? null,
+                            // Profile API does not return portal-selection session fields.
+                            portals: Array.isArray(incoming.portals)
+                                ? incoming.portals
+                                : existingPortalSession.portals,
+                            requiresPortalSelection: typeof incoming.requiresPortalSelection === 'boolean'
+                                ? incoming.requiresPortalSelection
+                                : existingPortalSession.requiresPortalSelection,
+                            activeExternalRoleId: incoming.activeExternalRoleId
+                                ?? existingPortalSession.activeExternalRoleId,
+                            activePortal: incoming.activePortal ?? existingPortalSession.activePortal,
+                            defaultExternalRoleId: incoming.defaultExternalRoleId
+                                ?? existingPortalSession.defaultExternalRoleId,
                         };
                         localStorage.setItem('user', JSON.stringify(this.user));
                         localStorage.setItem(PROFILE_REFRESHED_AT_KEY, String(Date.now()));
@@ -1200,7 +1239,9 @@ export const useAuthStore = defineStore('auth', {
                 } else if (response.status === 401) {
                     const onTrialExpiredShell = typeof window !== 'undefined'
                         && isTrialExpiredShelllessRoute(window.location.pathname);
-                    if (!isOnPublicShellRoute() && !onTrialExpiredShell) {
+                    const onPortalAuthLifecycle = typeof window !== 'undefined'
+                        && isPortalAuthLifecycleRoute(window.location.pathname);
+                    if (!isOnPublicShellRoute() && !onTrialExpiredShell && !onPortalAuthLifecycle) {
                         console.warn('Session expired, logging out');
                         this.logout();
                     }

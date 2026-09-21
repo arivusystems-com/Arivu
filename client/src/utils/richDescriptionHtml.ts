@@ -1,4 +1,8 @@
 import DOMPurify from 'dompurify';
+import {
+  resolveAssetDownloadUrl,
+  stripAuthTokenFromDownloadUrl
+} from '@/modules/template/composables/useCompanyLogoAsset';
 
 /** Tags produced by TaskDescriptionEditor (TipTap) for record descriptions. */
 export const ALLOWED_RICH_DESCRIPTION_TAGS = [
@@ -75,6 +79,32 @@ export function withLinksOpenInNewTab(html: string): string {
   return tpl.innerHTML;
 }
 
+const IMG_SRC_ATTR_PATTERN = /\ssrc=(["'])([^"']+)\1/gi;
+
+/** Rewrite managed /api/files/download img srcs for split-origin media (API host + token). */
+export function withResolvedDescriptionImageUrls(html: string): string {
+  const str = String(html || '');
+  if (!str.includes('<img') || !str.includes('/files/download')) return str;
+
+  return str.replace(IMG_SRC_ATTR_PATTERN, (full, quote, src) => {
+    const resolved = resolveAssetDownloadUrl(src);
+    if (!resolved || resolved === src) return full;
+    return ` src=${quote}${resolved}${quote}`;
+  });
+}
+
+/** Persist token-free download URLs (tokens are display-only). */
+export function stripDescriptionImageAuthTokens(html: string): string {
+  const str = String(html || '');
+  if (!str.includes('<img') || !str.includes('token=')) return str;
+
+  return str.replace(IMG_SRC_ATTR_PATTERN, (full, quote, src) => {
+    const stripped = stripAuthTokenFromDownloadUrl(src);
+    if (!stripped || stripped === src) return full;
+    return ` src=${quote}${stripped}${quote}`;
+  });
+}
+
 /**
  * Restricted sanitization matching the RTE, then new-tab behavior for links.
  */
@@ -99,6 +129,8 @@ export function sanitizeRichDescriptionHtml(raw: string): string {
       img.remove();
       return;
     }
+    const resolved = resolveAssetDownloadUrl(src);
+    if (resolved) img.setAttribute('src', resolved);
     img.setAttribute('loading', 'lazy');
     if (!img.getAttribute('alt')) img.setAttribute('alt', '');
     const width = (img.getAttribute('data-width') || img.getAttribute('width') || '').trim();

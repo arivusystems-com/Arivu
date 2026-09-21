@@ -1,6 +1,6 @@
 import { getApiUrlForFetch } from '@/config/apiBase';
 import { useAuthStore } from '@/stores/authRegistry';
-import { isOnPublicShellRoute } from '@/utils/standaloneRoutes';
+import { isOnPublicShellRoute, isPortalAuthLifecycleRoute } from '@/utils/standaloneRoutes';
 
 // Request deduplication: map of in-flight requests by URL+method
 const _inFlightRequests = new Map();
@@ -288,7 +288,10 @@ const apiClient = async (url, options = {}) => {
             });
 
             if (response.status === 401) {
-                const skipLogout = options.skipAuthLogout === true || isOnPublicShellRoute();
+                const skipLogout = options.skipAuthLogout === true
+                    || isOnPublicShellRoute()
+                    || (typeof window !== 'undefined'
+                        && isPortalAuthLifecycleRoute(window.location.pathname));
                 // Only clear the session if this request used the *current* token.
                 // Stale in-flight / other-tab requests with an old JWT must not wipe a fresh login.
                 const tokenStillCurrent = Boolean(token) && authStore.user?.token === token;

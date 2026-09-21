@@ -237,9 +237,18 @@ exports.createRole = async (req, res) => {
 
         const usesProfilePrivileges =
             String(privilegeMode || 'inline').toLowerCase() === 'profile' && profileId;
-        const { permissions: normalizedPermissions, appPermissions } = usesProfilePrivileges
+        let { permissions: normalizedPermissions, appPermissions } = usesProfilePrivileges
             ? await normalizeProfileModePermissions(profileId, permissions || {})
             : normalizeRolePermissions(permissions);
+
+        const { applyRoleUserTypeRules, PLATFORM_USER_TYPES } = require('../constants/platformUserTypes');
+        const typed = applyRoleUserTypeRules({
+            userType: userType || PLATFORM_USER_TYPES.STANDARD,
+            permissions: normalizedPermissions,
+            privilegeMode: privilegeMode || 'inline',
+            profileId: profileId || null,
+        });
+        normalizedPermissions = typed.permissions;
 
         const organization = await Organization.findById(req.user.organizationId).select('settings').lean();
         const legacyCaps = legacyRoleCapabilitiesForPersistence(organization);
@@ -259,9 +268,9 @@ exports.createRole = async (req, res) => {
             icon: icon || 'user',
             ...capabilityFields,
             isSystemRole: false,
-            userType: userType || 'INTERNAL',
-            privilegeMode: privilegeMode || 'inline',
-            profileId: profileId || null
+            userType: typed.userType,
+            privilegeMode: typed.privilegeMode,
+            profileId: typed.profileId
         };
         if (appEntitlements) createPayload.appEntitlements = appEntitlements;
         if (recordAssignment) createPayload.recordAssignment = recordAssignment;
@@ -391,6 +400,18 @@ exports.updateRole = async (req, res) => {
                 message: externalValidationError,
                 code: 'INVALID_EXTERNAL_ROLE'
             });
+        }
+
+        const { applyRoleUserTypeRules } = require('../constants/platformUserTypes');
+        const typed = applyRoleUserTypeRules({
+            userType: req.body.userType !== undefined ? req.body.userType : role.userType,
+            permissions: req.body.permissions !== undefined ? req.body.permissions : role.permissions,
+            privilegeMode: req.body.privilegeMode !== undefined ? req.body.privilegeMode : role.privilegeMode,
+            profileId: req.body.profileId !== undefined ? req.body.profileId : role.profileId,
+        });
+        req.body.userType = typed.userType;
+        if (req.body.permissions !== undefined || typed.userType === 'STANDARD') {
+            req.body.permissions = typed.permissions;
         }
 
         const organization = await Organization.findById(req.user.organizationId).select('settings').lean();
@@ -733,11 +754,14 @@ exports.seedRolesForOrganization = async (req, res) => {
             });
         }
 
-        const existingRoles = await Role.countDocuments({ organizationId: req.user.organizationId });
-        if (existingRoles > 0) {
+        const hasStaffHierarchy = await Role.exists({
+            organizationId: req.user.organizationId,
+            name: { $in: ['Owner', 'Administrator'] },
+        });
+        if (hasStaffHierarchy) {
             return res.status(409).json({
                 success: false,
-                message: 'Roles already exist for this organization. Use migration script for existing tenants.',
+                message: 'Staff roles already exist for this organization. Use migration script for existing tenants.',
                 code: 'ROLES_ALREADY_EXIST'
             });
         }

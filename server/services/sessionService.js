@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const UserSession = require('../models/UserSession');
 const { parseUserAgent } = require('../utils/liveChatUserAgentUtils');
+const { normalizePlatformUserType } = require('../constants/platformUserTypes');
 
 const DEVICE_CLASS_LIMITS = Object.freeze({
   desktop: 2,
@@ -257,7 +258,10 @@ async function admitOrBlockAuthSession(user, organization, meta = {}) {
     userId: user._id,
     sessionId: jti,
     authSessionVersion: sessionVersion,
-    userType: String(user.userType || 'INTERNAL').toUpperCase(),
+    userType: normalizePlatformUserType(user.userType, {
+      isOwner: user.isOwner,
+      roleName: user.role
+    }),
     deviceClass,
     browser: cleanUaLabel(parsed.browserLabel) || cleanUaLabel(parsed.browser),
     os: cleanUaLabel(parsed.osLabel) || cleanUaLabel(parsed.operatingSystem),

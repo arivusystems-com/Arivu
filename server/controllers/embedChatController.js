@@ -498,10 +498,11 @@ async function streamMessages(req, res) {
     if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
     await assertSessionSecret(req, session);
 
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
+    res.setHeader('X-Accel-Buffering', 'no');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
     const startedAt = Date.now();
     let after = Number(req.query.after) || startedAt;

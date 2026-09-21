@@ -501,7 +501,10 @@ function mergeAnalyticsSettings(orgSettings = {}) {
   const analytics = orgSettings.analytics && typeof orgSettings.analytics === 'object'
     ? orgSettings.analytics
     : {};
-  return { ...ANALYTICS_SETTINGS_DEFAULTS, ...analytics };
+  const { resolveFiscalYearStartMonth } = require('../utils/fiscalYear');
+  const merged = { ...ANALYTICS_SETTINGS_DEFAULTS, ...analytics };
+  merged.fiscalYearStartMonth = resolveFiscalYearStartMonth({ settings: orgSettings });
+  return merged;
 }
 
 async function getAnalyticsSettings(req, res) {
@@ -521,21 +524,27 @@ async function getAnalyticsSettings(req, res) {
 
 async function updateAnalyticsSettings(req, res) {
   try {
+    const { applyFiscalYearStartMonth, clampMonth } = require('../utils/fiscalYear');
     const org = await Organization.findById(req.user.organizationId);
     if (!org) {
       return res.status(404).json({ success: false, message: 'Organization not found' });
     }
 
     const current = mergeAnalyticsSettings(org.settings);
+    const nextFy = clampMonth(
+      req.body?.fiscalYearStartMonth ?? current.fiscalYearStartMonth,
+      current.fiscalYearStartMonth
+    );
     const next = {
       cacheTtlSeconds: Number(req.body?.cacheTtlSeconds ?? current.cacheTtlSeconds),
       exportRowLimit: Number(req.body?.exportRowLimit ?? current.exportRowLimit),
-      fiscalYearStartMonth: Number(req.body?.fiscalYearStartMonth ?? current.fiscalYearStartMonth),
+      fiscalYearStartMonth: nextFy,
       defaultDatePreset: String(req.body?.defaultDatePreset ?? current.defaultDatePreset),
     };
 
     org.settings = org.settings || {};
     org.settings.analytics = next;
+    applyFiscalYearStartMonth(org, nextFy);
     org.markModified('settings');
     await org.save();
 

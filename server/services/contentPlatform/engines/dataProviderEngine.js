@@ -18,13 +18,14 @@ const { resolveMergeTagModuleAlias } = require('../../../utils/mergeTagModuleAli
 const { loadMergeTagRelatedRecords } = require('./mergeTagRelatedRecords');
 const relationshipResolver = require('../../relationshipResolver');
 
-const COMMERCIAL_PREVIEW_MODULES = new Set(['quotes', 'invoices', 'sales_orders']);
+const COMMERCIAL_PREVIEW_MODULES = new Set(['quotes', 'invoices', 'billing_invoices', 'sales_orders']);
 
-const COMMERCIAL_MODULE_KEYS = new Set(['quotes', 'invoices', 'sales_orders']);
+const COMMERCIAL_MODULE_KEYS = new Set(['quotes', 'invoices', 'billing_invoices', 'sales_orders']);
 
 const RECORD_LOADERS = {
   quotes: loadQuoteContext,
   invoices: loadInvoiceContext,
+  billing_invoices: loadBillingInvoiceContext,
   people: loadPeopleContext,
   purchase_returns: loadPurchaseReturnContext
 };
@@ -322,6 +323,29 @@ async function loadInvoiceContext({ organizationId, recordId }) {
   };
 }
 
+/**
+ * Platform SaaS BillingInvoice — lookup by id (template org ≠ customer org).
+ */
+async function loadBillingInvoiceContext({ recordId }) {
+  const {
+    buildBillingInvoiceRenderContext,
+  } = require('../../commercial/commercialBillingInvoiceDocumentService');
+  const BillingInvoice = require('../../../models/commercial/BillingInvoice');
+  const invoice = await BillingInvoice.findById(recordId).lean();
+  if (!invoice) return null;
+  const ctx = await buildBillingInvoiceRenderContext({
+    organizationId: invoice.organizationId,
+    invoiceId: invoice._id,
+  });
+  return {
+    record: ctx.record,
+    lines: ctx.lines,
+    sections: [],
+    moduleKey: 'billing_invoices',
+    seller: ctx.seller,
+  };
+}
+
 async function loadPeopleContext({ organizationId, recordId }) {
   const person = await People.findOne({ _id: recordId, organizationId, deletedAt: null })
     .populate({ path: 'organization', select: ORGANIZATION_MERGE_SELECT })
@@ -381,6 +405,7 @@ async function loadPurchaseReturnContext({ organizationId, recordId }) {
 const PREVIEW_LINE_COLLECTION_MODULES = new Set([
   'quotes',
   'invoices',
+  'billing_invoices',
   'sales_orders',
   'purchase_returns'
 ]);
@@ -388,8 +413,12 @@ const PREVIEW_LINE_COLLECTION_MODULES = new Set([
 const PREVIEW_SAMPLE_LINES = [
   {
     description: 'Professional services',
+    title: 'Professional services',
+    subtitle: 'Platform administration and account management',
+    index: 1,
     quantity: 10,
     unitPrice: 100,
+    unitPriceLabel: '100 / month',
     lineTotal: 1000,
     lineSubtotal: 1000,
     name: 'Professional services',
@@ -398,8 +427,12 @@ const PREVIEW_SAMPLE_LINES = [
   },
   {
     description: 'Support package',
+    title: 'Support package',
+    subtitle: 'Access to applications',
+    index: 2,
     quantity: 1,
     unitPrice: 250,
+    unitPriceLabel: '250 / month',
     lineTotal: 250,
     lineSubtotal: 250,
     name: 'Support package',
@@ -455,6 +488,29 @@ function buildPreviewSampleRecord(moduleKey, tenantOrganization) {
       customerName: orgName,
       dueDate: new Date().toISOString(),
       status: 'Sent'
+    },
+    billing_invoices: {
+      invoiceNumber: 'ARV-PREVIEW-00001',
+      amountDue: 4004.92,
+      grandTotal: 4004.92,
+      subtotal: 3394,
+      taxTotal: 610.92,
+      taxLabel: 'GST (18%)',
+      cgstLabel: 'CGST @ 9%',
+      sgstLabel: 'SGST @ 9%',
+      cgstAmount: 305.46,
+      sgstAmount: 305.46,
+      currency: 'INR',
+      customerName: orgName,
+      customerAttn: 'Attn: Billing Contact',
+      customerAddress: 'Bengaluru, Karnataka, India',
+      customerGstin: '29AAAAA0000A1Z5',
+      invoiceDateLabel: '18 September 2026',
+      dueDateLabel: '18 October 2026',
+      periodLabel: '18 September 2026 – 17 October 2026',
+      amountInWords: 'Indian Rupees Four Thousand Four and Ninety Two Paise Only.',
+      dueDate: new Date().toISOString(),
+      status: 'finalized'
     },
     sales_orders: {
       orderNumber: 'SO-PREVIEW-001',
@@ -652,12 +708,16 @@ async function assembleRuntimeContext(params) {
     if (recordObjectId) {
       const loaded = await RECORD_LOADERS[recordModuleKey]({
         organizationId,
-        recordId: recordObjectId
+        recordId: recordObjectId,
+        runtimeContext
       });
       if (loaded) {
         record = loaded.record;
         lines = loaded.lines;
         sections = loaded.sections || [];
+        if (loaded.seller && !runtimeContext.Seller) {
+          runtimeContext.Seller = loaded.seller;
+        }
       }
     }
   }
@@ -804,7 +864,26 @@ async function assembleRuntimeContext(params) {
 
   if (recordModuleKey === 'quotes' && record) scope.Quote = record;
   if (recordModuleKey === 'invoices' && record) scope.Invoice = record;
+  if (recordModuleKey === 'billing_invoices' && record) {
+    scope.Invoice = record;
+    scope.BillingInvoice = record;
+  }
   if (recordModuleKey === 'people' && record) scope.People = record;
+
+  if (runtimeContext.Seller && typeof runtimeContext.Seller === 'object') {
+    scope.Seller = normalizeRecordForMergeTags(runtimeContext.Seller);
+  } else if (recordModuleKey === 'billing_invoices') {
+    // Always prefer Control → PDF settings (DB → env), never invent seller identity here.
+    try {
+      const {
+        resolveCommercialInvoicePdfConfig,
+      } = require('../../commercial/commercialInvoicePdfSettingsService');
+      const seller = await resolveCommercialInvoicePdfConfig();
+      scope.Seller = normalizeRecordForMergeTags(seller);
+    } catch {
+      scope.Seller = normalizeRecordForMergeTags({});
+    }
+  }
 
   if (relatedPeople) {
     scope.People = relatedPeople;
@@ -841,6 +920,10 @@ async function assembleRuntimeContext(params) {
 
   if (scope.Quote) scope.Quote = normalizeRecordForMergeTags(scope.Quote);
   if (scope.Invoice) scope.Invoice = normalizeRecordForMergeTags(scope.Invoice);
+  if (scope.BillingInvoice) {
+    scope.BillingInvoice = normalizeRecordForMergeTags(scope.BillingInvoice);
+  }
+  if (scope.Seller) scope.Seller = normalizeRecordForMergeTags(scope.Seller);
   if (scope.PurchaseReturns) scope.PurchaseReturns = normalizeRecordForMergeTags(scope.PurchaseReturns);
   if (scope.People) scope.People = normalizeRecordForMergeTags(scope.People);
   if (scope.Record) scope.Record = normalizeRecordForMergeTags(scope.Record);

@@ -1,0 +1,1014 @@
+{
+  "homeTitle": {
+    "message": "Learning Home",
+    "description": "Learning home page title"
+  },
+  "homeBlurb": {
+    "message": "Continue learning, see assigned courses, and track your progress.",
+    "description": "Learning home subtitle"
+  },
+  "myLearning": {
+    "message": "My Learning",
+    "description": "My Learning nav"
+  },
+  "explore": {
+    "message": "Explore",
+    "description": "Explore published courses"
+  },
+  "courses": {
+    "message": "Courses",
+    "description": "Courses admin list"
+  },
+  "paths": {
+    "message": "Learning Paths",
+    "description": "Learning paths"
+  },
+  "assessments": {
+    "message": "Assessments",
+    "description": "Assessments"
+  },
+  "certificates": {
+    "message": "Certificates",
+    "description": "Certificates"
+  },
+  "contentLibrary": {
+    "message": "Content Library",
+    "description": "Content library"
+  },
+  "analytics": {
+    "message": "Analytics",
+    "description": "Learning analytics"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Learning settings"
+  },
+  "createCourse": {
+    "message": "Create course",
+    "description": "Create course CTA"
+  },
+  "publish": {
+    "message": "Publish",
+    "description": "Publish course"
+  },
+  "enroll": {
+    "message": "Enroll",
+    "description": "Enroll in course"
+  },
+  "emptyCourses": {
+    "message": "No courses yet. Create your first course to start teaching.",
+    "description": "Empty courses state"
+  },
+  "emptyMyLearning": {
+    "message": "Nothing assigned yet. Explore published courses to get started.",
+    "description": "Empty my learning"
+  },
+  "seatUsage": {
+    "message": "{used} of {capacity} learner seats used",
+    "description": "Seat usage summary"
+  },
+  "seatsRemaining": {
+    "message": "You have {remaining} seats remaining.",
+    "description": "Seats remaining"
+  },
+  "capacityReached": {
+    "message": "Learner capacity reached. Upgrade your Learning plan to add more learners.",
+    "description": "Capacity gate message"
+  },
+  "mauThisMonth": {
+    "message": "{count} active learners this month",
+    "description": "MAU expansion signal"
+  },
+  "addModule": {
+    "message": "Add module",
+    "description": "Add module"
+  },
+  "addObject": {
+    "message": "Add learning object",
+    "description": "Add LO"
+  },
+  "completeLesson": {
+    "message": "Mark complete",
+    "description": "Complete lesson"
+  },
+  "issueCertificate": {
+    "message": "Issue certificate",
+    "description": "Issue certificate"
+  },
+  "draft": {
+    "message": "Draft",
+    "description": "Draft status"
+  },
+  "published": {
+    "message": "Published",
+    "description": "Published status"
+  },
+  "progress": {
+    "message": "{percent}% complete",
+    "description": "Progress percent"
+  },
+  "settingsBlurb": {
+    "message": "Learning App settings. Seat capacity is managed in Billing.",
+    "description": "Learning settings blurb"
+  },
+  "primaryPlanHint": {
+    "message": "Growth · 200 learner seats · ₹5,999/month",
+    "description": "Primary Learning plan hint"
+  },
+  "createAssessment": {
+    "message": "Create assessment",
+    "description": "Create assessment CTA"
+  },
+  "emptyAssessments": {
+    "message": "No assessments yet. Create one to quiz learners.",
+    "description": "Empty assessments"
+  },
+  "questionCount": {
+    "message": "{count} questions",
+    "description": "Question count"
+  },
+  "passScore": {
+    "message": "Pass {score}%",
+    "description": "Pass score"
+  },
+  "takeAssessment": {
+    "message": "Take",
+    "description": "Take assessment"
+  },
+  "submitAssessment": {
+    "message": "Submit",
+    "description": "Submit assessment"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel"
+  },
+  "assessmentPassed": {
+    "message": "Passed",
+    "description": "Assessment passed"
+  },
+  "assessmentFailed": {
+    "message": "Not passed",
+    "description": "Assessment failed"
+  },
+  "assessmentTitlePrompt": {
+    "message": "Assessment title",
+    "description": "Prompt for assessment title"
+  },
+  "emptyCertificates": {
+    "message": "No certificates yet. Complete a course and issue one from the course page.",
+    "description": "Empty certificates"
+  },
+  "credentialId": {
+    "message": "Credential",
+    "description": "Credential id label"
+  },
+  "createPath": {
+    "message": "Create path",
+    "description": "Create learning path"
+  },
+  "emptyPaths": {
+    "message": "No learning paths yet.",
+    "description": "Empty paths"
+  },
+  "pathTitlePrompt": {
+    "message": "Learning path title",
+    "description": "Prompt for path title"
+  },
+  "pathDefaultDesc": {
+    "message": "Curated sequence of published courses",
+    "description": "Default path description"
+  },
+  "pathItems": {
+    "message": "{count} courses",
+    "description": "Path item count"
+  },
+  "emptyExplore": {
+    "message": "No published courses to explore yet.",
+    "description": "Empty explore"
+  },
+  "openCourse": {
+    "message": "Open",
+    "description": "Open course"
+  },
+  "continueLearning": {
+    "message": "Continue",
+    "description": "Continue learning"
+  },
+  "viewAll": {
+    "message": "View all",
+    "description": "View all link"
+  },
+  "myLearningBlurb": {
+    "message": "Courses and paths you’re enrolled in.",
+    "description": "My Learning page subtitle"
+  },
+  "exploreBlurb": {
+    "message": "Published courses available to enroll in.",
+    "description": "Explore page subtitle"
+  },
+  "coursesBlurb": {
+    "message": "Create and manage courses for your organization.",
+    "description": "Courses admin subtitle"
+  },
+  "tabLearn": {
+    "message": "Learn",
+    "description": "Course learn tab"
+  },
+  "tabBuild": {
+    "message": "Build",
+    "description": "Course authoring tab"
+  },
+  "actions": {
+    "message": "Actions",
+    "description": "Course actions menu"
+  },
+  "outline": {
+    "message": "Outline",
+    "description": "Course outline sidebar"
+  },
+  "emptyOutline": {
+    "message": "No modules yet. Switch to Build to add content.",
+    "description": "Empty course outline"
+  },
+  "selectLesson": {
+    "message": "Select a lesson from the outline to begin.",
+    "description": "Empty lesson player"
+  },
+  "noLessonBody": {
+    "message": "No content for this lesson yet.",
+    "description": "Empty lesson body"
+  },
+  "loadFailed": {
+    "message": "Something went wrong. Try again.",
+    "description": "Generic learning load error"
+  },
+  "courseTitleLabel": {
+    "message": "Course title",
+    "description": "Create course title field"
+  },
+  "moduleTitlePrompt": {
+    "message": "Module title",
+    "description": "Prompt for module title"
+  },
+  "objectTitlePrompt": {
+    "message": "Lesson title",
+    "description": "Prompt for learning object title"
+  },
+  "objectBodyPrompt": {
+    "message": "Lesson text (optional)",
+    "description": "Prompt for learning object body"
+  },
+  "pathsBlurb": {
+    "message": "Curated sequences of courses for onboarding and skill tracks.",
+    "description": "Paths page subtitle"
+  },
+  "assessmentsBlurb": {
+    "message": "Quizzes and checks to verify learning.",
+    "description": "Assessments page subtitle"
+  },
+  "analyticsBlurb": {
+    "message": "Seat usage, course volume, and learner activity for this organization.",
+    "description": "Analytics page subtitle"
+  },
+  "certificatesBlurb": {
+    "message": "Credentials you have earned.",
+    "description": "Certificates page subtitle"
+  },
+  "contentLibraryBlurb": {
+    "message": "Reusable learning content across courses.",
+    "description": "Content library subtitle"
+  },
+  "publishedOfTotal": {
+    "message": "{published} published of {total} total",
+    "description": "Published vs total courses"
+  },
+  "seatCapacity": {
+    "message": "Learner seats",
+    "description": "Seat capacity KPI label"
+  },
+  "activeLearners": {
+    "message": "Active learners",
+    "description": "MAU KPI label"
+  },
+  "mauHint": {
+    "message": "Active this billing period (analytics only).",
+    "description": "MAU hint"
+  },
+  "certificatesIssued": {
+    "message": "Issued to date",
+    "description": "Certificates KPI hint"
+  },
+  "planSection": {
+    "message": "Plan",
+    "description": "Settings plan section"
+  },
+  "capacitySection": {
+    "message": "Capacity",
+    "description": "Settings capacity section"
+  },
+  "settingsSeatHint": {
+    "message": "Learner seats are billed as org capacity. Manage plans and invoices in Billing.",
+    "description": "Settings seat explanation"
+  },
+  "openBilling": {
+    "message": "Open Billing",
+    "description": "Link to billing settings"
+  },
+  "invalidCourse": {
+    "message": "This course link is invalid. Open the course from the Courses list.",
+    "description": "Invalid course id toast"
+  },
+  "objectTypeLabel": {
+    "message": "Lesson type",
+    "description": "Learning object type field"
+  },
+  "videoUrlLabel": {
+    "message": "Video URL",
+    "description": "Video media URL field"
+  },
+  "documentUrlLabel": {
+    "message": "Document URL",
+    "description": "Document media URL field"
+  },
+  "openDocument": {
+    "message": "Open document",
+    "description": "Open document link"
+  },
+  "publishPath": {
+    "message": "Publish path",
+    "description": "Publish learning path"
+  },
+  "startPath": {
+    "message": "Start path",
+    "description": "Enroll in learning path"
+  },
+  "pathSequential": {
+    "message": "Sequential",
+    "description": "Sequential path mode"
+  },
+  "pathOpen": {
+    "message": "Open order",
+    "description": "Non-sequential path mode"
+  },
+  "pathStep": {
+    "message": "Step {n}",
+    "description": "Path step label"
+  },
+  "pathStepDone": {
+    "message": "Completed",
+    "description": "Path step completed"
+  },
+  "pathStepLocked": {
+    "message": "Complete the previous course to unlock",
+    "description": "Path step locked"
+  },
+  "courseUnavailable": {
+    "message": "Course unavailable",
+    "description": "Missing course on path"
+  },
+  "claimCertificate": {
+    "message": "Claim certificate",
+    "description": "Learner claims certificate after completing course"
+  },
+  "certificateEarned": {
+    "message": "Certificate earned",
+    "description": "Certificate already earned badge"
+  },
+  "lessonComplete": {
+    "message": "Lesson complete",
+    "description": "Lesson already completed"
+  },
+  "enrollToProgress": {
+    "message": "Enroll to track progress and complete lessons.",
+    "description": "Hint to enroll before completing"
+  },
+  "emptyContentLibrary": {
+    "message": "No learning objects yet. Add lessons while building a course.",
+    "description": "Empty content library"
+  },
+  "planCapacity": {
+    "message": "{capacity} learner seats",
+    "description": "Plan capacity label"
+  },
+  "savePlan": {
+    "message": "Save Learning plan",
+    "description": "Save Learning plan CTA"
+  },
+  "savingPlan": {
+    "message": "Saving…",
+    "description": "Saving Learning plan"
+  },
+  "planSaved": {
+    "message": "Learning plan updated",
+    "description": "Learning plan saved toast"
+  },
+  "currentPlan": {
+    "message": "Current plan: {plan}",
+    "description": "Current Learning plan label"
+  },
+  "planAdminOnly": {
+    "message": "Only billing admins can change the Learning plan.",
+    "description": "Learning plan permission hint"
+  },
+  "assign": {
+    "message": "Assign",
+    "description": "Assign learners CTA"
+  },
+  "assignCourse": {
+    "message": "Assign course",
+    "description": "Assign course dialog title"
+  },
+  "assignPath": {
+    "message": "Assign path",
+    "description": "Assign path dialog title"
+  },
+  "assignDueDate": {
+    "message": "Due date (optional)",
+    "description": "Assignment due date field"
+  },
+  "assignConfirm": {
+    "message": "Assign",
+    "description": "Confirm assign"
+  },
+  "assignSuccess": {
+    "message": "Assigned to {count} learners",
+    "description": "Assign success toast"
+  },
+  "assignPartial": {
+    "message": "Assigned {ok}; {failed} failed (check seats or access)",
+    "description": "Partial assign toast"
+  },
+  "loadingUsers": {
+    "message": "Loading users…",
+    "description": "Loading assignable users"
+  },
+  "noAssignableUsers": {
+    "message": "No users with Learning access yet.",
+    "description": "Empty assignable users"
+  },
+  "assigned": {
+    "message": "Assigned",
+    "description": "Assigned badge"
+  },
+  "overdue": {
+    "message": "Overdue",
+    "description": "Overdue badge"
+  },
+  "dueOn": {
+    "message": "Due {date}",
+    "description": "Due date label"
+  },
+  "dueOverdue": {
+    "message": "Overdue {date}",
+    "description": "Overdue due date label"
+  },
+  "uploadMedia": {
+    "message": "Or upload a file",
+    "description": "Upload Learning media file"
+  },
+  "uploadingMedia": {
+    "message": "Uploading…",
+    "description": "Learning media upload in progress"
+  },
+  "mediaReady": {
+    "message": "Media attached",
+    "description": "Learning media upload success"
+  },
+  "uploadFailed": {
+    "message": "Upload failed. Try again or paste a URL.",
+    "description": "Learning media upload failure"
+  },
+  "compliance": {
+    "message": "Compliance",
+    "description": "Learning compliance nav and page title"
+  },
+  "complianceBlurb": {
+    "message": "Assigned learning progress — who is overdue and who still needs to finish.",
+    "description": "Compliance page subtitle"
+  },
+  "complianceScopeOrg": {
+    "message": "Organization",
+    "description": "Compliance org-wide scope"
+  },
+  "complianceScopeTeam": {
+    "message": "My team",
+    "description": "Compliance direct-reports scope"
+  },
+  "complianceOverdue": {
+    "message": "Overdue",
+    "description": "Overdue compliance status"
+  },
+  "complianceDueSoon": {
+    "message": "Due soon",
+    "description": "Due within 7 days"
+  },
+  "complianceInProgress": {
+    "message": "In progress",
+    "description": "Incomplete without urgent due"
+  },
+  "complianceCompleted": {
+    "message": "Completed",
+    "description": "Completed assignments"
+  },
+  "complianceNoDue": {
+    "message": "No due date",
+    "description": "Assigned without due date"
+  },
+  "complianceLearner": {
+    "message": "Learner",
+    "description": "Compliance table learner column"
+  },
+  "complianceContent": {
+    "message": "Course / path",
+    "description": "Compliance table content column"
+  },
+  "complianceDue": {
+    "message": "Due",
+    "description": "Compliance table due column"
+  },
+  "complianceStatus": {
+    "message": "Status",
+    "description": "Compliance table status column"
+  },
+  "complianceEmpty": {
+    "message": "No assignments yet. Assign a course or path with a due date to track compliance here.",
+    "description": "Empty compliance table"
+  },
+  "course": {
+    "message": "Course",
+    "description": "Generic course label"
+  },
+  "programs": {
+    "message": "Programs",
+    "description": "Learning programs nav and page title"
+  },
+  "programsBlurb": {
+    "message": "Multi-path curricula with time-boxed cohorts for org-scale rollout.",
+    "description": "Programs page subtitle"
+  },
+  "createProgram": {
+    "message": "Create program",
+    "description": "Create learning program CTA"
+  },
+  "emptyPrograms": {
+    "message": "No programs yet. Bundle paths into a program for cohort rollouts.",
+    "description": "Empty programs list"
+  },
+  "programDefaultDesc": {
+    "message": "Program curriculum",
+    "description": "Default program description"
+  },
+  "programPaths": {
+    "message": "{count} paths",
+    "description": "Program path count"
+  },
+  "programTitlePrompt": {
+    "message": "Program title",
+    "description": "Program title field"
+  },
+  "publishProgram": {
+    "message": "Publish program",
+    "description": "Publish program CTA"
+  },
+  "addPath": {
+    "message": "Add path",
+    "description": "Add path to program"
+  },
+  "programPathsHeading": {
+    "message": "Paths in this program",
+    "description": "Program paths section"
+  },
+  "programNoPaths": {
+    "message": "Add at least one path before publishing.",
+    "description": "Empty program paths"
+  },
+  "pathUnavailable": {
+    "message": "Path unavailable",
+    "description": "Missing path in program"
+  },
+  "selectPath": {
+    "message": "Path",
+    "description": "Select path label"
+  },
+  "selectPathPlaceholder": {
+    "message": "Select a path…",
+    "description": "Select path placeholder"
+  },
+  "cohortsHeading": {
+    "message": "Cohorts",
+    "description": "Cohorts section heading"
+  },
+  "emptyCohorts": {
+    "message": "No cohorts yet. Create a cohort after publishing to enroll a group.",
+    "description": "Empty cohorts"
+  },
+  "createCohort": {
+    "message": "Create cohort",
+    "description": "Create cohort CTA"
+  },
+  "cohortTitlePrompt": {
+    "message": "Cohort name",
+    "description": "Cohort title field"
+  },
+  "cohortMembers": {
+    "message": "{count} members",
+    "description": "Cohort member count"
+  },
+  "launchCohort": {
+    "message": "Launch",
+    "description": "Launch cohort CTA"
+  },
+  "launchCohortSuccess": {
+    "message": "Cohort launched — members enrolled in program paths",
+    "description": "Cohort launch success"
+  },
+  "liveSessions": {
+    "message": "Live Sessions",
+    "description": "Live sessions nav and page title"
+  },
+  "liveSessionsBlurb": {
+    "message": "Scheduled sync sessions — register and join when live.",
+    "description": "Live sessions subtitle"
+  },
+  "scheduleSession": {
+    "message": "Schedule session",
+    "description": "Create live session CTA"
+  },
+  "emptyLiveSessions": {
+    "message": "No live sessions scheduled yet.",
+    "description": "Empty live sessions"
+  },
+  "sessionTitlePrompt": {
+    "message": "Session title",
+    "description": "Live session title field"
+  },
+  "sessionStartsAt": {
+    "message": "Starts at",
+    "description": "Live session start datetime"
+  },
+  "sessionMeetingUrl": {
+    "message": "Meeting URL",
+    "description": "Live session join URL"
+  },
+  "joinSession": {
+    "message": "Join",
+    "description": "Join live session"
+  },
+  "registerSession": {
+    "message": "Register",
+    "description": "Register for live session"
+  },
+  "registerSessionSuccess": {
+    "message": "Registered for session",
+    "description": "Live session register success"
+  },
+  "cancelSession": {
+    "message": "Cancel",
+    "description": "Cancel live session"
+  },
+  "skillsBadges": {
+    "message": "Skills & Badges",
+    "description": "Skills and badges nav title"
+  },
+  "skillsBadgesBlurb": {
+    "message": "Capability badges earned from courses — or awarded by authors.",
+    "description": "Skills badges page subtitle"
+  },
+  "myBadges": {
+    "message": "My badges",
+    "description": "Learner badges section"
+  },
+  "emptyMyBadges": {
+    "message": "No badges yet. Complete a linked course or ask an author to award one.",
+    "description": "Empty my badges"
+  },
+  "skillsCatalog": {
+    "message": "Skills",
+    "description": "Author skills catalog"
+  },
+  "emptySkills": {
+    "message": "No skills defined yet.",
+    "description": "Empty skills"
+  },
+  "badgesCatalog": {
+    "message": "Badge catalog",
+    "description": "Author badges catalog"
+  },
+  "emptyBadges": {
+    "message": "No badges yet.",
+    "description": "Empty badges catalog"
+  },
+  "createSkill": {
+    "message": "Create skill",
+    "description": "Create skill CTA"
+  },
+  "createBadge": {
+    "message": "Create badge",
+    "description": "Create badge CTA"
+  },
+  "skillTitlePrompt": {
+    "message": "Skill name",
+    "description": "Skill title field"
+  },
+  "badgeTitlePrompt": {
+    "message": "Badge name",
+    "description": "Badge title field"
+  },
+  "linkSkill": {
+    "message": "Linked skill (optional)",
+    "description": "Badge skill link"
+  },
+  "linkCourse": {
+    "message": "Auto-award on course certificate (optional)",
+    "description": "Badge course link"
+  },
+  "optionalNone": {
+    "message": "None",
+    "description": "Optional none select"
+  },
+  "badgeAutoCourse": {
+    "message": "Auto-awarded on course certificate",
+    "description": "Badge course auto hint"
+  },
+  "relatedLearning": {
+    "message": "Learning",
+    "description": "Contextual Learning panel title"
+  },
+  "relatedLearningEmpty": {
+    "message": "No courses tagged for this app yet. Authors can set context apps on a course.",
+    "description": "Empty contextual learning"
+  },
+  "contextAppsHeading": {
+    "message": "Show in apps",
+    "description": "Course context app keys heading"
+  },
+  "contextAppsHint": {
+    "message": "Surface this course in the Learning tab on Case and Deal records.",
+    "description": "Course context apps hint"
+  },
+  "saveContextApps": {
+    "message": "Save app surfaces",
+    "description": "Save course context apps"
+  },
+  "aiRecommended": {
+    "message": "Recommended for you",
+    "description": "Learning AI recommendations heading"
+  },
+  "askAstra": {
+    "message": "Ask Astra",
+    "description": "Open Astra from Learning"
+  },
+  "aiAskAstraPrompt": {
+    "message": "Recommend Learning courses for me and summarize what I should finish first.",
+    "description": "Default Astra prompt from Learning Home"
+  },
+  "estimatedMinutes": {
+    "message": "~{minutes} min",
+    "description": "Estimated course duration"
+  },
+  "scormUrlLabel": {
+    "message": "SCORM entry URL",
+    "description": "SCORM package entry URL"
+  },
+  "ltiToolUrlLabel": {
+    "message": "LTI tool launch URL",
+    "description": "LTI 1.1 tool URL"
+  },
+  "ltiConsumerKey": {
+    "message": "LTI consumer key",
+    "description": "LTI OAuth consumer key"
+  },
+  "ltiSharedSecret": {
+    "message": "LTI shared secret",
+    "description": "LTI OAuth shared secret"
+  },
+  "scormHint": {
+    "message": "Launch the SCORM package in the embedded player, then mark the lesson complete.",
+    "description": "SCORM learner hint"
+  },
+  "ltiHint": {
+    "message": "Launch opens the external LTI tool in a new window with a signed request.",
+    "description": "LTI learner hint"
+  },
+  "launchContent": {
+    "message": "Launch",
+    "description": "Launch SCORM/LTI content"
+  },
+  "launching": {
+    "message": "Launching…",
+    "description": "Launch in progress"
+  },
+  "launchFailed": {
+    "message": "Could not launch content. Check enrollment and tool configuration.",
+    "description": "Launch failure"
+  },
+  "interopSection": {
+    "message": "Interop",
+    "description": "Learning settings interop section"
+  },
+  "interopBlurb": {
+    "message": "Learning uses Arivu platform identity for SSO/SCIM. Course authors can add SCORM and LTI learning objects.",
+    "description": "Learning interop blurb"
+  },
+  "interopSso": {
+    "message": "SSO / SCIM — configure under Organization identity (platform).",
+    "description": "SSO SCIM note"
+  },
+  "interopScorm": {
+    "message": "SCORM — add a SCORM learning object with an entry URL; learners launch in-player.",
+    "description": "SCORM note"
+  },
+  "interopLti": {
+    "message": "LTI 1.1 — add an LTI object with tool URL, consumer key, and shared secret.",
+    "description": "LTI note"
+  },
+  "academyNameFallback": {
+    "message": "Learning Academy",
+    "description": "Default Academy name"
+  },
+  "academyHome": {
+    "message": "Home",
+    "description": "Academy nav home"
+  },
+  "academyCatalog": {
+    "message": "Catalog",
+    "description": "Academy nav catalog"
+  },
+  "academyMyLearning": {
+    "message": "My Learning",
+    "description": "Academy nav my learning"
+  },
+  "academyCertificates": {
+    "message": "Certificates",
+    "description": "Academy nav certificates"
+  },
+  "academyProfile": {
+    "message": "Profile",
+    "description": "Academy nav profile"
+  },
+  "academyProfileName": {
+    "message": "Name",
+    "description": "Academy profile name"
+  },
+  "academyProfileEmail": {
+    "message": "Email",
+    "description": "Academy profile email"
+  },
+  "academyHomeTitle": {
+    "message": "Welcome to {name}",
+    "description": "Academy home title"
+  },
+  "academyHomeBlurb": {
+    "message": "Browse your catalog, continue learning, and earn certificates.",
+    "description": "Academy home blurb"
+  },
+  "academyCatalogBlurb": {
+    "message": "Courses available for your audience.",
+    "description": "Academy catalog blurb"
+  },
+  "academyMyLearningBlurb": {
+    "message": "Assigned and in-progress courses.",
+    "description": "Academy my learning blurb"
+  },
+  "academyCatalogEmpty": {
+    "message": "No courses in your catalog yet.",
+    "description": "Empty academy catalog"
+  },
+  "academyCertificatesEmpty": {
+    "message": "No certificates yet. Complete a course to earn one.",
+    "description": "Empty academy certificates"
+  },
+  "academyInvitePending": {
+    "message": "You have been invited to this Academy. Accept to start learning.",
+    "description": "Pending invite banner"
+  },
+  "academyAcceptInvite": {
+    "message": "Accept invitation",
+    "description": "Accept Academy invite CTA"
+  },
+  "academyAccepting": {
+    "message": "Accepting…",
+    "description": "Accepting invite"
+  },
+  "academyAccepted": {
+    "message": "Academy access activated",
+    "description": "Invite accepted toast"
+  },
+  "academyAudience": {
+    "message": "Audience",
+    "description": "Derived audience label"
+  },
+  "academySettingsSection": {
+    "message": "Learning Academy",
+    "description": "Academy settings section"
+  },
+  "academySettingsBlurb": {
+    "message": "Enable and brand the external Academy (/academy). Shared learner seats with the Learning App.",
+    "description": "Academy settings blurb"
+  },
+  "academyEnabled": {
+    "message": "Enable Learning Academy",
+    "description": "Enable academy checkbox"
+  },
+  "academyName": {
+    "message": "Academy name",
+    "description": "Academy name field"
+  },
+  "academyPrimaryColor": {
+    "message": "Primary color",
+    "description": "Academy primary color"
+  },
+  "academyCatalogVisibility": {
+    "message": "Default catalog visibility",
+    "description": "Catalog visibility select"
+  },
+  "catalogAssigned": {
+    "message": "Assigned only",
+    "description": "Catalog mode assigned"
+  },
+  "catalogAudience": {
+    "message": "By audience",
+    "description": "Catalog mode audience"
+  },
+  "catalogInviteOnly": {
+    "message": "Invite only",
+    "description": "Catalog mode invite only"
+  },
+  "saveAcademySettings": {
+    "message": "Save Academy settings",
+    "description": "Save academy CTA"
+  },
+  "academySettingsSaved": {
+    "message": "Academy settings saved",
+    "description": "Academy saved toast"
+  },
+  "academyLearnersSection": {
+    "message": "Academy learners",
+    "description": "Academy learners section"
+  },
+  "academyLearnersBlurb": {
+    "message": "Invite EXTERNAL users (by user id) after Person / portal setup. Revoke without deleting the Person.",
+    "description": "Academy learners blurb"
+  },
+  "academyInviteUserId": {
+    "message": "External user id",
+    "description": "Invite user id label"
+  },
+  "academyInviteUserIdHint": {
+    "message": "Mongo ObjectId of EXTERNAL user",
+    "description": "Invite user id hint"
+  },
+  "academyInvite": {
+    "message": "Invite to Academy",
+    "description": "Invite CTA"
+  },
+  "academyInviting": {
+    "message": "Inviting…",
+    "description": "Inviting state"
+  },
+  "academyInviteSent": {
+    "message": "Academy invitation recorded",
+    "description": "Invite sent toast"
+  },
+  "academyLearnersEmpty": {
+    "message": "No Academy learners yet.",
+    "description": "Empty learners"
+  },
+  "academySuspend": {
+    "message": "Suspend",
+    "description": "Suspend learner"
+  },
+  "academyRevoke": {
+    "message": "Revoke",
+    "description": "Revoke learner"
+  },
+  "academyRestore": {
+    "message": "Restore",
+    "description": "Restore learner"
+  },
+  "academyLifecycleUpdated": {
+    "message": "Academy access updated",
+    "description": "Lifecycle toast"
+  },
+  "audienceInternal": {
+    "message": "Internal",
+    "description": "Audience internal"
+  },
+  "audienceCustomer": {
+    "message": "Customer",
+    "description": "Audience customer"
+  },
+  "audiencePartner": {
+    "message": "Partner",
+    "description": "Audience partner"
+  },
+  "audienceExternal": {
+    "message": "External",
+    "description": "Audience external"
+  },
+  "untitledCourse": {
+    "message": "Untitled course",
+    "description": "Fallback course title"
+  }
+}

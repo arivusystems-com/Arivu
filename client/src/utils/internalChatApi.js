@@ -29,8 +29,27 @@ export async function joinChatChannel(spaceId) {
   return res?.data?.space || null;
 }
 
+export async function fetchChatMembers(spaceId) {
+  const res = await apiClient.get(`/internal-chat/spaces/${spaceId}/members`);
+  return {
+    spaceId: res?.data?.spaceId ? String(res.data.spaceId) : String(spaceId || ''),
+    spaceType: res?.data?.spaceType || null,
+    canInvite: res?.data?.canInvite === true,
+    canRemoveOthers: res?.data?.canRemoveOthers === true,
+    canLeave: res?.data?.canLeave === true,
+    currentUserRole: res?.data?.currentUserRole || 'member',
+    memberCount: Number(res?.data?.memberCount) || 0,
+    members: Array.isArray(res?.data?.members) ? res.data.members : [],
+  };
+}
+
 export async function inviteChatMembers(spaceId, memberIds) {
   const res = await apiClient.post(`/internal-chat/spaces/${spaceId}/members`, { memberIds });
+  return res?.data || null;
+}
+
+export async function removeChatMember(spaceId, userId) {
+  const res = await apiClient.delete(`/internal-chat/spaces/${spaceId}/members/${userId}`);
   return res?.data || null;
 }
 
@@ -94,6 +113,7 @@ export async function fetchChatMessages(spaceId, { threadRootId, before, aroundM
   return {
     space: res?.data?.space || null,
     messages: Array.isArray(res?.data?.messages) ? res.data.messages : [],
+    pinnedMessages: Array.isArray(res?.data?.pinnedMessages) ? res.data.pinnedMessages : [],
     readState: res?.data?.readState || { mode: 'private', memberCount: 0, members: [] },
     focus: res?.data?.focus || null,
   };
@@ -145,6 +165,23 @@ export async function publishChatTyping(spaceId) {
 export async function setChatPresence(spaceId) {
   const res = await apiClient.post(`/internal-chat/spaces/${spaceId}/presence`, { spaceId });
   return res?.data?.viewers || [];
+}
+
+export async function pinChatSpace(spaceId, pin = true) {
+  const res = await apiClient.post(`/internal-chat/spaces/${spaceId}/pin`, { pin });
+  return res?.data || null;
+}
+
+export async function muteChatSpace(spaceId, { muted = true, durationKey = 'forever' } = {}) {
+  const res = await apiClient.post(`/internal-chat/spaces/${spaceId}/mute`, { muted, durationKey });
+  return res?.data || null;
+}
+
+export async function markChatSpaceUnread(spaceId, { messageId } = {}) {
+  const res = await apiClient.post(`/internal-chat/spaces/${spaceId}/unread`, {
+    ...(messageId ? { messageId } : {}),
+  });
+  return res?.data || null;
 }
 
 export async function pinChatMessage(spaceId, messageId, pin = true) {

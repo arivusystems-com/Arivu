@@ -147,6 +147,42 @@ export function captureAstraActionCompleted(props: {
   })
 }
 
+export function captureAstraVoiceStarted(props: {
+  surface: AstraSurface
+}) {
+  capture('astra_voice_started', {
+    surface: props.surface,
+  })
+}
+
+export function captureAstraVoiceCommitted(props: {
+  surface: AstraSurface
+  promptLength?: number | null
+}) {
+  capture('astra_voice_committed', {
+    surface: props.surface,
+    prompt_length: props.promptLength ?? undefined,
+  })
+}
+
+export function captureAstraVoiceCancelled(props: {
+  surface: AstraSurface
+  reason?: string | null
+}) {
+  capture('astra_voice_cancelled', {
+    surface: props.surface,
+    reason: props.reason || undefined,
+  })
+}
+
+export function captureAstraTtsPlayed(props: {
+  surface: AstraSurface
+}) {
+  capture('astra_tts_played', {
+    surface: props.surface,
+  })
+}
+
 export function captureAstraActionRejected(props: {
   surface: AstraSurface
   actionKind?: string | null

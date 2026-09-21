@@ -4,7 +4,11 @@
     class="space-y-6"
     @submit.prevent="handleSubmit"
   >
-    <p v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300">
+    <p
+      v-if="error"
+      ref="errorBannerEl"
+      class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+    >
       {{ error }}
     </p>
 
@@ -60,7 +64,7 @@
         {{ t('settings.inviteSectionAccess') }}
       </h4>
 
-      <div v-if="availableRoles.length > 0" class="space-y-1">
+      <div v-if="inviteRoles.length > 0" class="space-y-1">
         <label for="onboarding-invite-role" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ t('settings.inviteRole') }} <span class="text-red-500">*</span>
         </label>
@@ -146,6 +150,28 @@
         <p v-if="validationErrors.appAccess" class="text-xs text-red-600 dark:text-red-400">
           {{ validationErrors.appAccess }}
         </p>
+        <div
+          v-if="inviteCostPreview && (form.userType === 'STANDARD' || form.userType === 'ADMIN' || form.userType === 'INTERNAL')"
+          class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-900/40"
+        >
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {{ t('settings.inviteCostPreviewHeading') }}
+          </p>
+          <ul class="mt-2 space-y-1">
+            <li
+              v-for="line in inviteCostPreview.lines"
+              :key="line.productCode"
+              class="flex justify-between gap-3 tabular-nums text-slate-700 dark:text-slate-300"
+            >
+              <span>{{ line.label }}</span>
+              <span>{{ formatInviteCost(line.amountMinor) }}</span>
+            </li>
+          </ul>
+          <p class="mt-2 flex justify-between border-t border-slate-200 pt-2 font-semibold tabular-nums dark:border-slate-700">
+            <span>{{ t('settings.inviteCostPreviewTotal') }}</span>
+            <span>{{ formatInviteCost(inviteCostPreview.totalMinor) }}{{ t('settings.inviteCostPreviewPerMonth') }}</span>
+          </p>
+        </div>
       </div>
     </section>
 
@@ -239,14 +265,18 @@
                       </div>
                     </div>
 
-                    <div class="h-0 flex-1 overflow-y-auto">
+                    <div ref="formBodyScrollEl" class="h-0 flex-1 overflow-y-auto">
                       <div class="px-4 sm:px-6 py-6 space-y-8">
                         <div v-if="successMessage" class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3">
                           <p class="text-sm text-green-800 dark:text-green-300">{{ successMessage }}</p>
                           <p v-if="successDetail" class="mt-1 text-xs text-green-700 dark:text-green-400">{{ successDetail }}</p>
                         </div>
 
-                        <div v-if="error" class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+                        <div
+                          v-if="error"
+                          ref="errorBannerEl"
+                          class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3"
+                        >
                           <p class="text-sm text-red-800 dark:text-red-300">{{ error }}</p>
                         </div>
 
@@ -474,6 +504,28 @@
                             <p v-if="validationErrors.appAccess" class="text-xs text-red-600 dark:text-red-400">
                               {{ validationErrors.appAccess }}
                             </p>
+                            <div
+                              v-if="inviteCostPreview && (form.userType === 'STANDARD' || form.userType === 'ADMIN' || form.userType === 'INTERNAL')"
+                              class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-900/40"
+                            >
+                              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                {{ t('settings.inviteCostPreviewHeading') }}
+                              </p>
+                              <ul class="mt-2 space-y-1">
+                                <li
+                                  v-for="line in inviteCostPreview.lines"
+                                  :key="line.productCode"
+                                  class="flex justify-between gap-3 tabular-nums text-slate-700 dark:text-slate-300"
+                                >
+                                  <span>{{ line.label }}</span>
+                                  <span>{{ formatInviteCost(line.amountMinor) }}</span>
+                                </li>
+                              </ul>
+                              <p class="mt-2 flex justify-between border-t border-slate-200 pt-2 font-semibold tabular-nums dark:border-slate-700">
+                                <span>{{ t('settings.inviteCostPreviewTotal') }}</span>
+                                <span>{{ formatInviteCost(inviteCostPreview.totalMinor) }}{{ t('settings.inviteCostPreviewPerMonth') }}</span>
+                              </p>
+                            </div>
                           </div>
                         </section>
 
@@ -592,7 +644,7 @@
 <script setup>
 import HeadlessCheckbox from '@/components/ui/HeadlessCheckbox.vue';
 import HeadlessSelect from '@/components/ui/HeadlessSelect.vue';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { UserPlusIcon, XMarkIcon } from '@heroicons/vue/24/outline';
@@ -602,11 +654,27 @@ import { isRbacV2Enabled } from '@/utils/rbacFeatureFlags';
 import { captureInviteSent } from '@/config/posthogOnboarding';
 import { getAppLabel } from '@/utils/getRoleDisplay';
 import { useBusinessHours } from '@/composables/useBusinessHours';
+import { formatInrFromPaise } from '@/utils/commercialPricingApi';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 const { fetchSets } = useBusinessHours();
 const rbacV2Enabled = computed(() => isRbacV2Enabled(authStore.organization));
+
+const APP_KEY_TO_BILLING_PRODUCT = {
+  SALES: 'sales_app',
+  HELPDESK: 'helpdesk_app',
+  AUDIT: 'audit_app',
+  INVENTORY: 'inventory_app',
+  MARKETING: 'marketing_app',
+};
+
+const inviteCostPreview = ref(null);
+let inviteCostTimer = null;
+
+function formatInviteCost(amountMinor) {
+  return formatInrFromPaise(amountMinor);
+}
 
 const props = defineProps({
   isOpen: Boolean,
@@ -631,7 +699,7 @@ const form = ref({
   firstName: '',
   lastName: '',
   email: '',
-  userType: 'INTERNAL',
+  userType: 'STANDARD',
   roleId: '',
   businessHourSetId: '',
   sendEmail: true,
@@ -641,6 +709,16 @@ const form = ref({
 
 const saving = ref(false);
 const error = ref('');
+const formBodyScrollEl = ref(null);
+const errorBannerEl = ref(null);
+
+async function scrollFormToMessage() {
+  await nextTick();
+  if (formBodyScrollEl.value) {
+    formBodyScrollEl.value.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  errorBannerEl.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+}
 const successMessage = ref('');
 const successDetail = ref('');
 const availableRoles = ref([]);
@@ -651,13 +729,25 @@ const selectedAppRoles = ref({});
 const validationErrors = ref({});
 
 const userTypeOptions = computed(() => [
-  { value: 'INTERNAL', label: t('settings.inviteInternal') },
+  { value: 'STANDARD', label: t('settings.userTypeStandard') },
+  { value: 'ADMIN', label: t('settings.userTypeAdmin') },
   { value: 'EXTERNAL', label: t('settings.inviteExternal') }
 ]);
 
+function isStaffInviteRole(role) {
+  const userType = String(role?.userType || '').toUpperCase();
+  return userType !== 'EXTERNAL' && userType !== 'PORTAL';
+}
+
+const inviteRoles = computed(() => (
+  props.inline
+    ? availableRoles.value.filter(isStaffInviteRole)
+    : availableRoles.value
+));
+
 const roleSelectOptions = computed(() => [
   { value: '', label: t('settings.inviteSelectRole') },
-  ...availableRoles.value.map((role) => ({
+  ...inviteRoles.value.map((role) => ({
     value: role._id,
     label: rbacV2Enabled.value ? role.name : `${role.name} — ${role.description}`
   }))
@@ -723,7 +813,8 @@ const appDisplayNames = {
   PROJECTS: 'Projects',
   INVENTORY: 'Inventory',
   AUDIT: 'Audit',
-  PORTAL: 'Portal'
+  PORTAL: 'Portal',
+  LMS: 'Learning'
 };
 
 const roleDisplayNames = {
@@ -764,14 +855,56 @@ const roleDisplayNames = {
   PORTAL: {
     CUSTOMER: 'Customer',
     VIEWER: 'Viewer'
+  },
+  LMS: {
+    ADMIN: 'Admin',
+    AUTHOR: 'Author',
+    LEARNER: 'Learner'
   }
 };
 const availableApps = computed(() => {
   if (!form.value.userType) return [];
-  return capabilities.value.filter((app) => app.userTypesAllowed.includes(form.value.userType));
+  const t = String(form.value.userType || '').toUpperCase();
+  return capabilities.value.filter((app) => {
+    const allowed = (app.userTypesAllowed || []).map((x) => String(x).toUpperCase());
+    if (allowed.includes(t)) return true;
+    if (allowed.includes('INTERNAL') && (t === 'STANDARD' || t === 'ADMIN' || t === 'INTERNAL')) return true;
+    if ((allowed.includes('STANDARD') || allowed.includes('ADMIN')) && t === 'INTERNAL') return true;
+    return false;
+  });
 });
 
 const selectedApps = computed(() => Object.keys(selectedAppRoles.value));
+
+async function refreshInviteCostPreview() {
+  if (form.value.userType !== 'STANDARD' && form.value.userType !== 'ADMIN' && form.value.userType !== 'INTERNAL') {
+    inviteCostPreview.value = null;
+    return;
+  }
+  const applicationProductCodes = selectedApps.value
+    .map((key) => APP_KEY_TO_BILLING_PRODUCT[key])
+    .filter(Boolean);
+  try {
+    const data = await apiClient.post('/billing/preview-user-cost', {
+      includeInternalUserLicense: true,
+      userTypeProductCode: form.value.userType === 'ADMIN' ? 'admin_user' : 'standard_user',
+      applicationProductCodes,
+      billingPeriod: 'monthly',
+    });
+    inviteCostPreview.value = data?.data || data || null;
+  } catch {
+    inviteCostPreview.value = null;
+  }
+}
+
+function scheduleInviteCostPreview() {
+  if (inviteCostTimer) clearTimeout(inviteCostTimer);
+  inviteCostTimer = setTimeout(() => {
+    refreshInviteCostPreview();
+  }, 200);
+}
+
+watch([selectedApps, () => form.value.userType], scheduleInviteCostPreview);
 
 const isFormValid = computed(() => {
   if (!form.value.firstName || !form.value.lastName || !form.value.email) {
@@ -843,12 +976,13 @@ watch(
   { deep: true }
 );
 
-watch(availableRoles, (roles) => {
+watch(inviteRoles, (roles) => {
   if (!props.inline || form.value.roleId || !Array.isArray(roles) || roles.length === 0) return;
   const defaultRole = roles.find((role) =>
     String(role.name || '').toLowerCase() === 'user'
+    || String(role.name || '').toLowerCase() === 'sales executive'
     || String(role.key || '').toLowerCase() === 'user'
-  ) || roles.find((role) => !role.isSystem) || roles[0];
+  ) || roles.find((role) => !role.isSystemRole && !role.isSystem) || roles[0];
   if (defaultRole?._id) {
     form.value.roleId = defaultRole._id;
   }
@@ -915,7 +1049,7 @@ const resetForm = () => {
     firstName: '',
     lastName: '',
     email: '',
-    userType: 'INTERNAL',
+    userType: 'STANDARD',
     roleId: '',
     businessHourSetId: '',
     sendEmail: true,
@@ -1127,13 +1261,15 @@ const handleSubmit = async () => {
       if (response.errors && Array.isArray(response.errors)) {
         error.value += ': ' + response.errors.join(', ');
       }
+      await scrollFormToMessage();
     }
   } catch (err) {
     console.error('Error inviting user:', err);
-    error.value = err.message || t('settings.inviteFailed');
+    error.value = err.response?.data?.message || err.message || t('settings.inviteFailed');
     if (err.response?.data?.errors) {
       error.value += ': ' + err.response.data.errors.join(', ');
     }
+    await scrollFormToMessage();
   } finally {
     saving.value = false;
   }

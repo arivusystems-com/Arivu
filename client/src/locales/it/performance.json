@@ -446,5 +446,9 @@
   "detailForecastProbabilityHint": {
     "message": "Enable forecast in target settings for achievement probability and risk level.",
     "description": "Forecast hint"
+  },
+  "periodQuarterOptionRange": {
+    "message": "Q{quarter} ({range})",
+    "description": "Quarter button with fiscal month range"
   }
 }

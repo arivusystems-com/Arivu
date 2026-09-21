@@ -21,6 +21,11 @@ export type FieldLayoutSection = {
 export type FieldLayout = {
   version: 1;
   sections: FieldLayoutSection[];
+  /**
+   * One-shot repair marker for people Basic Information seed order.
+   * When missing/older, core fields are reordered to PEOPLE_BASIC_SEED_ORDER once.
+   */
+  peopleBasicSeedOrder?: number;
 };
 
 export type LayoutField = {
@@ -40,9 +45,7 @@ const GENERIC_DEFAULT: FieldLayoutSection[] = [
 const MODULE_DEFAULT_SECTIONS: Record<string, FieldLayoutSection[]> = {
   people: [
     { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
-    { id: 'contact', labelKey: 'settings.modFieldsSectionContact', order: 1, protected: true },
-    { id: 'assignment', labelKey: 'settings.modFieldsSectionAssignment', order: 2, protected: true },
-    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 3, protected: true }
+    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 1, protected: true }
   ],
   organizations: [
     { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
@@ -146,12 +149,35 @@ const PEOPLE_SEED_SECTION: Record<string, string> = {
   source: 'basic',
   tags: 'basic',
   do_not_contact: 'basic',
-  email: 'contact',
-  phone: 'contact',
-  mobile: 'contact',
-  organization: 'assignment',
-  assignedto: 'assignment'
+  email: 'basic',
+  phone: 'basic',
+  mobile: 'basic',
+  organization: 'basic',
+  assignedto: 'basic'
 };
+
+/**
+ * Canonical people Basic Information order (identity → contact → ownership → flags).
+ * Keep in sync with server peopleDefaultFieldOrder / fieldLayout PEOPLE_BASIC_SEED_ORDER.
+ */
+const PEOPLE_BASIC_SEED_ORDER = [
+  'salutation',
+  'first_name',
+  'last_name',
+  'email',
+  'phone',
+  'mobile',
+  'organization',
+  'assignedto',
+  'tags',
+  'do_not_contact',
+  'source'
+] as const;
+
+const PEOPLE_BASIC_SEED_ORDER_VERSION = 1;
+
+/** Legacy people sections collapsed into Basic Information. */
+const PEOPLE_LEGACY_SECTION_IDS = new Set(['contact', 'assignment']);
 
 const ORG_SEED_SECTION: Record<string, string> = {
   name: 'basic',
@@ -298,6 +324,7 @@ export function normalizeFieldLayout(
     return defaults;
   }
 
+  const mod = String(moduleKey || '').toLowerCase();
   const wantsBasic = defaults.sections.some((s) => s.id === 'basic');
   const byId = new Map<string, FieldLayoutSection>();
   for (const s of existing.sections) {
@@ -311,6 +338,8 @@ export function normalizeFieldLayout(
         labelKey = 'settings.modFieldsSectionBasic';
       }
     }
+    // People: Contact Details + Assignment collapsed into Basic Information
+    if (mod === 'people' && PEOPLE_LEGACY_SECTION_IDS.has(id)) continue;
     if (byId.has(id)) continue;
     byId.set(id, {
       id,
@@ -332,7 +361,64 @@ export function normalizeFieldLayout(
   }
 
   const sections = sortSections(Array.from(byId.values())).map((s, i) => ({ ...s, order: i }));
-  return { version: 1, sections };
+  const next: FieldLayout = { version: 1, sections };
+  if (mod === 'people' && typeof existing.peopleBasicSeedOrder === 'number') {
+    next.peopleBasicSeedOrder = existing.peopleBasicSeedOrder;
+  }
+  return next;
+}
+
+/**
+ * Reorder people Basic Information seed fields to PEOPLE_BASIC_SEED_ORDER.
+ * Custom / non-seed basic fields keep relative order after the seed block.
+ */
+function reorderPeopleBasicSeedFields(fields: LayoutField[], layout: FieldLayout): LayoutField[] {
+  const basicId = layout.sections.find((s) => s.id === 'basic')?.id;
+  if (!basicId) return fields;
+
+  const seedRank = new Map<string, number>(
+    PEOPLE_BASIC_SEED_ORDER.map((k, i) => [k, i])
+  );
+
+  const basicSeeded: LayoutField[] = [];
+  const basicOther: LayoutField[] = [];
+  const nonBasic: LayoutField[] = [];
+
+  for (const field of fields) {
+    if (String(field.sectionId) !== basicId) {
+      nonBasic.push(field);
+      continue;
+    }
+    const nk = normalizeKey(String(field.key || ''));
+    if (seedRank.has(nk)) basicSeeded.push(field);
+    else basicOther.push(field);
+  }
+
+  basicSeeded.sort(
+    (a, b) =>
+      (seedRank.get(normalizeKey(String(a.key || ''))) ?? 0) -
+      (seedRank.get(normalizeKey(String(b.key || ''))) ?? 0)
+  );
+
+  const bySection = new Map<string, LayoutField[]>();
+  for (const s of layout.sections) bySection.set(s.id, []);
+  for (const f of [...basicSeeded, ...basicOther]) {
+    bySection.get(basicId)!.push(f);
+  }
+  for (const f of nonBasic) {
+    const sid = String(f.sectionId || '');
+    if (bySection.has(sid)) bySection.get(sid)!.push(f);
+    else bySection.get(layout.sections[layout.sections.length - 1]!.id)!.push(f);
+  }
+
+  const out: LayoutField[] = [];
+  let order = 0;
+  for (const s of sortSections(layout.sections)) {
+    for (const f of bySection.get(s.id) || []) {
+      out.push({ ...f, sectionId: s.id, order: order++ });
+    }
+  }
+  return out;
 }
 
 /**
@@ -348,10 +434,15 @@ export function ensureFieldsHaveSectionIds(
   const fallback = getDefaultSectionIdForModule(moduleKey);
   const primaryId = layout.sections.find((s) => s.id === 'basic' || s.id === 'general')?.id;
 
+  const mod = String(moduleKey || '').toLowerCase();
   const mapped = fields.map((field) => {
     let sid = field.sectionId ? String(field.sectionId) : '';
     // Migrate legacy general → basic when layout uses basic
     if (sid === 'general' && validIds.has('basic')) sid = 'basic';
+    // People: Contact Details + Assignment → Basic Information
+    if (mod === 'people' && PEOPLE_LEGACY_SECTION_IDS.has(sid) && validIds.has('basic')) {
+      sid = 'basic';
+    }
     if (sid && validIds.has(sid)) {
       return field.sectionId === sid ? field : { ...field, sectionId: sid };
     }
@@ -362,7 +453,10 @@ export function ensureFieldsHaveSectionIds(
   });
 
   // Bootstrap repair: primary section empty but seeded keys dumped into additional
-  if (primaryId && COMMERCIAL_LAYOUT_MODULES.has(String(moduleKey || '').toLowerCase())) {
+  if (
+    primaryId &&
+    (COMMERCIAL_LAYOUT_MODULES.has(mod) || mod === 'people')
+  ) {
     const primaryOccupied = mapped.some((f) => String(f.sectionId) === primaryId);
     if (!primaryOccupied) {
       return mapped.map((field) => {
@@ -383,11 +477,21 @@ export function applyFieldLayoutToModuleState(
   fields: LayoutField[],
   existingLayout?: FieldLayout | null
 ): { layout: FieldLayout; fields: LayoutField[] } {
-  const layout = normalizeFieldLayout(moduleKey, existingLayout);
+  const mod = String(moduleKey || '').toLowerCase();
+  let layout = normalizeFieldLayout(moduleKey, existingLayout);
   const withSections = ensureFieldsHaveSectionIds(moduleKey, fields, layout);
   // Sort once by existing order so first bootstrap preserves prior sequence within sections.
   const sorted = [...withSections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const ordered = flattenFieldsByLayout(sorted, layout);
+  let ordered = flattenFieldsByLayout(sorted, layout);
+
+  if (mod === 'people') {
+    const currentVersion = Number(layout.peopleBasicSeedOrder || 0);
+    if (currentVersion < PEOPLE_BASIC_SEED_ORDER_VERSION) {
+      ordered = reorderPeopleBasicSeedFields(ordered, layout);
+      layout = { ...layout, peopleBasicSeedOrder: PEOPLE_BASIC_SEED_ORDER_VERSION };
+    }
+  }
+
   return { layout, fields: ordered };
 }
 
@@ -398,8 +502,12 @@ export function flattenFieldsByLayout(fields: LayoutField[], layout: FieldLayout
 
   // Preserve caller array order (drag/drop updates position before flatten).
   for (const f of fields) {
-    const sid = String(f.sectionId || '');
-    if (bySection.has(sid)) bySection.get(sid)!.push(f);
+    let sid = String(f.sectionId || '');
+    if (sid === 'general' && bySection.has('basic')) sid = 'basic';
+    if (PEOPLE_LEGACY_SECTION_IDS.has(sid) && bySection.has('basic') && !bySection.has(sid)) {
+      sid = 'basic';
+    }
+    if (bySection.has(sid)) bySection.get(sid)!.push(sid === f.sectionId ? f : { ...f, sectionId: sid });
     else orphan.push(f);
   }
 

@@ -313,6 +313,29 @@ const OrganizationSchema = new mongoose.Schema({
             type: String, 
             default: '#3a1f8a' 
         },
+        /**
+         * Canonical financial-year start month (1–12).
+         * Mirrored to settings.analytics.fiscalYearStartMonth for Analytics UI compatibility.
+         */
+        fiscalYearStartMonth: {
+            type: Number,
+            default: 1,
+            min: 1,
+            max: 12
+        },
+        /** Operating / company address for Company Details (not SaaS bill-to). */
+        companyAddress: {
+            line1: { type: String, trim: true, default: '' },
+            city: { type: String, trim: true, default: '' },
+            postalCode: { type: String, trim: true, default: '' },
+            country: { type: String, trim: true, uppercase: true, default: '' }
+        },
+        /** Public social profile URLs for templates / company profile. */
+        social: {
+            facebook: { type: String, trim: true, default: '' },
+            twitter: { type: String, trim: true, default: '' },
+            linkedin: { type: String, trim: true, default: '' }
+        },
         rbacV2Enabled: {
             type: Boolean,
             default: false
@@ -325,6 +348,28 @@ const OrganizationSchema = new mongoose.Schema({
         portalFrameworkV1Enabled: {
             type: Boolean,
             default: false
+        },
+        /**
+         * Learning Academy (EXTERNAL /academy) — owned by Learning, not CRM Portal.
+         * @see docs/LEARNING_PORTAL_ACADEMY_V2.md
+         */
+        learningAcademy: {
+            enabled: { type: Boolean, default: false },
+            name: { type: String, trim: true, default: '' },
+            logoUrl: { type: String, default: null },
+            faviconUrl: { type: String, default: null },
+            primaryColor: { type: String, default: '#3a1f8a' },
+            secondaryColor: { type: String, default: null },
+            customDomain: { type: String, trim: true, lowercase: true, default: null },
+            catalogVisibility: {
+                type: String,
+                enum: ['assigned', 'audience', 'invite_only'],
+                default: 'assigned',
+            },
+            allowedAudiences: {
+                type: [{ type: String, enum: ['customer', 'partner', 'external'] }],
+                default: () => ['customer', 'partner', 'external'],
+            },
         },
         /** Platform quotes module policies (tenant-wide) */
         quotes: {
@@ -611,7 +656,7 @@ const OrganizationSchema = new mongoose.Schema({
     preferredPaymentMethod: { type: String, trim: true },
     taxId: { type: String, trim: true },
 
-    // India GST (GTM-1) — optional, CRM parties
+    // India GST (GTM-1) — optional, CRM parties / tenant bill-to
     gstin: { type: String, trim: true, uppercase: true },
     gstRegistrationType: {
         type: String,
@@ -627,7 +672,20 @@ const OrganizationSchema = new mongoose.Schema({
             'tax_collector'
         ]
     },
+    /** Tenant commercial bill-to: legal name on SaaS invoices (falls back to name). */
+    companyName: { type: String, trim: true },
+    /** True when business is GST-registered — GSTIN then required for subscribe. */
+    gstRegistered: { type: Boolean, default: false },
+    /** Optional uploaded GST registration certificate (URL under /api/uploads). */
+    gstCertificateUrl: { type: String, trim: true, default: null },
+    /** Original filename for the GST certificate upload. */
+    gstCertificateFileName: { type: String, trim: true, default: null },
+    /** Invoice / subscription communication email. */
+    billingEmail: { type: String, trim: true, lowercase: true },
+    /** Optional billing contact phone. */
+    billingPhone: { type: String, trim: true },
     stateCode: { type: String, trim: true },
+    /** { line1, city, state, pincode, country } */
     billingAddressStructured: { type: mongoose.Schema.Types.Mixed },
 
     // External sync triad (Tally / accounting connectors) — CRM parties

@@ -363,7 +363,12 @@ async function createCaseRecord({ payload, organizationId, actorUserId, webformN
   const normalized = ensureCaseDefaults(payload, webformName);
   const { standardPayload, customFieldsSet } = extractCustomFields(normalized, Case);
   const now = new Date();
-  const caseId = `CAS-${now.getUTCFullYear()}-${String(Date.now()).slice(-6)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const { allocateRequired } = require('./moduleNumberingService');
+  const caseId = await allocateRequired({
+    organizationId,
+    moduleKey: 'cases',
+    at: now,
+  });
 
   const createPayload = {
     ...standardPayload,

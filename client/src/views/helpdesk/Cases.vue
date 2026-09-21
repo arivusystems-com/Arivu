@@ -17,6 +17,77 @@
         <CaseResponseSlaListCell :row="row" />
       </template>
 
+      <template #cell-status="{ value }">
+        <BadgeCell
+          v-if="value"
+          :value="value"
+          :color="getStatusColor(value)"
+          :variant-map="CASE_STATUS_VARIANT_MAP"
+        />
+        <span v-else class="text-gray-500 dark:text-gray-400">-</span>
+      </template>
+
+      <template #cell-priority="{ value }">
+        <BadgeCell
+          v-if="value"
+          :value="value"
+          :variant-map="CASE_PRIORITY_VARIANT_MAP"
+        />
+        <span v-else class="text-gray-500 dark:text-gray-400">-</span>
+      </template>
+
+      <template #cell-caseType="{ value }">
+        <BadgeCell v-if="value" :value="value" />
+        <span v-else class="text-gray-500 dark:text-gray-400">-</span>
+      </template>
+
+      <template #cell-channel="{ value }">
+        <BadgeCell v-if="value" :value="value" />
+        <span v-else class="text-gray-500 dark:text-gray-400">-</span>
+      </template>
+
+      <template #cell-assignedTo="{ row }">
+        <div v-if="row.assignedTo" class="flex items-center gap-2">
+          <Avatar
+            v-if="typeof row.assignedTo === 'object'"
+            :user="{
+              firstName: row.assignedTo.firstName || row.assignedTo.first_name,
+              lastName: row.assignedTo.lastName || row.assignedTo.last_name,
+              email: row.assignedTo.email,
+              avatar: row.assignedTo.avatar
+            }"
+            size="sm"
+          />
+          <span class="text-sm text-gray-700 dark:text-gray-300">
+            {{ getUserDisplayName(row.assignedTo) }}
+          </span>
+        </div>
+        <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t('records.editableUnassigned') }}</span>
+      </template>
+
+      <template #cell-contactId="{ row }">
+        <div v-if="row.contactId" class="flex items-center gap-2 min-w-0">
+          <Avatar
+            v-if="typeof row.contactId === 'object'"
+            :user="{
+              firstName: row.contactId.first_name || row.contactId.firstName,
+              lastName: row.contactId.last_name || row.contactId.lastName,
+              email: row.contactId.email,
+              avatar: row.contactId.avatar || row.contactId.image
+            }"
+            size="sm"
+          />
+          <span class="text-sm text-gray-700 dark:text-gray-300 truncate">
+            {{ getContactDisplayName(row.contactId) }}
+          </span>
+        </div>
+        <span v-else class="text-sm text-gray-500 dark:text-gray-400">-</span>
+      </template>
+
+      <template #cell-updatedAt="{ value }">
+        <DateCell :value="value" format="short" />
+      </template>
+
       <template #header-actions>
         <div class="flex gap-3 items-center">
           <div class="relative flex h-[34px] items-stretch rounded-lg bg-gray-100 dark:bg-gray-700/90 p-[0.1rem] border border-gray-200/80 dark:border-gray-600 shadow-inner min-w-[200px]">
@@ -180,6 +251,9 @@ import ModuleActions from '@/components/common/ModuleActions.vue';
 import KanbanBoard from '@/components/common/KanbanBoard.vue';
 import CreateRecordDrawer from '@/components/common/CreateRecordDrawer.vue';
 import CaseResponseSlaListCell from '@/components/cases/CaseResponseSlaListCell.vue';
+import Avatar from '@/components/common/Avatar.vue';
+import BadgeCell from '@/components/common/table/BadgeCell.vue';
+import DateCell from '@/components/common/table/DateCell.vue';
 import { useTabs } from '@/composables/useTabs';
 import { ListBulletIcon, ViewColumnsIcon, PlusIcon, HashtagIcon, FlagIcon, UserIcon } from '@heroicons/vue/24/outline';
 
@@ -192,6 +266,23 @@ const route = useRoute();
 const { openTab } = useTabs();
 
 const moduleListRef = ref(null);
+
+const CASE_STATUS_VARIANT_MAP = {
+  New: 'info',
+  Assigned: 'primary',
+  'In Progress': 'warning',
+  'On Hold': 'default',
+  'Waiting for Customer': 'primary',
+  Resolved: 'success',
+  Closed: 'default'
+};
+
+const CASE_PRIORITY_VARIANT_MAP = {
+  Low: 'default',
+  Medium: 'info',
+  High: 'warning',
+  Critical: 'danger'
+};
 
 // View state (module-specific URL param so other modules don't affect it)
 const viewStorageKey = 'arivu-cases-view';
@@ -331,6 +422,14 @@ function getUserDisplayName(user) {
   const firstName = user.firstName || user.first_name || '';
   const lastName = user.lastName || user.last_name || '';
   return `${firstName} ${lastName}`.trim() || user.email || '';
+}
+
+function getContactDisplayName(contact) {
+  if (!contact) return '';
+  if (typeof contact === 'string') return contact;
+  const firstName = contact.first_name || contact.firstName || '';
+  const lastName = contact.last_name || contact.lastName || '';
+  return `${firstName} ${lastName}`.trim() || contact.email || contact.name || '';
 }
 
 function isCaseFieldEmpty(row, key) {

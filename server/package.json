@@ -76,6 +76,7 @@
     "test:vertical-presets": "node --test services/__tests__/verticalPresetService.test.js",
     "seed:reports-sample": "node scripts/seedReportsSampleData.js",
     "seed:addons": "node scripts/seedAddonDefinitions.js",
+    "seed:learning-academy": "node scripts/seedArivuAcademyLearning.js",
     "migrate:live-chat-lc0": "node scripts/migrateLiveChatLc0.js",
     "migrate:live-chat-lc0:dry-run": "node scripts/migrateLiveChatLc0.js --dry-run",
     "migrate:live-chat-lc1": "node scripts/migrateLiveChatLc1.js",

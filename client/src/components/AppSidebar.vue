@@ -261,6 +261,7 @@ import AppModuleDrawer from '@/components/AppModuleDrawer.vue';
 import { dispatchSidebarChromeChange } from '@/utils/sidebarLayout';
 import logoLightUrl from '/assets/logo/Logo_light.svg';
 import {
+  AcademicCapIcon,
   BanknotesIcon,
   BookOpenIcon,
   ChatBubbleLeftRightIcon,
@@ -772,6 +773,7 @@ function getAppIcon(app: { id: string; icon?: string; name?: string }) {
   if (appId === 'core') return wrapHeroIcon(Squares2X2Icon);
   if (appId.includes('helpdesk')) return wrapHeroIcon(LifebuoyIcon);
   if (appId.includes('audit')) return wrapHeroIcon(ShieldCheckIcon);
+  if (appId === 'lms' || appId.includes('learning')) return wrapHeroIcon(AcademicCapIcon);
   if (app.icon) {
     return wrapHeroIcon(getIconComponent(app.icon));
   }

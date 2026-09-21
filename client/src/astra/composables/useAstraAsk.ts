@@ -8,6 +8,42 @@ import {
   type AstraSurface,
 } from '@/config/posthogAi';
 import { formatCurrencyValue } from '@/utils/currencyOptions';
+import { dispatchRecordUpdated } from '@/utils/moduleListFreshness';
+import { emitLocalDataChange } from '@/services/dataChangeRealtimeService';
+
+function extractConfirmPayload(proposal: AstraProposal): Record<string, unknown> {
+  const raw = proposal.fields;
+  if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
+  return {};
+}
+
+function extractMutationPatch(proposal: AstraProposal): Record<string, unknown> | null {
+  const payload = extractConfirmPayload(proposal);
+  const nested = payload.fields;
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    return nested as Record<string, unknown>;
+  }
+  const skip = new Set(['moduleKey', 'recordId', 'id', 'action', 'confirmed', 'toolName']);
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(payload)) {
+    if (skip.has(k) || v === undefined) continue;
+    out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+function notifyAstraRecordMutation(
+  moduleKey?: string,
+  recordId?: string,
+  op: 'update' | 'create' = 'update',
+  patch: Record<string, unknown> | null = null,
+) {
+  const mod = String(moduleKey || '').trim().toLowerCase();
+  const id = String(recordId || '').trim();
+  if (!mod || !id) return;
+  emitLocalDataChange({ moduleKey: mod, recordId: id, op, patch });
+  dispatchRecordUpdated({ moduleKey: mod, recordId: id });
+}
 
 export interface AstraProposalDetail {
   label: string;
@@ -304,14 +340,19 @@ export function useAstraAsk(surface: AstraSurface = 'copilot') {
     confirming.value = true;
     error.value = '';
     try {
+      const confirmPayload = extractConfirmPayload(proposal);
       const data = (await apiClient.post(CONFIRM_PATH, {
         toolName: proposal.kind,
         proposalId: proposal.id,
         kind: proposal.kind,
-        moduleKey: proposal.moduleKey,
-        recordId: proposal.recordId,
-        payload: proposal.fields,
-        fields: proposal.fields,
+        moduleKey: proposal.moduleKey
+          || toStringSafe(confirmPayload.moduleKey)
+          || undefined,
+        recordId: proposal.recordId
+          || toStringSafe(confirmPayload.recordId)
+          || undefined,
+        payload: confirmPayload,
+        fields: confirmPayload,
         conversationId: context.conversationId,
         confirmed: true,
       }, ASTRA_OPT_OPTS)) as Record<string, unknown>;
@@ -322,11 +363,35 @@ export function useAstraAsk(surface: AstraSurface = 'copilot') {
         moduleKey: proposal.moduleKey,
         recordId: toStringSafe(data?.recordId) || proposal.recordId,
       });
+      const resolvedModuleKey = toStringSafe(data?.moduleKey)
+        || proposal.moduleKey
+        || toStringSafe(confirmPayload.moduleKey)
+        || undefined;
+      const resolvedRecordId = toStringSafe(data?.recordId)
+        || proposal.recordId
+        || toStringSafe(confirmPayload.recordId)
+        || undefined;
+      const resultObj = data?.result && typeof data.result === 'object'
+        ? (data.result as Record<string, unknown>)
+        : null;
+      const resultRecord = resultObj?.record && typeof resultObj.record === 'object'
+        ? (resultObj.record as Record<string, unknown>)
+        : null;
+      const patch = extractMutationPatch(proposal)
+        || (resultRecord
+          ? {
+            ...(resultRecord.status != null ? { status: resultRecord.status } : {}),
+            ...(resultRecord.title != null ? { title: resultRecord.title } : {}),
+            ...(resultRecord.name != null ? { name: resultRecord.name } : {}),
+          }
+          : null);
+      const op = /create/i.test(String(proposal.kind || '')) ? 'create' : 'update';
+      notifyAstraRecordMutation(resolvedModuleKey, resolvedRecordId, op, patch && Object.keys(patch).length ? patch : null);
       return {
         ok: true,
         message: toStringSafe(data?.message) || undefined,
-        recordId: toStringSafe(data?.recordId) || undefined,
-        moduleKey: toStringSafe(data?.moduleKey) || proposal.moduleKey,
+        recordId: resolvedRecordId,
+        moduleKey: resolvedModuleKey || proposal.moduleKey,
         href: toStringSafe(data?.href) || undefined,
         navigateLabel: toStringSafe(data?.navigateLabel) || undefined,
         raw: data,

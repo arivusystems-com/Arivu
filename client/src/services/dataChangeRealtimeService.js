@@ -60,11 +60,31 @@ function handleDataChangePayload(payload) {
         detail: {
           moduleKey,
           recordId: payload.recordId ? String(payload.recordId) : null,
-          op: payload.op || 'update'
+          op: payload.op || 'update',
+          patch: payload.patch && typeof payload.patch === 'object' ? payload.patch : null,
         }
       })
     );
   }
+}
+
+/**
+ * Same-tab notify after local writes (Astra confirm, drawers, etc.).
+ * Prefer this over waiting for SSE round-trip.
+ */
+export function emitLocalDataChange({
+  moduleKey,
+  recordId,
+  op = 'update',
+  patch = null,
+} = {}) {
+  handleDataChangePayload({
+    type: 'data-change',
+    moduleKey,
+    recordId,
+    op,
+    patch,
+  });
 }
 
 function connect(token) {

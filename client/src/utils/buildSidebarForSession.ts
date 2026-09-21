@@ -126,6 +126,14 @@ function applyPortalOnlySidebarFilters(
   allowedAppKeys: Set<string>,
 ): void {
   if (String(userType).toUpperCase() !== 'EXTERNAL') return;
+
+  // Academy is a separate surface — never an app-rail peer for EXTERNAL.
+  if (Array.isArray(structure.applications)) {
+    structure.applications = structure.applications.filter(
+      (app) => String(app.id || '').toUpperCase() !== 'LMS',
+    );
+  }
+
   const profile = buildAppAccessProfile((appKey) => allowedAppKeys.has(String(appKey).toUpperCase()));
   if (!profile.hasOnlyPortalAccess) return;
 

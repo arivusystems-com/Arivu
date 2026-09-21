@@ -39,6 +39,7 @@ const { resolveLinkedRecordsForSessionContext } = require('../services/liveChatC
 const {
   buildSessionRelationMaps,
   applySessionRelations,
+  loadUsersById,
 } = require('../services/liveChatSessionEnrichmentService');
 const { buildBotClosePatch } = require('../constants/liveChatBotSession');
 const { buildAgentSessionFieldPatch } = require('../constants/liveChatSessionFields');
@@ -719,33 +720,55 @@ exports.streamMessages = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Session not found' });
     }
 
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
+    res.setHeader('X-Accel-Buffering', 'no');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
     const startedAt = Date.now();
     let after = Number(req.query.after) || startedAt;
     let receiptAfter = startedAt;
     let lastTypingHash = '';
     let sessionClosedEmitted = String(session.status || '') === 'closed';
+    let lastAssignedAgentId = session.assignedAgentId ? String(session.assignedAgentId) : '';
 
     const timer = setInterval(async () => {
       try {
         const currentSession = await ChatSession.findById(session._id)
-          .select('status lifecycleStatus outcome endedAt')
+          .select('status lifecycleStatus outcome endedAt assignedAgentId transferCount')
           .lean();
-        if (currentSession && String(currentSession.status || '') === 'closed' && !sessionClosedEmitted) {
-          sessionClosedEmitted = true;
-          res.write('event: session\n');
-          res.write(
-            `data: ${JSON.stringify({
-              status: 'closed',
-              lifecycleStatus: currentSession.lifecycleStatus || 'ended',
-              outcome: currentSession.outcome || null,
-              endedAt: currentSession.endedAt || null,
-            })}\n\n`,
-          );
+        if (currentSession) {
+          const nextAssignedAgentId = currentSession.assignedAgentId
+            ? String(currentSession.assignedAgentId)
+            : '';
+          const closedNow = String(currentSession.status || '') === 'closed';
+          const shouldEmitClosed = closedNow && !sessionClosedEmitted;
+          const assignmentChanged = nextAssignedAgentId !== lastAssignedAgentId;
+
+          if (shouldEmitClosed || assignmentChanged) {
+            if (shouldEmitClosed) sessionClosedEmitted = true;
+            lastAssignedAgentId = nextAssignedAgentId;
+
+            let assignedAgent = null;
+            if (nextAssignedAgentId) {
+              const usersById = await loadUsersById([nextAssignedAgentId]);
+              assignedAgent = usersById.get(nextAssignedAgentId) || null;
+            }
+
+            res.write('event: session\n');
+            res.write(
+              `data: ${JSON.stringify({
+                status: closedNow ? 'closed' : currentSession.status || null,
+                lifecycleStatus: currentSession.lifecycleStatus || (closedNow ? 'ended' : null),
+                outcome: currentSession.outcome || null,
+                endedAt: currentSession.endedAt || null,
+                assignedAgentId: currentSession.assignedAgentId || null,
+                assignedAgent,
+                transferCount: currentSession.transferCount ?? null,
+              })}\n\n`,
+            );
+          }
         }
 
         const rows = await ChatMessage.find({

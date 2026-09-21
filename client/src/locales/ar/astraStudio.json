@@ -502,5 +502,17 @@
   "processEmpty": {
     "message": "No process steps yet",
     "description": "Empty process graph"
+  },
+  "noLinkedRecord": {
+    "message": "No linked record yet. Ask Astra to focus this panel.",
+    "description": "CRM widget when canvas has no binding for this module"
+  },
+  "kpiEmpty": {
+    "message": "No CRM signals yet — refresh to load focus, stage, and activity",
+    "description": "Empty KPI / relationship score widget"
+  },
+  "kpiFocusOrg": {
+    "message": "Organization",
+    "description": "KPI focus for org-wide executive report canvases"
   }
 }

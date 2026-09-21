@@ -46,6 +46,19 @@ function ensureTenantWorkspaceFlag(organization) {
     }
 }
 
+/**
+ * Grant org-scoped learning_app capacity entitlement when LMS is enabled
+ * and a commercial BillingSubscription exists (Growth default).
+ */
+async function ensureLearningCapacityEntitlementForOrg(organizationId) {
+    const { setOrgLearningPlan } = require('../services/commercial/subscriptionService');
+    const { LEARNING_PRIMARY_PLAN_KEY } = require('../constants/commercialBilling');
+    return setOrgLearningPlan({
+        organizationId,
+        planKey: LEARNING_PRIMARY_PLAN_KEY,
+    });
+}
+
 // --- Get organization details ---
 exports.getOrganization = async (req, res) => {
     try {
@@ -399,6 +412,33 @@ exports.enableApp = async (req, res) => {
 
         // Idempotent: org may already have the app (e.g. migration) while catalog UI was stale
         if (isAppEnabledForOrg(organization, normalizedAppKey)) {
+            try {
+                const { syncPrivilegedUsersAppAccessForApp } = require('../services/roleSeedService');
+                await syncPrivilegedUsersAppAccessForApp(organization._id, normalizedAppKey, {
+                    organization,
+                    initiatedByUserId: req.user._id,
+                });
+            } catch (syncErr) {
+                console.warn('[EnableApp] privileged appAccess backfill failed:', syncErr.message);
+            }
+            try {
+                const {
+                    reconcileCommercialBillingAfterMutation,
+                } = require('../services/commercial/reconcileCommercialSubscription');
+                await reconcileCommercialBillingAfterMutation({
+                    organizationId: organization._id,
+                    initiatedByUserId: req.user._id,
+                });
+            } catch (reconcileErr) {
+                console.warn('[EnableApp] commercial reconcile failed:', reconcileErr.message);
+            }
+            if (normalizedAppKey === 'LMS') {
+                try {
+                    await ensureLearningCapacityEntitlementForOrg(organization._id);
+                } catch (learningGrantErr) {
+                    console.warn('[EnableApp] Learning capacity grant failed:', learningGrantErr.message);
+                }
+            }
             return res.json({
                 success: true,
                 message: `App ${normalizedAppKey} is already enabled for this organization`,
@@ -434,8 +474,15 @@ exports.enableApp = async (req, res) => {
         invalidatePermissionCachesForOrg(organization._id);
 
         try {
-            const { syncPrivilegedRoleEntitlementsForApp } = require('../services/roleSeedService');
+            const {
+                syncPrivilegedRoleEntitlementsForApp,
+                syncPrivilegedUsersAppAccessForApp,
+            } = require('../services/roleSeedService');
             await syncPrivilegedRoleEntitlementsForApp(organization._id, normalizedAppKey);
+            await syncPrivilegedUsersAppAccessForApp(organization._id, normalizedAppKey, {
+                organization,
+                initiatedByUserId: req.user._id,
+            });
             if (normalizedAppKey === 'PORTAL' || normalizedAppKey === 'AUDIT') {
                 const { ensureExternalPortalRolesForOrganization } = require('../services/portalExternalRoleSeedService');
                 await ensureExternalPortalRolesForOrganization(organization._id, organization.toObject?.() || organization);
@@ -462,6 +509,26 @@ exports.enableApp = async (req, res) => {
                 appKey: appKey,
                 error: bootstrapError.message
             });
+        }
+
+        if (normalizedAppKey === 'LMS') {
+            try {
+                await ensureLearningCapacityEntitlementForOrg(organization._id);
+            } catch (learningGrantErr) {
+                console.warn('[EnableApp] Learning capacity grant failed:', learningGrantErr.message);
+            }
+        }
+
+        try {
+            const {
+                reconcileCommercialBillingAfterMutation,
+            } = require('../services/commercial/reconcileCommercialSubscription');
+            await reconcileCommercialBillingAfterMutation({
+                organizationId: organization._id,
+                initiatedByUserId: req.user._id,
+            });
+        } catch (reconcileErr) {
+            console.warn('[EnableApp] commercial reconcile failed:', reconcileErr.message);
         }
 
         const { attachSettingsAuditDiff } = require('../utils/settingsAuditSnapshot');
@@ -593,6 +660,66 @@ exports.disableApp = async (req, res) => {
         ensureTenantWorkspaceFlag(organization);
         await organization.save();
         invalidatePermissionCachesForOrg(organization._id);
+
+        const normalizedAppKey = String(appKey).trim().toUpperCase();
+
+        // Revoke ACTIVE per-user appAccess so commercial recount zeroes the app line.
+        try {
+            let UserModel = User;
+            try {
+                const { getScopedUserModel } = require('../services/userInviteService');
+                UserModel = await getScopedUserModel(organization);
+            } catch (_) { /* fall back to master User */ }
+
+            const { decrementSeat } = require('../utils/subscriptionUtils');
+            const usersWithAccess = await UserModel.find({
+                organizationId: organization._id,
+                'appAccess.appKey': normalizedAppKey,
+            });
+
+            for (const orgUser of usersWithAccess) {
+                const access = (Array.isArray(orgUser.appAccess) ? orgUser.appAccess : []).map((entry) => {
+                    const plain = entry && typeof entry.toObject === 'function'
+                        ? entry.toObject()
+                        : { ...(entry || {}) };
+                    return {
+                        appKey: String(plain.appKey || '').toUpperCase(),
+                        roleKey: plain.roleKey || undefined,
+                        status: String(plain.status || 'ACTIVE').toUpperCase(),
+                        addedAt: plain.addedAt || undefined,
+                    };
+                });
+                const idx = access.findIndex((entry) => entry.appKey === normalizedAppKey);
+                if (idx < 0) continue;
+                const wasActive = access[idx].status === 'ACTIVE';
+                if (!wasActive) continue;
+                access[idx] = { ...access[idx], status: 'DISABLED' };
+                orgUser.appAccess = access;
+                orgUser.allowedApps = access
+                    .filter((entry) => entry.status === 'ACTIVE' && entry.appKey)
+                    .map((entry) => entry.appKey);
+                await orgUser.save();
+                try {
+                    await decrementSeat(organization._id, normalizedAppKey);
+                } catch (seatErr) {
+                    console.warn('[DisableApp] seat decrement failed:', seatErr.message);
+                }
+            }
+        } catch (revokeErr) {
+            console.warn('[DisableApp] user appAccess revoke failed:', revokeErr.message);
+        }
+
+        try {
+            const {
+                reconcileCommercialBillingAfterMutation,
+            } = require('../services/commercial/reconcileCommercialSubscription');
+            await reconcileCommercialBillingAfterMutation({
+                organizationId: organization._id,
+                initiatedByUserId: req.user._id,
+            });
+        } catch (reconcileErr) {
+            console.warn('[DisableApp] commercial reconcile failed:', reconcileErr.message);
+        }
 
         // Clean up app-owned fields from module definitions
         // For complete uninstall rules, see: /docs/field-governance.md

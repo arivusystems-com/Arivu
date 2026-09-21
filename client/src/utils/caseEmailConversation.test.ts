@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCaseEmailConversationItems,
+  getCaseEmailMessageAvatarUser,
   isCaseEmailMessageActivity,
   type CaseEmailConversationItem
 } from './caseEmailConversation';
@@ -98,5 +99,36 @@ describe('caseEmailConversation', () => {
     });
     expect(items).toHaveLength(1);
     expect(items[0]?.kind).toBe('internal_comment');
+  });
+
+  it('keeps outbound agent identity on sentByUser when case assignee changes', () => {
+    const avatar = getCaseEmailMessageAvatarUser(
+      {
+        direction: 'outbound',
+        fromAddress: '"Agent A" <a@example.com>',
+        sentByUser: { firstName: 'Agent', lastName: 'A', email: 'a@example.com' }
+      },
+      {
+        assignedTo: { firstName: 'Agent', lastName: 'B', email: 'b@example.com' }
+      }
+    );
+    expect(avatar?.firstName).toBe('Agent');
+    expect(avatar?.lastName).toBe('A');
+    expect(avatar?.email).toBe('a@example.com');
+  });
+
+  it('falls back to fromAddress for outbound when sentByUser is missing', () => {
+    const avatar = getCaseEmailMessageAvatarUser(
+      {
+        direction: 'outbound',
+        fromAddress: 'Original Sender <orig@example.com>'
+      },
+      {
+        assignedTo: { firstName: 'New', lastName: 'Assignee', email: 'new@example.com' }
+      }
+    );
+    expect(avatar?.firstName).toBe('Original');
+    expect(avatar?.lastName).toBe('Sender');
+    expect(avatar?.email).toBe('orig@example.com');
   });
 });

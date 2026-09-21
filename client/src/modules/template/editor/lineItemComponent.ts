@@ -39,6 +39,22 @@ function configureLineItemTable(table: Component): void {
   });
 }
 
+function ensureLineItemTable(component: Component): void {
+  const attrs = component.getAttributes?.() || {};
+  const hasBindings = Boolean(attrs['data-line-item-bindings']);
+  const table = findLineItemInnerTableComponent(component);
+  if (table) {
+    configureLineItemTable(table);
+    return;
+  }
+  // Bindings present but no table (empty seed wrapper) — build from bindings.
+  if (hasBindings) {
+    renderLineItemTable(component, readLineItemBindings(component, templateModuleScope));
+  } else {
+    renderLineItemTable(component, { moduleScope: templateModuleScope });
+  }
+}
+
 export function renderLineItemTable(component: Component, bindings: Partial<LineItemBindings>): void {
   const existingTable = findLineItemInnerTableComponent(component);
   const current = readLineItemBindings(component, templateModuleScope);
@@ -99,24 +115,14 @@ export function registerLineItemComponent(editor: Editor): void {
         toolbar: []
       },
       init() {
-        const attrs = this.getAttributes?.() || {};
-        if (!attrs['data-line-item-bindings']) {
-          renderLineItemTable(this, { moduleScope: templateModuleScope });
-          return;
-        }
-        const table = this.components().find(
-          (child: Component) => String(child.get('tagName') || '').toLowerCase() === 'table'
-        );
-        if (table) configureLineItemTable(table);
+        ensureLineItemTable(this);
       }
     }
   });
 
   editor.on('component:add', (component: Component) => {
     if (isLineItemComponent(component)) {
-      if (!component.getAttributes()?.['data-line-item-bindings']) {
-        renderLineItemTable(component, { moduleScope: templateModuleScope });
-      }
+      ensureLineItemTable(component);
       return;
     }
     if (isLineItemInnerTable(component)) {
@@ -129,8 +135,7 @@ export function registerLineItemComponent(editor: Editor): void {
     if (!wrapper) return;
     const visit = (component: Component) => {
       if (isLineItemComponent(component)) {
-        const table = findLineItemInnerTableComponent(component);
-        if (table) configureLineItemTable(table);
+        ensureLineItemTable(component);
       }
       component.components().forEach(visit);
     };

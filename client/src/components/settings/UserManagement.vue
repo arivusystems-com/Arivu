@@ -23,6 +23,7 @@
       :loading="loading"
       :statistics="stats"
       :stats-config="statsConfig"
+      :selected-stat-key="selectedStatKey"
       :pagination="pagination"
       :sort-field="sortField"
       :sort-order="sortOrder"
@@ -30,7 +31,7 @@
       :parent-search-query="searchQuery"
       table-id="settings-users-table"
       row-key="_id"
-      :show-import="false"
+      :show-import="true"
       :show-export="false"
       :selectable="false"
       :has-actions="true"
@@ -39,6 +40,7 @@
       :empty-title="hasActiveFilters ? t('settings.usersEmptyFilteredTitle') : t('settings.usersEmptyTitle')"
       :empty-message="hasActiveFilters ? t('settings.usersEmptyFilteredBody') : t('settings.usersEmptyBody')"
       @create="openInviteModal"
+      @import="openImportModal"
       @search-submit="handleSearch"
       @update:search-query="handleSearch"
       @update:filters="handleFiltersUpdate"
@@ -50,6 +52,18 @@
       @edit="openEditModal"
     >
       <template v-if="embedded" #toolbar-trailing>
+        <PermissionButton
+          module="settings-users"
+          action="create"
+          variant="secondary"
+          size="compact"
+          icon="import"
+          icon-only-mobile
+          :title="t('settings.usersImportTitle')"
+          @click="openImportModal"
+        >
+          <span class="hidden sm:inline">{{ t('common.importData') }}</span>
+        </PermissionButton>
         <PermissionButton
           module="settings-users"
           action="create"
@@ -203,8 +217,8 @@
 
       <template #cell-userType="{ row }">
         <BadgeCell
-          :value="formatUserTypeLabel(row.userType)"
-          :variant="row.userType === 'EXTERNAL' ? 'warning' : 'info'"
+          :value="formatUserTypeLabel(row)"
+          :variant="resolveDisplayUserType(row) === 'EXTERNAL' ? 'warning' : (resolveDisplayUserType(row) === 'ADMIN' ? 'danger' : 'info')"
         />
       </template>
 
@@ -231,6 +245,12 @@
       :is-open="showInviteModal"
       @close="showInviteModal = false"
       @user-invited="handleUserInvited"
+    />
+
+    <UserImportModal
+      :open="showImportModal"
+      @close="showImportModal = false"
+      @imported="handleUsersImported"
     />
 
     <EditUserModal
@@ -269,6 +289,7 @@ import ListView from '@/components/common/ListView.vue';
 import PermissionButton from '@/components/common/PermissionButton.vue';
 import BadgeCell from '@/components/common/table/BadgeCell.vue';
 import InviteUserDrawer from './InviteUserDrawer.vue';
+import UserImportModal from './UserImportModal.vue';
 import EditUserModal from './EditUserModal.vue';
 import UserTransferRecordsModal from './UserTransferRecordsModal.vue';
 import { useNotifications } from '@/composables/useNotifications';
@@ -305,8 +326,10 @@ const filters = ref({
   createdAt: ''
 });
 const adminOnlyFilter = ref(false);
+const selectedStatKey = ref('total');
 
 const showInviteModal = ref(false);
+const showImportModal = ref(false);
 const showEditModal = ref(false);
 const selectedUser = ref(null);
 
@@ -363,7 +386,8 @@ const statusFilterOptions = computed(() => [
 ]);
 
 const userTypeFilterOptions = computed(() => [
-  { value: 'INTERNAL', label: t('settings.inviteInternal') },
+  { value: 'STANDARD', label: t('settings.userTypeStandard') },
+  { value: 'ADMIN', label: t('settings.userTypeAdmin') },
   { value: 'EXTERNAL', label: t('settings.inviteExternal') }
 ]);
 
@@ -595,7 +619,7 @@ const fetchStats = async () => {
         inactive: all.filter((u) => u.status === 'inactive').length,
         deleted: all.filter((u) => u.status === 'deleted').length,
         invited: all.filter((u) => u.status === 'invited').length,
-        admins: all.filter((u) => u.isOwner || u.role === 'admin' || u.role === 'owner').length
+        admins: all.filter((u) => resolveDisplayUserType(u) === 'ADMIN').length
       };
     }
   } catch (error) {
@@ -636,6 +660,7 @@ const refreshAll = async () => {
 
 const handleStatClick = (statItem) => {
   adminOnlyFilter.value = false;
+  selectedStatKey.value = statItem?.key || 'total';
 
   switch (statItem.key) {
     case 'total':
@@ -687,6 +712,7 @@ const handleFiltersUpdate = (newFilters) => {
     adminOnlyFilter.value = Boolean(resolved.adminOnly);
   }
 
+  selectedStatKey.value = null;
   filters.value = next;
   currentPage.value = 1;
   fetchUsers();
@@ -714,6 +740,10 @@ const openInviteModal = () => {
   showInviteModal.value = true;
 };
 
+const openImportModal = () => {
+  showImportModal.value = true;
+};
+
 const openEditModal = (user) => {
   selectedUser.value = user;
   showEditModal.value = true;
@@ -731,6 +761,10 @@ const handleUserInvited = () => {
   showInviteModal.value = false;
   refreshAll();
   notifySuccess(t('settings.inviteSuccessCreated'));
+};
+
+const handleUsersImported = () => {
+  refreshAll();
 };
 
 const handleUserUpdated = () => {
@@ -832,12 +866,29 @@ const roleVariant = (role) => {
 };
 
 const isExternalUserRow = (row) =>
-  String(row?.userType || '').toUpperCase() === 'EXTERNAL';
+  resolveDisplayUserType(row) === 'EXTERNAL';
 
-const formatUserTypeLabel = (userType) => {
-  if (userType === 'EXTERNAL') return t('settings.inviteExternal');
-  if (userType === 'INTERNAL') return t('settings.inviteInternal');
-  return userType || t('settings.inviteInternal');
+/** Effective Type for UI: Owner/Admin roles → Admin even if DB still has legacy STANDARD/INTERNAL. */
+function resolveDisplayUserType(row) {
+  if (row?.isOwner) return 'ADMIN';
+  const roleName = String(row?.roleId?.name || row?.role || '').trim().toLowerCase();
+  if (roleName === 'owner' || roleName === 'admin' || roleName === 'administrator') {
+    return 'ADMIN';
+  }
+  const tType = String(row?.userType || '').toUpperCase();
+  if (tType === 'EXTERNAL' || tType === 'PORTAL') return 'EXTERNAL';
+  if (tType === 'ADMIN' || tType === 'SYSTEM') return 'ADMIN';
+  return 'STANDARD';
+}
+
+const formatUserTypeLabel = (rowOrType) => {
+  const tType = typeof rowOrType === 'object' && rowOrType
+    ? resolveDisplayUserType(rowOrType)
+    : String(rowOrType || '').toUpperCase();
+  if (tType === 'EXTERNAL' || tType === 'PORTAL') return t('settings.inviteExternal');
+  if (tType === 'ADMIN' || tType === 'SYSTEM') return t('settings.userTypeAdmin');
+  if (tType === 'STANDARD' || tType === 'INTERNAL') return t('settings.userTypeStandard');
+  return t('settings.userTypeStandard');
 };
 
 const formatAbsoluteDate = (date) => {

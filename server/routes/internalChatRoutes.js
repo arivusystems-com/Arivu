@@ -21,7 +21,9 @@ router.get('/teammates', internalChatController.listTeammates);
 router.get('/spaces', internalChatController.listSpaces);
 router.post('/spaces/channels', internalChatController.createChannel);
 router.post('/spaces/:spaceId/join', internalChatController.joinChannel);
+router.get('/spaces/:spaceId/members', internalChatController.listMembers);
 router.post('/spaces/:spaceId/members', internalChatController.inviteMembers);
+router.delete('/spaces/:spaceId/members/:userId', internalChatController.removeMember);
 router.patch('/spaces/:spaceId', internalChatController.updateChannel);
 router.post('/spaces/dms', internalChatController.createDm);
 router.post('/spaces/group-dms', internalChatController.createGroupDm);
@@ -34,6 +36,9 @@ router.post(
   internalChatController.uploadAttachment
 );
 router.post('/spaces/:spaceId/messages/:messageId/reactions', internalChatController.toggleReaction);
+router.post('/spaces/:spaceId/pin', internalChatController.pinSpace);
+router.post('/spaces/:spaceId/mute', internalChatController.muteSpace);
+router.post('/spaces/:spaceId/unread', internalChatController.markUnread);
 router.post('/spaces/:spaceId/messages/:messageId/pin', internalChatController.pinMessage);
 router.patch('/spaces/:spaceId/messages/:messageId', internalChatController.editMessage);
 router.delete('/spaces/:spaceId/messages/:messageId', internalChatController.deleteMessage);

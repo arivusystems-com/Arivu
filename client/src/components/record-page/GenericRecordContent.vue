@@ -4280,7 +4280,11 @@ function onArivuDataChange(event) {
   if (!detail?.recordId || !detail?.moduleKey) return;
   if (String(detail.recordId) !== String(props.recordId)) return;
   if (!moduleKeyAliasesMatch(detail.moduleKey, props.moduleKey)) return;
-  scheduleSoftRecordRefresh(detail.op === 'create' ? 0 : 400);
+  // Instant UI update from Astra/local writes, then soft GET for full consistency
+  if (detail.patch && typeof detail.patch === 'object' && record.value) {
+    Object.assign(record.value, detail.patch);
+  }
+  scheduleSoftRecordRefresh(detail.op === 'create' ? 0 : 150);
 }
 
 async function fetchRecord(options = {}) {

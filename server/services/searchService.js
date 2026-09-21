@@ -99,6 +99,8 @@ class SearchService {
     } else {
       searchPromises.push(Promise.resolve([]));
     }
+
+    searchPromises.push(this.searchLearningCourses(organizationId, query, searchRegex, limit, fetchLimit));
     
     // Run all searches in parallel for speed
     const [
@@ -110,6 +112,7 @@ class SearchService {
       forms,
       items,
       quotes,
+      learningCourses,
     ] = await Promise.all(searchPromises);
 
     return {
@@ -123,9 +126,11 @@ class SearchService {
         forms,
         items,
         quotes,
+        learningCourses,
       },
       total: people.length + organizations.length + deals.length
              + tasks.length + events.length + forms.length + items.length + quotes.length
+             + learningCourses.length
     };
   }
 
@@ -425,6 +430,56 @@ class SearchService {
       }));
     } catch (error) {
       console.error('[SearchService] Error searching items:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Search Learning courses (when LMS is enabled for the org)
+   */
+  async searchLearningCourses(organizationId, query, searchRegex, limit, fetchLimit) {
+    try {
+      let LearningCourse;
+      try {
+        LearningCourse = require('../models/learning/LearningCourse');
+      } catch {
+        return [];
+      }
+
+      const Organization = require('../models/Organization');
+      const org = await Organization.findById(organizationId).select('enabledApps').lean();
+      const enabled = Array.isArray(org?.enabledApps) ? org.enabledApps : [];
+      const lmsOn = enabled.some((e) => {
+        const key = typeof e === 'object' && e !== null ? e.appKey : e;
+        const status = typeof e === 'object' && e !== null ? e.status : 'ACTIVE';
+        return String(key || '').toUpperCase() === 'LMS'
+          && String(status || 'ACTIVE').toUpperCase() === 'ACTIVE';
+      });
+      if (!lmsOn) return [];
+
+      const results = await LearningCourse.find({
+        organizationId,
+        status: 'published',
+        $or: buildSearchOrConditions(query, ['title', 'description']),
+      })
+        .select('title description status')
+        .limit(fetchLimit)
+        .lean();
+
+      const ranked = rankAndLimit(results, query, [
+        { getValue: (c) => c.title, primary: true },
+        { getValue: (c) => c.description, primary: false },
+      ], limit);
+
+      return ranked.map((course) => ({
+        id: course._id,
+        type: 'learningCourses',
+        title: course.title || 'Course',
+        subtitle: course.description || 'Learning course',
+        route: `/learning/courses/${course._id}`,
+      }));
+    } catch (error) {
+      console.error('[SearchService] Error searching learning courses:', error);
       return [];
     }
   }

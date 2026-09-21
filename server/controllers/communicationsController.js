@@ -831,17 +831,33 @@ exports.getThreads = async (req, res) => {
     const viewMap = new Map();
     const metaMap = new Map();
     const assigneeMap = new Map();
-    if (threadIds.length > 0) {
-      const [views, metas] = await Promise.all([
-        ThreadView.find({
-          userId: req.user._id,
-          organizationId: orgId,
-          threadId: { $in: threadIds }
-        }).lean(),
-        CommunicationThreadMeta.find({
-          organizationId: orgId,
-          threadId: { $in: threadIds }
-        }).select('threadId assignedToUserId tags').lean()
+    const senderMap = new Map();
+    const senderIds = [...new Set(
+      comms
+        .map((c) => (c?.sentByUserId ? String(c.sentByUserId) : ''))
+        .filter(Boolean)
+    )];
+    if (threadIds.length > 0 || senderIds.length > 0) {
+      const [views, metas, senders] = await Promise.all([
+        threadIds.length > 0
+          ? ThreadView.find({
+              userId: req.user._id,
+              organizationId: orgId,
+              threadId: { $in: threadIds }
+            }).lean()
+          : Promise.resolve([]),
+        threadIds.length > 0
+          ? CommunicationThreadMeta.find({
+              organizationId: orgId,
+              threadId: { $in: threadIds }
+            }).select('threadId assignedToUserId tags').lean()
+          : Promise.resolve([]),
+        senderIds.length > 0
+          ? User.find({
+              _id: { $in: senderIds },
+              organizationId: orgId
+            }).select('_id firstName lastName email avatar').lean()
+          : Promise.resolve([])
       ]);
       for (const v of views) {
         viewMap.set(String(v.threadId), {
@@ -853,6 +869,15 @@ exports.getThreads = async (req, res) => {
         metaMap.set(String(m.threadId), {
           assignedToUserId: m.assignedToUserId || null,
           tags: Array.isArray(m.tags) ? m.tags : []
+        });
+      }
+      for (const user of senders) {
+        senderMap.set(String(user._id), {
+          _id: user._id,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          avatar: user.avatar || null
         });
       }
       const assigneeIds = [...new Set(
@@ -951,6 +976,10 @@ exports.getThreads = async (req, res) => {
           sentAt: m.sentAt,
           receivedAt: m.receivedAt,
           status: m.status,
+          sentByUserId: m.sentByUserId || null,
+          sentByUser: m.sentByUserId
+            ? senderMap.get(String(m.sentByUserId)) || null
+            : null,
           ...mapCommunicationDeliveryFields(m)
         }))
       };
@@ -1756,6 +1785,28 @@ exports.getThreadMessages = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Thread not found' });
     }
 
+    const senderIds = [...new Set(
+      messages
+        .map((m) => (m?.sentByUserId ? String(m.sentByUserId) : ''))
+        .filter(Boolean)
+    )];
+    const senderMap = new Map();
+    if (senderIds.length > 0) {
+      const senders = await User.find({
+        _id: { $in: senderIds },
+        organizationId: orgId
+      }).select('_id firstName lastName email avatar').lean();
+      for (const user of senders) {
+        senderMap.set(String(user._id), {
+          _id: user._id,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          avatar: user.avatar || null
+        });
+      }
+    }
+
     const mailboxIds = [
       ...new Set(messages.map((m) => m.mailboxId).filter(Boolean).map(String))
     ];
@@ -1807,6 +1858,10 @@ exports.getThreadMessages = async (req, res) => {
           receivedAt: m.receivedAt,
           scheduledAt: m.scheduledAt || null,
           status: m.status,
+          sentByUserId: m.sentByUserId || null,
+          sentByUser: m.sentByUserId
+            ? senderMap.get(String(m.sentByUserId)) || null
+            : null,
           ...mapCommunicationDeliveryFields(m)
         }))
       }
@@ -2123,7 +2178,12 @@ exports.createCaseFromEmail = async (req, res) => {
 
     const cycle = createInitialSlaCycle(1, now);
 
-    const caseId = `CAS-${now.getUTCFullYear()}-${String(Date.now()).slice(-6)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const { allocateRequired } = require('../services/moduleNumberingService');
+    const caseId = await allocateRequired({
+      organizationId: orgId,
+      moduleKey: 'cases',
+      at: now,
+    });
     const payload = {
       organizationId: orgId,
       caseId,

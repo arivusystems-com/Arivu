@@ -71,44 +71,71 @@ async function issueSetupToken(demoRequest) {
 }
 
 async function sendVerificationEmailForDemoRequest(demoRequest, rawToken) {
-  const result = await sendDemoTrialVerificationEmail({
+  return sendDemoTrialVerificationEmail({
     to: demoRequest.email,
     contactName: demoRequest.contactName,
     companyName: demoRequest.companyName,
     verifyToken: rawToken,
   });
-  return mapAccountEmailResult(result);
 }
 
-async function confirmEmailVerification(rawToken) {
-  const tokenHash = hashToken(rawToken);
-  const demoRequest = await DemoRequest.findOne({
-    emailVerificationTokenHash: tokenHash,
-    status: { $in: ['pending_verification', 'pending'] },
-  });
-
-  if (!demoRequest) {
-    return { ok: false, code: 'INVALID_TOKEN', message: 'Invalid or expired verification link.' };
-  }
-
-  if (isTokenExpired(demoRequest.emailVerificationExpiresAt)) {
-    return { ok: false, code: 'TOKEN_EXPIRED', message: 'Verification link expired. Request a new one.' };
-  }
-
-  const setupTokenRaw = generateRawToken();
-  demoRequest.emailVerifiedAt = new Date();
-  demoRequest.status = 'email_verified';
-  demoRequest.emailVerificationTokenHash = null;
-  demoRequest.emailVerificationExpiresAt = null;
-  demoRequest.setupTokenHash = hashToken(setupTokenRaw);
-  demoRequest.setupTokenExpiresAt = getDemoSetupExpiry();
-  await demoRequest.save();
-
+async function issueVerifiedSetupSession(demoRequest) {
+  const setupTokenRaw = await issueSetupToken(demoRequest);
   return {
     ok: true,
     setupToken: setupTokenRaw,
     session: serializeDemoSetupSession(demoRequest),
   };
+}
+
+async function confirmEmailVerification(rawToken) {
+  const tokenHash = hashToken(rawToken);
+  const now = new Date();
+  const setupTokenRaw = generateRawToken();
+
+  const claimed = await DemoRequest.findOneAndUpdate(
+    {
+      emailVerificationTokenHash: tokenHash,
+      status: { $in: ['pending_verification', 'pending'] },
+      emailVerificationExpiresAt: { $gt: now },
+    },
+    {
+      $set: {
+        emailVerifiedAt: now,
+        status: 'email_verified',
+        setupTokenHash: hashToken(setupTokenRaw),
+        setupTokenExpiresAt: getDemoSetupExpiry(),
+      },
+    },
+    { new: true }
+  );
+
+  if (claimed) {
+    return {
+      ok: true,
+      setupToken: setupTokenRaw,
+      session: serializeDemoSetupSession(claimed),
+    };
+  }
+
+  const existing = await DemoRequest.findOne({ emailVerificationTokenHash: tokenHash });
+  if (!existing) {
+    return { ok: false, code: 'INVALID_TOKEN', message: 'Invalid or expired verification link.' };
+  }
+
+  if (existing.status === 'converted') {
+    return { ok: false, code: 'ALREADY_CONVERTED', message: 'Workspace already set up. Sign in to continue.' };
+  }
+
+  if (isTokenExpired(existing.emailVerificationExpiresAt)) {
+    return { ok: false, code: 'TOKEN_EXPIRED', message: 'Verification link expired. Request a new one.' };
+  }
+
+  if (existing.status === 'email_verified') {
+    return issueVerifiedSetupSession(existing);
+  }
+
+  return { ok: false, code: 'INVALID_TOKEN', message: 'Invalid or expired verification link.' };
 }
 
 async function findDemoRequestBySetupToken(rawSetupToken) {

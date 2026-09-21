@@ -9,7 +9,7 @@ import { useColorMode } from '@/composables/useColorMode'
 const navigation = [
   { name: 'Product', href: '#' },
   { name: 'Features', href: '#' },
-  { name: 'Pricing', href: '#' },
+  { name: 'Pricing', href: '/pricing', router: true },
   { name: 'About Us', href: '#' },
 ]
 
@@ -39,7 +39,18 @@ const { colorMode, toggleColorMode } = useColorMode();
           </button>
         </div>
         <div class="hidden lg:flex lg:gap-x-12">
-          <a v-for="item in navigation" :key="item.name" :href="item.href" class="text-sm/6 font-semibold text-gray-900 dark:text-white">{{ item.name }}</a>
+          <template v-for="item in navigation" :key="item.name">
+            <router-link
+              v-if="item.router"
+              :to="item.href"
+              class="text-sm/6 font-semibold text-gray-900 dark:text-white"
+            >{{ item.name }}</router-link>
+            <a
+              v-else
+              :href="item.href"
+              class="text-sm/6 font-semibold text-gray-900 dark:text-white"
+            >{{ item.name }}</a>
+          </template>
         </div>
           <div class="hidden lg:flex lg:flex-1 lg:justify-end">
             <router-link to="/login" class="text-sm/6 font-semibold text-gray-900 dark:text-white">{{ t('platform.landingPageLogIn2') }}<span aria-hidden="true">&rarr;</span></router-link>
@@ -65,7 +76,19 @@ const { colorMode, toggleColorMode } = useColorMode();
           <div class="mt-6 flow-root">
             <div class="-my-6 divide-y divide-gray-500/10 dark:divide-white/10">
               <div class="space-y-2 py-6">
-                <a v-for="item in navigation" :key="item.name" :href="item.href" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5">{{ item.name }}</a>
+                <template v-for="item in navigation" :key="item.name">
+                  <router-link
+                    v-if="item.router"
+                    :to="item.href"
+                    class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5"
+                    @click="mobileMenuOpen = false"
+                  >{{ item.name }}</router-link>
+                  <a
+                    v-else
+                    :href="item.href"
+                    class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5"
+                  >{{ item.name }}</a>
+                </template>
               </div>
               <div class="py-6">
                 <router-link to="/login" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-white/5 dark:text-white">{{ t('platform.landingPageLogIn') }}<span aria-hidden="true">→</span></router-link>

@@ -248,6 +248,21 @@
                     {{ t('astra.responseFromAgent', { name: msg.agentName }) }}
                   </p>
                   <AstraAnswerBody v-if="msg.body" :body="msg.body" />
+                  <div v-if="msg.body && ttsSupported" class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="inline-flex h-7 w-7 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                      :aria-label="speakingMessageId === msg.id && speaking ? t('astra.stopSpeaking') : t('astra.speakAnswer')"
+                      :aria-pressed="speakingMessageId === msg.id && speaking"
+                      @click="onSpeakAnswer(msg)"
+                    >
+                      <StopCircleIcon
+                        v-if="speakingMessageId === msg.id && speaking"
+                        class="h-4 w-4"
+                      />
+                      <SpeakerWaveIcon v-else class="h-4 w-4" />
+                    </button>
+                  </div>
                   <div v-if="msg.href" class="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -351,27 +366,51 @@
 
           <div class="relative z-[1] shrink-0 border-t border-neutral-200/70 bg-white/90 px-3.5 py-3 backdrop-blur dark:border-white/[0.08] dark:bg-neutral-900/90">
             <form
-              class="flex items-end gap-2 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-sm dark:border-white/10 dark:bg-neutral-950"
+              class="flex flex-col gap-1.5 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-sm dark:border-white/10 dark:bg-neutral-950"
+              :class="isListening ? 'ring-2 ring-rose-400/70 dark:ring-rose-400/50' : ''"
               @submit.prevent="onSend"
             >
-              <textarea
-                ref="inputEl"
-                v-model="draft"
-                rows="1"
-                class="max-h-32 min-h-[2.5rem] flex-1 resize-none bg-transparent px-2.5 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:text-neutral-100"
-                :placeholder="composerPlaceholder"
-                :disabled="asking"
-                @keydown.enter.exact.prevent="onSend"
-                @input="autoGrow"
-              />
-              <button
-                type="submit"
-                class="mb-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-35 dark:bg-primary-500 dark:hover:bg-primary-600 dark:text-white"
-                :disabled="asking || !draft.trim()"
-                :aria-label="t('astra.send')"
+              <div class="flex items-end gap-2">
+                <textarea
+                  ref="inputEl"
+                  v-model="draft"
+                  rows="1"
+                  class="max-h-32 min-h-[2.5rem] flex-1 resize-none bg-transparent px-2.5 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:text-neutral-100"
+                  :placeholder="composerPlaceholder"
+                  :disabled="asking || isListening"
+                  :aria-busy="isListening"
+                  @keydown.enter.exact.prevent="onSend"
+                  @input="autoGrow"
+                />
+                <button
+                  type="button"
+                  class="mb-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition disabled:opacity-35"
+                  :class="isListening
+                    ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30 animate-pulse'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'"
+                  :disabled="asking"
+                  :aria-label="isListening ? t('astra.voiceStop') : t('astra.voiceStart')"
+                  :aria-pressed="isListening"
+                  @click="onMicClick"
+                >
+                  <MicrophoneIcon class="h-4 w-4" />
+                </button>
+                <button
+                  type="submit"
+                  class="mb-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-35 dark:bg-primary-500 dark:hover:bg-primary-600 dark:text-white"
+                  :disabled="asking || isListening || !draft.trim()"
+                  :aria-label="t('astra.send')"
+                >
+                  <PaperAirplaneIcon class="h-4 w-4 -rotate-45 translate-x-px" />
+                </button>
+              </div>
+              <p
+                v-if="isListening"
+                class="px-2 pb-0.5 text-[11px] font-medium text-rose-600 dark:text-rose-400"
+                aria-live="polite"
               >
-                <PaperAirplaneIcon class="h-4 w-4 -rotate-45 translate-x-px" />
-              </button>
+                {{ t('astra.voiceListening') }}
+              </p>
             </form>
             <p class="mt-2 text-center text-[10px] text-neutral-400">{{ t('astra.composerFootnote') }}</p>
           </div>
@@ -455,7 +494,10 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import {
   ChevronDownIcon,
+  MicrophoneIcon,
   PaperAirplaneIcon,
+  SpeakerWaveIcon,
+  StopCircleIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/authRegistry';
@@ -463,6 +505,7 @@ import { useTabs } from '@/composables/useTabs';
 import { useAstraAsk, type AstraNbaItem, type AstraProposal, type AstraSuggestion } from '@/astra/composables/useAstraAsk';
 import { useAstraStatusLine } from '@/astra/composables/useAstraStatusLine';
 import { useAstraConversations } from '@/astra/composables/useAstraConversations';
+import { useAstraVoice } from '@/astra/composables/useAstraVoice';
 import AstraMessageBlocks from '@/astra/blocks/AstraMessageBlocks.vue';
 import AstraAnswerBody from '@/astra/components/AstraAnswerBody.vue';
 import AstraFollowUps from '@/astra/components/AstraFollowUps.vue';
@@ -480,7 +523,13 @@ import {
   SIDEBAR_SHELL_PADDING_REM,
   WORK_PANEL_SURFACE_CLASS,
 } from '@/utils/sidebarLayout';
-import { captureAstraActionRejected } from '@/config/posthogAi';
+import {
+  captureAstraActionRejected,
+  captureAstraTtsPlayed,
+  captureAstraVoiceCancelled,
+  captureAstraVoiceCommitted,
+  captureAstraVoiceStarted,
+} from '@/config/posthogAi';
 import { playAstraIntroResolveSound, playAstraIntroSound } from '@/utils/astraIntroSound';
 
 interface PanelMessage {
@@ -516,6 +565,16 @@ const authStore = useAuthStore();
 const { activeTab, tabs } = useTabs();
 const { asking, confirming, error, askSync, confirmProposal, fetchNba } = useAstraAsk('side_panel');
 const { statusLine } = useAstraStatusLine(asking);
+const {
+  isListening,
+  ttsSupported,
+  speaking,
+  speakingMessageId,
+  toggleListening,
+  speakAnswer,
+  stopSpeaking,
+} = useAstraVoice();
+const voiceDraftBaseline = ref('');
 const {
   conversations,
   refresh: refreshHistory,
@@ -701,6 +760,7 @@ const headerTitle = computed(() =>
 );
 
 const composerPlaceholder = computed(() => {
+  if (isListening.value) return t('astra.voicePlaceholder');
   const user = authStore.user as { firstName?: string } | null;
   const name = String(user?.firstName || '').trim();
   return name ? t('astra.askPromptNamed', { name }) : t('astra.askPrompt');
@@ -1057,6 +1117,47 @@ async function onSend() {
   await nextTick();
   autoGrow();
   await ask(text);
+}
+
+function onMicClick() {
+  if (asking.value) return;
+  if (isListening.value) {
+    void toggleListening();
+    return;
+  }
+  voiceDraftBaseline.value = draft.value;
+  captureAstraVoiceStarted({ surface: 'side_panel' });
+  void toggleListening({
+    onTranscript: (text) => {
+      draft.value = text;
+      void nextTick(() => autoGrow());
+    },
+    onEnd: ({ text, reason }) => {
+      if (reason === 'commit' && text.trim()) {
+        draft.value = text.trim();
+        captureAstraVoiceCommitted({
+          surface: 'side_panel',
+          promptLength: text.trim().length,
+        });
+        void onSend();
+        return;
+      }
+      draft.value = voiceDraftBaseline.value;
+      void nextTick(() => autoGrow());
+      captureAstraVoiceCancelled({ surface: 'side_panel', reason });
+    },
+  });
+}
+
+function onSpeakAnswer(msg: PanelMessage) {
+  const body = String(msg.body || '').trim();
+  if (!body) return;
+  if (speakingMessageId.value === msg.id && speaking.value) {
+    stopSpeaking();
+    return;
+  }
+  captureAstraTtsPlayed({ surface: 'side_panel' });
+  speakAnswer(msg.id, body);
 }
 
 async function onSuggestion(suggestion: string) {

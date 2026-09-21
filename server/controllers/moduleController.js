@@ -1068,6 +1068,7 @@ function getBaseFieldsForKey(key) {
             'estimatedHours'
         ];
         const peopleDefaultFieldOrder = [
+            'salutation',
             'first_name',
             'last_name',
             'email',
@@ -1075,8 +1076,9 @@ function getBaseFieldsForKey(key) {
             'mobile',
             'organization',
             'assignedTo',
+            'tags',
             'do_not_contact',
-            'tags'
+            'source'
         ];
         const casesDefaultFieldOrder = [
             'caseId',

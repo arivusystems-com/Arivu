@@ -403,6 +403,7 @@
               v-for="(rule, index) in ingestRules"
               :key="rule.id || index"
               class="rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
+              :class="{ 'opacity-60': rule.enabled === false }"
             >
               <div class="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/40 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
                 <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200">
@@ -415,7 +416,12 @@
                   class="flex-1 min-w-0 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
                 <label class="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 shrink-0">
-                  <input v-model="rule.enabled" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                  <input
+                    v-model="rule.enabled"
+                    type="checkbox"
+                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    @change="syncIngestPolicy"
+                  />
                   {{ t('settings.mailroomIngestEnabled') }}
                 </label>
                 <button

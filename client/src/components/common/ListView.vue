@@ -296,8 +296,12 @@
           v-for="item in computedStats"
           :key="item.key"
           type="button"
-          class="group flex min-w-[5.5rem] flex-1 flex-col items-start gap-1 border-r border-gray-100 px-3 py-2.5 text-left transition-[background-color,color] duration-150 last:border-r-0 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:border-gray-800 dark:hover:bg-indigo-900/25 sm:min-w-[7rem] sm:gap-1.5 sm:px-4 sm:py-3"
+          class="group flex min-w-[5.5rem] flex-1 flex-col items-start gap-1 border-r border-gray-100 px-3 py-2.5 text-left transition-[background-color,color] duration-150 last:border-r-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:border-gray-800 sm:min-w-[7rem] sm:gap-1.5 sm:px-4 sm:py-3"
+          :class="item.key === selectedStatKey
+            ? 'bg-indigo-50 dark:bg-indigo-900/30'
+            : 'hover:bg-indigo-50 dark:hover:bg-indigo-900/25'"
           :title="item.name"
+          :aria-pressed="item.key === selectedStatKey ? 'true' : 'false'"
           @click="handleStatClick(item)"
         >
           <TruncatedLabel
@@ -306,7 +310,10 @@
             text-class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
           />
           <span
-            class="text-base font-semibold tabular-nums text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400 sm:text-lg"
+            class="text-base font-semibold tabular-nums transition-colors sm:text-lg"
+            :class="item.key === selectedStatKey
+              ? 'text-indigo-700 dark:text-indigo-300'
+              : 'text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400'"
           >
             {{ item.stat }}
           </span>
@@ -1712,6 +1719,11 @@ const props = defineProps({
   statsConfig: {
     type: Array,
     default: null // Array of { name, key, previousKey, formatter } or null to disable stats
+  },
+  /** Active quick-filter stat card key (visual selection only; does not change counts). */
+  selectedStatKey: {
+    type: String,
+    default: null
   },
   
   // Table configuration
@@ -3693,7 +3705,9 @@ function buildCompiledListFilters() {
 }
 
 const activeFilterRulesCount = computed(() =>
-  countActiveFilterRules(filters, filterOperatorsMap.value)
+  countActiveFilterRules(filters, filterOperatorsMap.value, {
+    allowedKeys: Object.keys(mergedFilterByKey.value),
+  })
 );
 
 const filterButtonLabel = computed(() => {
@@ -4260,7 +4274,9 @@ const handleStatClick = (item) => {
 };
 
 // Get count of active filters for mobile badge
-const getActiveFiltersCount = () => countActiveFilterRules(filters, filterOperatorsMap.value);
+const getActiveFiltersCount = () => countActiveFilterRules(filters, filterOperatorsMap.value, {
+  allowedKeys: Object.keys(mergedFilterByKey.value),
+});
 
 function syncFilterBuilderFromActiveFilters() {
   filterBuilderQuery.value = syncRootGroupFromActiveFilters(

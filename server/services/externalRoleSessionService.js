@@ -208,21 +208,33 @@ async function hydrateExternalUserSession(user, activeExternalRoleId, organizati
   let { appAccess, allowedApps } = deriveAppAccessFromRole(roleLean, organization);
   if (normalizeUserType(user) === 'EXTERNAL') {
     appAccess = appAccess.filter((a) => String(a.appKey).toUpperCase() !== 'SALES');
-    if (!appAccess.length) {
-      const enabled = organization?.enabledApps || [];
-      const portalEnabled = enabled.some((e) => {
-        const key = typeof e === 'string' ? e : e?.appKey;
-        return String(key || '').toUpperCase() === 'PORTAL';
-      });
-      if (portalEnabled) {
-        appAccess = [{
+
+    // Portal role selection must attach PORTAL when the org app is ACTIVE —
+    // even if the role also carries LMS (Academy). Do not treat a non-empty
+    // LMS-only appAccess as "done" and skip PORTAL.
+    const portalActive = (organization?.enabledApps || []).some((entry) => {
+      if (typeof entry === 'string') {
+        return String(entry).toUpperCase() === 'PORTAL';
+      }
+      const key = String(entry?.appKey || '').toUpperCase();
+      const status = String(entry?.status || 'ACTIVE').toUpperCase();
+      return key === 'PORTAL' && status === 'ACTIVE';
+    });
+    const hasPortalRow = appAccess.some(
+      (a) => String(a.appKey || '').toUpperCase() === 'PORTAL'
+    );
+    if (portalActive && !hasPortalRow) {
+      appAccess = [
+        ...appAccess,
+        {
           appKey: 'PORTAL',
           roleKey: 'CUSTOMER',
           status: 'ACTIVE',
           addedAt: new Date()
-        }];
-      }
+        }
+      ];
     }
+
     allowedApps = appAccess.map((a) => a.appKey);
   }
 
@@ -231,13 +243,21 @@ async function hydrateExternalUserSession(user, activeExternalRoleId, organizati
 
   await applyProjectionToUser(user, roleLean, organization);
 
+  // Learning Academy: inject LMS LEARNER when Academy access is ACTIVE
+  try {
+    const { applyAcademyAccessToSession } = require('./learning/learningAcademyAccessService');
+    await applyAcademyAccessToSession(user, organizationId);
+  } catch (_err) {
+    // non-fatal — Academy optional
+  }
+
   return {
     ok: true,
     role: {
       _id: roleLean._id,
       name: roleLean.name
     },
-    allowedApps
+    allowedApps: user.allowedApps
   };
 }
 

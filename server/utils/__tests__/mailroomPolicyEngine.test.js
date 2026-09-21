@@ -150,6 +150,40 @@ describe('mailroom policy engine', () => {
     assert.equal(result.action.type, 'route_to_case_flow');
   });
 
+  it('ingest disabled matching rule suppresses defaultAction', () => {
+    const message = buildNormalizedMessage({
+      channel: 'email',
+      subject: 'Need support',
+      participants: {
+        from: { address: 'customer@example.com' },
+        to: [{ address: 'hello@arivusystems.com' }]
+      }
+    });
+    const result = evaluate('ingest', {
+      message,
+      policies: {
+        ingest: {
+          rules: [
+            {
+              id: 'case-creation',
+              enabled: false,
+              match: 'all',
+              conditions: [{ field: 'to', operator: 'equals', value: 'hello@arivusystems.com' }],
+              action: { type: 'route_to_case_flow' }
+            }
+          ],
+          defaultAction: { type: 'route_to_case_flow' }
+        }
+      }
+    });
+    assert.equal(result.matched, false);
+    assert.equal(result.ruleId, 'case-creation');
+    assert.equal(result.action.type, 'ignore');
+    assert.equal(result.suppressedDefault, true);
+    assert.equal(result.trace[0].skipped, true);
+    assert.equal(result.trace[0].reason, 'disabled');
+  });
+
   it('case_link appends to open case', () => {
     const message = buildNormalizedMessage({ channel: 'email', subject: 'Hi' });
     const candidates = {

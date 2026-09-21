@@ -1808,6 +1808,7 @@ import DatePicker from '@/components/common/DatePicker.vue';
 import { useAuthStore } from '@/stores/authRegistry';
 import { useTabs } from '@/composables/useTabs';
 import { useNotifications } from '@/composables/useNotifications';
+import { useArivuDataChangeRefresh } from '@/composables/useArivuDataChangeRefresh';
 import { 
   TASK_FIELD_METADATA, 
   getCoreTaskFields,
@@ -3596,6 +3597,17 @@ const fetchTask = async (options = {}) => {
     await resolveRelatedToDisplayName();
   }, 'Failed to load task', options);
 };
+
+useArivuDataChangeRefresh({
+  getModuleKey: () => 'tasks',
+  getRecordId: () => String(effectiveTaskId.value || task.value?._id || ''),
+  onChange: (detail) => {
+    if (detail?.patch && typeof detail.patch === 'object' && task.value) {
+      Object.assign(task.value, detail.patch);
+    }
+    void fetchTask({ soft: true });
+  },
+});
 
 const TASK_RELATIONSHIP_CONTEXTS = [
   { appKey: 'platform', moduleKey: 'tasks' },

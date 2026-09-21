@@ -11,6 +11,8 @@ import {
 import { useAuthStore } from '@/stores/authRegistry';
 import { isOrganizationTrialExpired } from '@/utils/trialStatus';
 
+const emit = defineEmits(['settling']);
+
 const { t } = useI18n();
 
 const email = ref('');
@@ -24,6 +26,10 @@ const loginNotice = ref('');
 const redirecting = ref(false);
 const confirmSessionId = ref(null);
 const autoContinuing = ref(false);
+
+watch(redirecting, (value) => {
+  emit('settling', value);
+}, { immediate: true });
 
 const showSessionLimit = computed(() => Boolean(authStore.sessionLimit?.challengeId));
 const canContinueLogin = computed(() => authStore.canContinueAfterSessionLimit());
@@ -247,9 +253,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="redirecting" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-    {{ t('auth.signingIn') }}
-  </div>
+  <!-- Settling UI is owned by Login.vue; keep this branch mounted but empty. -->
+  <div v-if="redirecting" class="sr-only" aria-hidden="true" />
 
   <div v-else-if="showSessionLimit" class="space-y-4">
     <!-- Header -->

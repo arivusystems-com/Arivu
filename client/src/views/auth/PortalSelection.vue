@@ -12,9 +12,52 @@ const selectedRoleId = ref(null);
 const rememberDefault = ref(false);
 const localError = ref('');
 const loadingPortals = ref(false);
+const submitting = ref(false);
 
 const portals = computed(() => authStore.user?.portals || []);
 const organizationName = computed(() => authStore.organization?.name || '');
+
+const submit = async () => {
+  if (!selectedRoleId.value || submitting.value) {
+    if (!selectedRoleId.value) {
+      localError.value = t('auth.portalSelectionRequired');
+    }
+    return;
+  }
+  localError.value = '';
+  submitting.value = true;
+  try {
+    const ok = await authStore.selectPortal(selectedRoleId.value);
+    if (!ok) {
+      localError.value = authStore.error || t('auth.portalSelectionFailed');
+      return;
+    }
+    if (rememberDefault.value) {
+      try {
+        await authStore.setDefaultExternalRole(selectedRoleId.value);
+      } catch (_err) {
+        /* non-blocking */
+      }
+    }
+    const nextRoute = authStore.resolvePostLoginRoute();
+    const nextName = typeof nextRoute === 'string' ? null : nextRoute?.name;
+    if (nextName === 'portal-select' || nextName === 'login') {
+      const hasPortal = authStore.hasAssignedAppAccess('PORTAL');
+      const hasLms = authStore.hasAssignedAppAccess('LMS') || authStore.hasAppAccess('LMS');
+      if (!hasPortal && hasLms) {
+        await router.replace({ name: 'academy-home' });
+        return;
+      }
+      localError.value = hasPortal
+        ? t('auth.portalSelectionFailed')
+        : t('auth.portalSelectionEmpty');
+      return;
+    }
+    await router.replace(nextRoute);
+  } finally {
+    submitting.value = false;
+  }
+};
 
 onMounted(async () => {
   if (!authStore.isAuthenticated) {
@@ -25,46 +68,39 @@ onMounted(async () => {
     await router.replace(authStore.resolvePostLoginRoute());
     return;
   }
-  if (!authStore.needsPortalSelection) {
-    await router.replace(authStore.resolvePostLoginRoute());
-    return;
-  }
   loadingPortals.value = true;
   try {
     await authStore.refreshPortals();
   } catch (err) {
     localError.value = err.message || t('auth.portalSelectionLoadFailed');
+    loadingPortals.value = false;
+    return;
   } finally {
     loadingPortals.value = false;
   }
+
+  // Selection not required (single portal / default already resolved) — leave this page.
+  if (!authStore.needsPortalSelection) {
+    await router.replace(authStore.resolvePostLoginRoute());
+    return;
+  }
+  if (!portals.value.length) {
+    localError.value = t('auth.portalSelectionEmpty');
+    return;
+  }
+
   const defaultId = authStore.user?.defaultExternalRoleId;
   if (defaultId && portals.value.some((p) => String(p.roleId) === String(defaultId))) {
     selectedRoleId.value = defaultId;
   } else if (portals.value.length === 1) {
     selectedRoleId.value = portals.value[0].roleId;
   }
-});
 
-const submit = async () => {
-  if (!selectedRoleId.value) {
-    localError.value = t('auth.portalSelectionRequired');
-    return;
+  // One role: select immediately — no dead-end Continue + surfaces race.
+  if (portals.value.length === 1 && selectedRoleId.value) {
+    await submit();
   }
-  localError.value = '';
-  const ok = await authStore.selectPortal(selectedRoleId.value);
-  if (!ok) {
-    localError.value = authStore.error || t('auth.portalSelectionFailed');
-    return;
-  }
-  if (rememberDefault.value) {
-    try {
-      await authStore.setDefaultExternalRole(selectedRoleId.value);
-    } catch (_err) {
-      /* non-blocking */
-    }
-  }
-  await router.replace(authStore.resolvePostLoginRoute());
-};
+});
 </script>
 
 <template>
@@ -148,10 +184,10 @@ const submit = async () => {
 
           <button
             type="submit"
-            :disabled="authStore.loading || !selectedRoleId"
+            :disabled="authStore.loading || submitting || !selectedRoleId"
             class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {{ authStore.loading ? t('auth.portalSelectionSubmitting') : t('auth.portalSelectionContinue') }}
+            {{ authStore.loading || submitting ? t('auth.portalSelectionSubmitting') : t('auth.portalSelectionContinue') }}
           </button>
         </form>
       </div>

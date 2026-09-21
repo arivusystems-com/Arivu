@@ -25,12 +25,13 @@ const LINE_ITEM_FIELDS = [
   { key: 'lineSubtotal', label: 'lineSubtotal' }
 ];
 
-const LINE_COLLECTION_MODULES = new Set(['quotes', 'invoices', 'sales_orders']);
+const LINE_COLLECTION_MODULES = new Set(['quotes', 'invoices', 'billing_invoices', 'sales_orders']);
 
 /** Runtime scope aliases — keep aligned with dataProviderEngine. */
 const MODULE_MERGE_ALIASES = {
   quotes: 'Quote',
   invoices: 'Invoice',
+  billing_invoices: 'Invoice',
   sales_orders: 'SalesOrder',
   people: 'People',
   organizations: 'Organization',
@@ -40,7 +41,7 @@ const MODULE_MERGE_ALIASES = {
   items: 'Item'
 };
 
-const COMMERCIAL_MODULE_KEYS = new Set(['quotes', 'invoices', 'sales_orders']);
+const COMMERCIAL_MODULE_KEYS = new Set(['quotes', 'invoices', 'billing_invoices', 'sales_orders']);
 
 const CURRENT_USER_FIELDS = [
   { key: 'email', label: 'email' },
@@ -58,6 +59,50 @@ const YOUR_COMPANY_FIELDS = [
   { key: 'phone', label: 'phone' },
   { key: 'email', label: 'email' },
   { key: 'website', label: 'website' }
+];
+
+/** Platform SaaS BillingInvoice merge fields (not a tenant module definition). */
+const BILLING_INVOICE_FIELDS = [
+  { key: 'invoiceNumber', label: 'invoiceNumber' },
+  { key: 'status', label: 'status' },
+  { key: 'customerName', label: 'customerName' },
+  { key: 'customerGstin', label: 'customerGstin' },
+  { key: 'customerAttn', label: 'customerAttn' },
+  { key: 'customerAddress', label: 'customerAddress' },
+  { key: 'invoiceDateLabel', label: 'invoiceDateLabel' },
+  { key: 'dueDateLabel', label: 'dueDateLabel' },
+  { key: 'dueDate', label: 'dueDate' },
+  { key: 'periodLabel', label: 'periodLabel' },
+  { key: 'subtotal', label: 'subtotal' },
+  { key: 'taxTotal', label: 'taxTotal' },
+  { key: 'taxLabel', label: 'taxLabel' },
+  { key: 'cgstLabel', label: 'cgstLabel' },
+  { key: 'sgstLabel', label: 'sgstLabel' },
+  { key: 'cgstAmount', label: 'cgstAmount' },
+  { key: 'sgstAmount', label: 'sgstAmount' },
+  { key: 'grandTotal', label: 'grandTotal' },
+  { key: 'amountDue', label: 'amountDue' },
+  { key: 'amountInWords', label: 'amountInWords' },
+  { key: 'currency', label: 'currency' }
+];
+
+const SELLER_FIELDS = [
+  { key: 'legalName', label: 'legalName' },
+  { key: 'gstin', label: 'gstin' },
+  { key: 'pan', label: 'pan' },
+  { key: 'address', label: 'address' },
+  { key: 'email', label: 'email' },
+  { key: 'phone', label: 'phone' },
+  { key: 'tagline', label: 'tagline' },
+  { key: 'website', label: 'website' },
+  { key: 'paymentTerms', label: 'paymentTerms' },
+  { key: 'paymentInstructions', label: 'paymentInstructions' },
+  { key: 'bankName', label: 'bankName' },
+  { key: 'accountName', label: 'accountName' },
+  { key: 'accountNumber', label: 'accountNumber' },
+  { key: 'ifsc', label: 'ifsc' },
+  { key: 'upiId', label: 'upiId' },
+  { key: 'bankDetails', label: 'bankDetails' }
 ];
 
 /**
@@ -290,6 +335,23 @@ export async function buildMergeTagTreeGroups(moduleScope) {
   const groups = [systemGroup, yourCompanyGroup, currentUserGroup];
   const moduleKey = String(moduleScope || '').trim().toLowerCase();
   if (!moduleKey) return groups;
+
+  if (moduleKey === 'billing_invoices') {
+    groups.push({
+      id: 'billing-invoice',
+      moduleKey: 'billing_invoices',
+      label: 'Invoice',
+      children: buildStaticFieldNodes('Invoice', BILLING_INVOICE_FIELDS, 'billing-invoice')
+    });
+    groups.push({
+      id: 'seller',
+      moduleKey: 'seller',
+      label: 'Seller',
+      children: buildStaticFieldNodes('Seller', SELLER_FIELDS, 'seller')
+    });
+    groups.push(buildLineItemsGroup('billing_invoices'));
+    return groups;
+  }
 
   const primaryModule = await fetchModuleDefinition(moduleKey);
   if (!primaryModule) return groups;

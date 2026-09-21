@@ -653,14 +653,24 @@ async function materializeEffectiveCRMEnvelopeOnUser(user, options = {}) {
         .lean();
     }
 
-    const userType = String(user.userType || 'INTERNAL').toUpperCase();
+    const {
+      normalizePlatformUserType,
+      PLATFORM_USER_TYPES,
+      isExternalUserType,
+      stripSettingsPermissions,
+    } = require('../constants/platformUserTypes');
+
+    const userType = normalizePlatformUserType(user.userType, {
+      isOwner: user.isOwner,
+      roleName: user.role,
+    });
     const activeExternalRoleId =
       options.activeExternalRoleId ||
       user.activeExternalRoleId ||
       user._activeExternalRoleId ||
       null;
 
-    if (userType === 'EXTERNAL') {
+    if (isExternalUserType(user.userType) || userType === PLATFORM_USER_TYPES.EXTERNAL) {
       const resolvedExternalRoleId = resolveExternalRoleIdForSession(user, activeExternalRoleId);
       if (resolvedExternalRoleId) {
         const { hydrateExternalUserSession } = require('../services/externalRoleSessionService');
@@ -699,6 +709,9 @@ async function materializeEffectiveCRMEnvelopeOnUser(user, options = {}) {
       }
       if (roleLean) {
         await applyProjectionToUser(user, roleLean, organization);
+        if (userType === PLATFORM_USER_TYPES.STANDARD) {
+          user.permissions = stripSettingsPermissions(user.permissions);
+        }
         return;
       }
     }

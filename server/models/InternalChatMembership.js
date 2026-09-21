@@ -33,6 +33,21 @@ const InternalChatMembershipSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    /** When set with muted=true, mute expires at this time. null = muted until unmuted. */
+    mutedUntil: {
+      type: Date,
+      default: null,
+    },
+    /** Per-user: force unread badge until the space is opened/read. */
+    forceUnread: {
+      type: Boolean,
+      default: false,
+    },
+    /** Per-user: when set, space is pinned to top of that user's chat list. */
+    pinnedAt: {
+      type: Date,
+      default: null,
+    },
     lastReadAt: {
       type: Date,
       default: null,

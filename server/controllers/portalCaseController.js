@@ -128,7 +128,12 @@ async function createPortalCase(req, res) {
       : req.user._id;
 
     const now = new Date();
-    const caseId = `CAS-${now.getUTCFullYear()}-${String(Date.now()).slice(-6)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const { allocateRequired } = require('../services/moduleNumberingService');
+    const caseId = await allocateRequired({
+      organizationId,
+      moduleKey: 'cases',
+      at: now,
+    });
     const baseCycle = createInitialSlaCycle(1, now);
     const adjustedCycle = applyStatusToSlaCycle(baseCycle, 'New');
 

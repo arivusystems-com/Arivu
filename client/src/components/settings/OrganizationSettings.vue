@@ -316,6 +316,213 @@
         </div>
       </section>
 
+      <!-- Contact & legal -->
+      <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <header class="flex items-center gap-3 px-6 py-5 border-b border-gray-100 dark:border-gray-700/60">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('settings.orgContactLegal') }}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('settings.orgContactLegalDesc') }}</p>
+          </div>
+        </header>
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2 space-y-2">
+            <label for="company-address" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgAddress') }}
+            </label>
+            <input
+              id="company-address"
+              v-model="form.companyAddress.line1"
+              type="text"
+              maxlength="200"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              :placeholder="t('settings.orgAddressPh')"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-city" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgCity') }}
+            </label>
+            <input
+              id="company-city"
+              v-model="form.companyAddress.city"
+              type="text"
+              maxlength="100"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-postal" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgPostalCode') }}
+            </label>
+            <input
+              id="company-postal"
+              v-model="form.companyAddress.postalCode"
+              type="text"
+              maxlength="32"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgCountry') }}
+            </label>
+            <HeadlessSelect
+              v-model="form.companyAddress.country"
+              :options="countryOptions"
+              :placeholder="t('settings.orgCountryPh')"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-phone" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgPhone') }}
+            </label>
+            <input
+              id="company-phone"
+              v-model="form.phone"
+              type="tel"
+              maxlength="40"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-website" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgWebsite') }}
+            </label>
+            <input
+              id="company-website"
+              v-model="form.website"
+              type="url"
+              maxlength="200"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              placeholder="https://"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-tax" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgTaxId') }}
+            </label>
+            <input
+              id="company-tax"
+              v-model="form.taxId"
+              type="text"
+              maxlength="64"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              :placeholder="t('settings.orgTaxIdPh')"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-gstin" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgGstin') }}
+            </label>
+            <input
+              id="company-gstin"
+              v-model="form.gstin"
+              type="text"
+              maxlength="15"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white uppercase font-mono text-sm focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              :placeholder="t('settings.orgGstinPh')"
+              @blur="normalizeGstinField"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-facebook" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgFacebook') }}
+            </label>
+            <input
+              id="company-facebook"
+              v-model="form.social.facebook"
+              type="url"
+              maxlength="200"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              placeholder="https://"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-twitter" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgTwitter') }}
+            </label>
+            <input
+              id="company-twitter"
+              v-model="form.social.twitter"
+              type="url"
+              maxlength="200"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              placeholder="https://"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="company-linkedin" class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgLinkedin') }}
+            </label>
+            <input
+              id="company-linkedin"
+              v-model="form.social.linkedin"
+              type="url"
+              maxlength="200"
+              class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all outline-none"
+              placeholder="https://"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Financial calendar -->
+      <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <header class="flex items-center gap-3 px-6 py-5 border-b border-gray-100 dark:border-gray-700/60">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('settings.orgFinancialCalendar') }}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('settings.orgFinancialCalendarDesc') }}</p>
+          </div>
+        </header>
+
+        <div class="p-6 space-y-6">
+          <div class="max-w-sm space-y-2">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-200">
+              {{ t('settings.orgFyStartMonth') }}
+            </label>
+            <HeadlessSelect
+              v-model.number="form.fiscalYearStartMonth"
+              :options="fyMonthOptions"
+            />
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+              {{ t('settings.orgFyQuartersPreview') }}
+            </p>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <li
+                v-for="row in fyQuarterPreview"
+                :key="row.quarter"
+                class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 text-sm text-gray-700 dark:text-gray-300"
+              >
+                {{ t('settings.orgFyQuarterLabel', { quarter: row.quarter, range: row.range }) }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <!-- Regional Settings -->
       <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <header class="flex items-center gap-3 px-6 py-5 border-b border-gray-100 dark:border-gray-700/60">
@@ -569,6 +776,8 @@ import {
   applyRegionalBundleToForm,
   detectRegionalMismatch,
 } from '@/utils/regionalSettings';
+import { isValidGstin } from '@/utils/gstin';
+import { getQuarterMonthLabels } from '@/utils/targetDisplayUtils';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -607,7 +816,23 @@ const form = ref({
   locale: 'en-US',
   language: 'en',
   defaultPhoneCountry: '',
-  dataRegion: 'us-east-1'
+  dataRegion: 'us-east-1',
+  phone: '',
+  website: '',
+  taxId: '',
+  gstin: '',
+  companyAddress: {
+    line1: '',
+    city: '',
+    postalCode: '',
+    country: '',
+  },
+  social: {
+    facebook: '',
+    twitter: '',
+    linkedin: '',
+  },
+  fiscalYearStartMonth: 1,
 });
 
 // -------- Timezones (grouped, comprehensive, with offsets) --------
@@ -676,6 +901,30 @@ const phoneCountryOptions = computed(() => [
     label: `${country.name} (+${country.dialCode})`,
   })),
 ]);
+
+const countryOptions = computed(() => [
+  { value: '', label: t('settings.orgCountryPh') },
+  ...PHONE_COUNTRIES.map((country) => ({
+    value: country.iso2,
+    label: country.name,
+  })),
+]);
+
+const fyMonthOptions = computed(() => {
+  const fmt = new Intl.DateTimeFormat(undefined, { month: 'long' });
+  return Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: fmt.format(new Date(2000, i, 1)),
+  }));
+});
+
+const fyQuarterPreview = computed(() => {
+  const startMonth = Number(form.value.fiscalYearStartMonth) || 1;
+  return [1, 2, 3, 4].map((quarter) => ({
+    quarter,
+    range: getQuarterMonthLabels(quarter, startMonth),
+  }));
+});
 
 const resolvedPhoneCountryLabel = computed(() => {
   const iso2 = resolveDefaultPhoneCountry({
@@ -793,6 +1042,8 @@ const fetchOrganizationSettings = async () => {
 
     if (data && data.success && data.data) {
       const savedTimeZone = data.data.timeZone || 'UTC';
+      const addr = data.data.companyAddress || {};
+      const social = data.data.social || {};
       form.value = {
         name: data.data.name || '',
         logoUrl: data.data.logoUrl || '',
@@ -802,7 +1053,23 @@ const fetchOrganizationSettings = async () => {
         locale: data.data.locale || 'en-US',
         language: data.data.language || 'en',
         defaultPhoneCountry: data.data.defaultPhoneCountry || '',
-        dataRegion: data.data.dataRegion || 'us-east-1'
+        dataRegion: data.data.dataRegion || 'us-east-1',
+        phone: data.data.phone || '',
+        website: data.data.website || '',
+        taxId: data.data.taxId || '',
+        gstin: data.data.gstin || '',
+        companyAddress: {
+          line1: addr.line1 || '',
+          city: addr.city || '',
+          postalCode: addr.postalCode || '',
+          country: addr.country || '',
+        },
+        social: {
+          facebook: social.facebook || '',
+          twitter: social.twitter || '',
+          linkedin: social.linkedin || '',
+        },
+        fiscalYearStartMonth: Number(data.data.fiscalYearStartMonth) || 1,
       };
       // Capture the server-saved state as the baseline used for "unsaved changes" detection.
       originalForm.value = JSON.parse(JSON.stringify(form.value));
@@ -811,10 +1078,17 @@ const fetchOrganizationSettings = async () => {
         authStore.organization = {
           ...authStore.organization,
           name: form.value.name || authStore.organization.name,
+          phone: form.value.phone,
+          website: form.value.website,
+          taxId: form.value.taxId,
+          gstin: form.value.gstin,
           settings: {
             ...(authStore.organization.settings || {}),
             logoUrl: form.value.logoUrl || null,
-            primaryColor: form.value.primaryColor
+            primaryColor: form.value.primaryColor,
+            fiscalYearStartMonth: form.value.fiscalYearStartMonth,
+            companyAddress: { ...form.value.companyAddress },
+            social: { ...form.value.social },
           }
         };
         localStorage.setItem('organization', JSON.stringify(authStore.organization));
@@ -854,12 +1128,23 @@ const resetForm = () => {
   logoError.value = '';
 };
 
+const normalizeGstinField = () => {
+  form.value.gstin = String(form.value.gstin || '').trim().toUpperCase().replace(/\s+/g, '');
+};
+
 const handleSubmit = async () => {
   saving.value = true;
   try {
+    normalizeGstinField();
+    if (form.value.gstin && !isValidGstin(form.value.gstin)) {
+      notifyError(t('settings.orgGstinInvalid'));
+      saving.value = false;
+      return;
+    }
+
     // Send only fields the user actually changed so audit log stays precise.
     const payload = {};
-    const keys = [
+    const scalarKeys = [
       'name',
       'logoUrl',
       'primaryColor',
@@ -867,18 +1152,29 @@ const handleSubmit = async () => {
       'currency',
       'locale',
       'language',
-      'defaultPhoneCountry'
+      'defaultPhoneCountry',
+      'phone',
+      'website',
+      'taxId',
+      'gstin',
+      'fiscalYearStartMonth',
     ];
-    for (const key of keys) {
-      const nextVal = key === 'defaultPhoneCountry'
-        ? (form.value.defaultPhoneCountry || '')
+    for (const key of scalarKeys) {
+      const nextVal = key === 'defaultPhoneCountry' || key === 'phone' || key === 'website' || key === 'taxId' || key === 'gstin'
+        ? (form.value[key] || '')
         : form.value[key];
-      const prevVal = key === 'defaultPhoneCountry'
-        ? (originalForm.value.defaultPhoneCountry || '')
+      const prevVal = key === 'defaultPhoneCountry' || key === 'phone' || key === 'website' || key === 'taxId' || key === 'gstin'
+        ? (originalForm.value[key] || '')
         : originalForm.value[key];
       if (JSON.stringify(nextVal ?? null) !== JSON.stringify(prevVal ?? null)) {
         payload[key] = nextVal;
       }
+    }
+    if (JSON.stringify(form.value.companyAddress) !== JSON.stringify(originalForm.value.companyAddress)) {
+      payload.companyAddress = { ...form.value.companyAddress };
+    }
+    if (JSON.stringify(form.value.social) !== JSON.stringify(originalForm.value.social)) {
+      payload.social = { ...form.value.social };
     }
 
     if (Object.keys(payload).length === 0) {
@@ -892,12 +1188,19 @@ const handleSubmit = async () => {
     });
 
     if (data && data.success) {
+      if (data.data?.gstin != null) {
+        form.value.gstin = data.data.gstin || '';
+      }
       originalForm.value = JSON.parse(JSON.stringify(form.value));
       showTimezoneWarning.value = false;
       if (authStore.organization) {
         authStore.organization = {
           ...authStore.organization,
           ...(payload.name !== undefined ? { name: form.value.name } : {}),
+          phone: form.value.phone,
+          website: form.value.website,
+          taxId: form.value.taxId,
+          gstin: form.value.gstin,
           settings: {
             ...(authStore.organization.settings || {}),
             timeZone: form.value.timeZone,
@@ -905,6 +1208,9 @@ const handleSubmit = async () => {
             locale: form.value.locale,
             language: form.value.language,
             defaultPhoneCountry: form.value.defaultPhoneCountry || '',
+            fiscalYearStartMonth: form.value.fiscalYearStartMonth,
+            companyAddress: { ...form.value.companyAddress },
+            social: { ...form.value.social },
             ...(payload.logoUrl !== undefined ? { logoUrl: form.value.logoUrl || null } : {}),
             ...(payload.primaryColor !== undefined ? { primaryColor: form.value.primaryColor } : {})
           },

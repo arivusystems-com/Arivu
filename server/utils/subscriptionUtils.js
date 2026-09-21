@@ -308,15 +308,16 @@ async function canAddUserToApp(orgId, appKey) {
     const appConfig = getAppConfig(appKey);
     const pricingConfig = appPricingRegistry[appKey];
     
-    if (!appConfig || !pricingConfig) {
+    if (!appConfig) {
         return {
             allowed: false,
             reason: `App ${appKey} is not registered in the system`
         };
     }
 
-    // FLAT apps always allow adding users
-    if (pricingConfig.billingType === 'FLAT') {
+    // Learning (and any app without legacy PER_USER pricing): access grants are allowed;
+    // capacity is enforced by commercial / LearningSeatService, not invite seats.
+    if (!pricingConfig || pricingConfig.billingType === 'FLAT') {
         return { allowed: true };
     }
 

@@ -1,14 +1,41 @@
+/**
+ * Which Settings sidebar / landing cards a user may see.
+ * STANDARD: profile + personal notifications only.
+ * ADMIN / Owner: full access subject to settings.* flags (Owner/Admin role bypass).
+ */
+
 type SettingsAccessCtx = {
   isOwner: boolean;
   role: string | null | undefined;
   permissions: Record<string, any> | null | undefined;
   entitledAddons?: { ai?: boolean } | null;
   inventoryEnabled?: boolean;
+  userType?: string | null;
 };
+
+const STANDARD_ALLOWED_TABS = new Set(['profile', 'notifications']);
+
+function normalizeUserType(raw: string | null | undefined, hints: { isOwner?: boolean; role?: string | null }): string {
+  if (hints.isOwner) return 'ADMIN';
+  const t = String(raw || '').trim().toUpperCase();
+  if (t === 'EXTERNAL' || t === 'PORTAL') return 'EXTERNAL';
+  if (t === 'ADMIN' || t === 'SYSTEM') return 'ADMIN';
+  if (t === 'STANDARD') {
+    const role = String(hints.role || '').toLowerCase();
+    if (role === 'owner' || role === 'admin' || role === 'administrator') return 'ADMIN';
+    return 'STANDARD';
+  }
+  if (t === 'INTERNAL' || !t) {
+    const role = String(hints.role || '').toLowerCase();
+    if (role === 'owner' || role === 'admin' || role === 'administrator') return 'ADMIN';
+    return 'STANDARD';
+  }
+  return 'STANDARD';
+}
 
 function isPrivilegedSettingsRole(role: string | null | undefined): boolean {
   const normalized = String(role || '').toLowerCase();
-  return normalized === 'admin' || normalized === 'owner';
+  return normalized === 'admin' || normalized === 'owner' || normalized === 'administrator';
 }
 
 function hasWorkspaceSettingsAdminAccess(permissions: Record<string, any> | null | undefined): boolean {
@@ -21,11 +48,16 @@ function hasWorkspaceSettingsAdminAccess(permissions: Record<string, any> | null
   );
 }
 
+function isAdminLikeCtx(ctx: SettingsAccessCtx): boolean {
+  return normalizeUserType(ctx.userType, { isOwner: ctx.isOwner, role: ctx.role }) === 'ADMIN';
+}
+
 /** Webforms admin: settings workspace admins + explicit webforms.* grants. */
 export function canManageWebforms(
   ctx: SettingsAccessCtx,
   action: 'view' | 'create' | 'edit' | 'delete' = 'view'
 ): boolean {
+  if (!isAdminLikeCtx(ctx)) return false;
   if (ctx.isOwner || isPrivilegedSettingsRole(ctx.role)) return true;
   if (hasWorkspaceSettingsAdminAccess(ctx.permissions)) return true;
 
@@ -39,12 +71,22 @@ export function canManageWebforms(
 
 /**
  * Which Settings sidebar / landing cards a user may see, based on role permissions.
- * Owners and org "Admin" role keep full access; everyone else is limited to explicit settings.* flags.
+ * STANDARD users: profile + notifications only (type wins over settings.*).
  */
 export function canAccessSettingsTab(
   tabId: string,
   ctx: SettingsAccessCtx
 ): boolean {
+  const userType = normalizeUserType(ctx.userType, { isOwner: ctx.isOwner, role: ctx.role });
+
+  if (userType === 'EXTERNAL') {
+    return tabId === 'profile' || tabId === 'notifications';
+  }
+
+  if (userType === 'STANDARD') {
+    return STANDARD_ALLOWED_TABS.has(tabId);
+  }
+
   // Personal profile is always accessible to authenticated users; do not require
   // owner/admin or any settings.* flag to manage your own identity.
   if (tabId === 'profile') return true;
@@ -91,7 +133,6 @@ export function canAccessSettingsTab(
     case 'ai':
       return Boolean(p.manageIntegrations || p.edit);
     case 'automation':
-      // Same bar as application configuration: assignment routing affects operational behavior org-wide.
       return Boolean(p.edit);
     case 'webforms':
       return canManageWebforms(ctx, 'view');
@@ -104,7 +145,6 @@ export function canAccessSettingsTab(
     case 'business-hours':
       return true;
     case 'audit-log':
-      // Admins/owners already short-circuit above; non-privileged never see this tab.
       return false;
     default:
       return false;
@@ -140,6 +180,7 @@ export function hasAnySettingsAccess(ctx: {
   permissions: Record<string, any> | null | undefined;
   entitledAddons?: { ai?: boolean } | null;
   inventoryEnabled?: boolean;
+  userType?: string | null;
 }): boolean {
   return SETTINGS_TAB_IDS.some((id) => canAccessSettingsTab(id, ctx));
 }

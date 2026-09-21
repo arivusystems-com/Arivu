@@ -1,7 +1,6 @@
 <template>
-  <Teleport to="body">
+  <Teleport to="body" defer>
     <div
-      v-if="announcement"
       class="fixed inset-0 z-[10040] flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
@@ -14,6 +13,7 @@
       />
       <div class="relative z-10 w-full max-w-lg animate-[announcement-popover-in_180ms_ease-out]">
         <AnnouncementPopoverCard
+          :key="announcement.id"
           :title="announcement.title"
           :short-description="announcement.shortDescription"
           :body="bodyText"
@@ -47,7 +47,7 @@ import {
 import AnnouncementPopoverCard from '@/components/announcements/AnnouncementPopoverCard.vue';
 
 const props = defineProps<{
-  announcement: AnnouncementViewModel | null;
+  announcement: AnnouncementViewModel;
 }>();
 
 const router = useRouter();

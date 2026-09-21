@@ -477,6 +477,18 @@ async function enablePortalAccess(params) {
     await incrementActiveExternalUsers(tenantOrganizationId);
   }
 
+  try {
+    const {
+      reconcileCommercialBillingAfterMutation,
+    } = require('./commercial/reconcileCommercialSubscription');
+    await reconcileCommercialBillingAfterMutation({
+      organizationId: tenantOrganizationId,
+      initiatedByUserId: adminUser?._id || null,
+    });
+  } catch (reconcileErr) {
+    console.warn('[portalAccess] commercial reconcile after enable failed:', reconcileErr.message);
+  }
+
   return {
     ok: true,
     peopleId: person._id,
@@ -504,6 +516,7 @@ async function disablePortalAccess(params) {
     if (user) {
       user.status = 'inactive';
       await revokeAllUserSessions(user, tenantOrganizationId);
+      await user.save();
     } else {
       await ScopedUser.updateOne(
         { _id: person.portalAccess.userId, organizationId: tenantOrganizationId },
@@ -536,6 +549,18 @@ async function disablePortalAccess(params) {
   });
 
   await decrementActiveExternalUsers(tenantOrganizationId);
+
+  try {
+    const {
+      reconcileCommercialBillingAfterMutation,
+    } = require('./commercial/reconcileCommercialSubscription');
+    await reconcileCommercialBillingAfterMutation({
+      organizationId: tenantOrganizationId,
+      initiatedByUserId: adminUser?._id || null,
+    });
+  } catch (reconcileErr) {
+    console.warn('[portalAccess] commercial reconcile after disable failed:', reconcileErr.message);
+  }
 
   return { ok: true, peopleId: person._id };
 }

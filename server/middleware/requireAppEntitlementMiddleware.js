@@ -486,6 +486,39 @@ const requireAppEntitlement = async (req, res, next) => {
         req.organization = organization;
 
         // ============================================================================
+        // Commercial billing entitlement gate (feature-flagged, soft by default)
+        // ============================================================================
+        // FEATURE_COMMERCIAL_BILLING_ENFORCEMENT=true + BillingSubscription present
+        // → require platform + user application entitlements for mapped apps.
+        // Otherwise legacy OrganizationSubscription / allowedApps remain authoritative.
+        {
+            const {
+                evaluateCommercialAppAccess,
+            } = require('../services/commercial/commercialAccessGate');
+            const commercial = await evaluateCommercialAppAccess({
+                organizationId,
+                userId: req.user._id,
+                appKey: req.appKey,
+                accessMode: accessResult.mode,
+            });
+            req.commercialAccess = commercial;
+            if (commercial.enforced && !commercial.allowed) {
+                return res.status(402).json({
+                    success: false,
+                    message: commercial.reason === 'COMMERCIAL_APP_ENTITLEMENT_MISSING'
+                        ? `Commercial entitlement required for ${req.appKey}. Assign application access in Billing.`
+                        : commercial.reason === 'PLATFORM_ENTITLEMENT_MISSING'
+                            ? 'Arivu Platform entitlement is required.'
+                            : 'Commercial subscription is not active.',
+                    code: commercial.code || 'COMMERCIAL_ENTITLEMENT_REQUIRED',
+                    reason: commercial.reason,
+                    currentApp: req.appKey,
+                    productCode: commercial.productCode || null,
+                });
+            }
+        }
+
+        // ============================================================================
         // Phase 0J: Seat Accounting Hook (Metadata Only)
         // ============================================================================
         // This is a future billing hook point - no implementation yet
@@ -506,7 +539,14 @@ const requireAppEntitlement = async (req, res, next) => {
         // Note: ADMIN access bypasses billing, EXECUTION access enforces seat limits
         // SUBSCRIPTION RULE: ACTIVE and TRIAL are usable, SUSPENDED/CANCELLED are blocked
         // SPECIAL CASE: CRM is the control plane - if enabled, allow access even without subscription
+        // SPECIAL CASE: LMS (Learning) uses TIERED_CAPACITY learner seats via LearningSeatService /
+        // commercial learning_app entitlements — not OrganizationSubscription app seats.
+        // Enroll/capacity is enforced in learningService.enrollLearner → LearningSeatService.consumeSeat.
         if (accessResult.mode !== 'EXECUTION') {
+            return next();
+        }
+
+        if (req.appKey === APP_KEYS.LMS) {
             return next();
         }
 

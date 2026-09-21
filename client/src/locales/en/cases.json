@@ -1494,5 +1494,21 @@
   "portalDashboardSignalInProgressResponses": {
     "message": "You have {count} form in progress | You have {count} forms in progress",
     "description": "Portal dashboard brief signal for in-progress form responses"
+  },
+  "listStatTotal": {
+    "message": "Total Cases",
+    "description": "Cases list statistics card — total"
+  },
+  "listStatMy": {
+    "message": "My Cases",
+    "description": "Cases list statistics card — assigned to me"
+  },
+  "listStatOpen": {
+    "message": "Open",
+    "description": "Cases list statistics card — open (not resolved/closed)"
+  },
+  "listStatSlaBreached": {
+    "message": "SLA Breached",
+    "description": "Cases list statistics card — open cases with breached SLA"
   }
 }

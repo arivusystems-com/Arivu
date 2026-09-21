@@ -25,6 +25,12 @@ const routes = [
     component: () => import('@/views/LandingPage.vue')
   },
   {
+    path: '/pricing',
+    name: 'pricing',
+    component: () => import('@/views/PricingPage.vue'),
+    meta: { requiresAuth: false, hideShell: true }
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/views/Login.vue')
@@ -141,6 +147,11 @@ const routes = [
   // Phase 1B: Generic App Dashboard (registry-driven)
   // Note: More specific route (/dashboard/:appKey) must come BEFORE less specific (/dashboard)
   // to ensure proper route matching
+  // Learning uses a dedicated shell; never render the generic empty AppDashboard.
+  {
+    path: '/dashboard/lms',
+    redirect: '/learning',
+  },
   {
     path: '/dashboard/:appKey',
     name: 'app-dashboard',
@@ -502,6 +513,156 @@ const routes = [
       appKey: 'INVENTORY',
       routeType: 'detail'
     }
+  },
+  {
+    path: '/learning',
+    name: 'learning-home',
+    component: () => import('@/views/learning/LearningHome.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/academy',
+    component: () => import('@/layouts/AcademyLayout.vue'),
+    meta: {
+      requiresAuth: true,
+      appKey: 'LMS',
+      academySurface: true,
+      hideShell: true,
+    },
+    children: [
+      {
+        path: '',
+        name: 'academy-home',
+        component: () => import('@/views/academy/AcademyHome.vue'),
+        meta: { requiresAuth: true, appKey: 'LMS', academySurface: true, hideShell: true },
+      },
+      {
+        path: 'catalog',
+        name: 'academy-catalog',
+        component: () => import('@/views/academy/AcademyCatalog.vue'),
+        meta: { requiresAuth: true, appKey: 'LMS', academySurface: true, hideShell: true },
+      },
+      {
+        path: 'my',
+        name: 'academy-my',
+        component: () => import('@/views/academy/AcademyMyLearning.vue'),
+        meta: { requiresAuth: true, appKey: 'LMS', academySurface: true, hideShell: true },
+      },
+      {
+        path: 'certificates',
+        name: 'academy-certificates',
+        component: () => import('@/views/academy/AcademyCertificates.vue'),
+        meta: { requiresAuth: true, appKey: 'LMS', academySurface: true, hideShell: true },
+      },
+      {
+        path: 'profile',
+        name: 'academy-profile',
+        component: () => import('@/views/academy/AcademyProfile.vue'),
+        meta: { requiresAuth: true, appKey: 'LMS', academySurface: true, hideShell: true },
+      },
+      {
+        path: 'courses/:id',
+        name: 'academy-course-detail',
+        component: () => import('@/views/learning/LearningCourseDetail.vue'),
+        meta: { requiresAuth: true, appKey: 'LMS', academySurface: true, hideShell: true },
+      },
+    ],
+  },
+  {
+    path: '/learning/my',
+    name: 'learning-my',
+    component: () => import('@/views/learning/LearningMyLearning.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/explore',
+    name: 'learning-explore',
+    component: () => import('@/views/learning/LearningExplore.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/courses',
+    name: 'learning-courses',
+    component: () => import('@/views/learning/LearningCourses.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/courses/:id',
+    name: 'learning-course-detail',
+    component: () => import('@/views/learning/LearningCourseDetail.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/paths',
+    name: 'learning-paths',
+    component: () => import('@/views/learning/LearningPaths.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/paths/:id',
+    name: 'learning-path-detail',
+    component: () => import('@/views/learning/LearningPathDetail.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/programs',
+    name: 'learning-programs',
+    component: () => import('@/views/learning/LearningPrograms.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/programs/:id',
+    name: 'learning-program-detail',
+    component: () => import('@/views/learning/LearningProgramDetail.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/live',
+    name: 'learning-live',
+    component: () => import('@/views/learning/LearningLiveSessions.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/assessments',
+    name: 'learning-assessments',
+    component: () => import('@/views/learning/LearningAssessments.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/certificates',
+    name: 'learning-certificates',
+    component: () => import('@/views/learning/LearningCertificates.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/skills',
+    name: 'learning-skills',
+    component: () => import('@/views/learning/LearningSkillsBadges.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/content',
+    name: 'learning-content',
+    component: () => import('@/views/learning/LearningContentLibrary.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/compliance',
+    name: 'learning-compliance',
+    component: () => import('@/views/learning/LearningCompliance.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/analytics',
+    name: 'learning-analytics',
+    component: () => import('@/views/learning/LearningAnalytics.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
+  },
+  {
+    path: '/learning/settings',
+    name: 'learning-settings',
+    component: () => import('@/views/learning/LearningSettings.vue'),
+    meta: { requiresAuth: true, appKey: 'LMS' },
   },
   {
     path: '/dashboard/marketing',
@@ -1124,6 +1285,15 @@ const routes = [
       requiresAuth: true, 
       requiresPlatformAdmin: true 
     }
+  },
+  {
+    path: '/control/billing',
+    name: 'control-billing',
+    component: () => import('@/views/CommercialBillingAdmin.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresPlatformAdmin: true,
+    },
   },
   {
     path: '/control/inbound-parser',
@@ -2502,6 +2672,57 @@ router.beforeEach(async (to, from, next) => {
       showGlobalNotification('You do not have access to the Portal. Please contact your administrator.', { type: 'warning' })
       next(getDefaultRoute(authStore))
       return
+    }
+  }
+
+  // Learning (LMS) app access + role surfaces (LEARNER vs AUTHOR vs ADMIN)
+  // Academy (/academy) = EXTERNAL Learning-only; Learning App (/learning) = internal
+  if (to.meta.appKey === 'LMS' || to.path.startsWith('/learning') || to.path.startsWith('/academy')) {
+    const isAcademy = to.meta.academySurface === true || to.path.startsWith('/academy');
+    const isExternal = authStore.isExternalUser === true;
+
+    if (isAcademy && !isExternal) {
+      logNavDebug('Redirect: internal user → Learning App')
+      next('/learning')
+      return
+    }
+    if (!isAcademy && isExternal && to.path.startsWith('/learning')) {
+      logNavDebug('Redirect: external user → Academy')
+      next('/academy')
+      return
+    }
+
+    const hasLearningAccess = authStore.hasAppAccess('LMS') || authStore.hasAssignedAppAccess('LMS');
+    if (!hasLearningAccess && !isAcademy) {
+      logNavDebug('Blocked: LMS app access required')
+      showGlobalNotification('You do not have access to Learning. Enable the Learning app for your organization.', { type: 'warning' })
+      next(getDefaultRoute(authStore))
+      return
+    }
+
+    if (!isAcademy) {
+      const pathOnly = String(to.path || '').split('?')[0].split('#')[0]
+      const {
+        resolveLearningRole,
+        canAuthorLearning,
+        canAdminLearning,
+        isLearningAuthorRoute,
+        isLearningAdminRoute,
+      } = await import('@/utils/learningRoles')
+      const learningRole = resolveLearningRole(authStore.user)
+
+      if (isLearningAdminRoute(pathOnly) && !canAdminLearning(learningRole)) {
+        logNavDebug('Blocked: Learning admin role required')
+        showGlobalNotification('Learning admin access is required for this page.', { type: 'warning' })
+        next('/learning')
+        return
+      }
+      if (isLearningAuthorRoute(pathOnly) && !canAuthorLearning(learningRole)) {
+        logNavDebug('Blocked: Learning author role required')
+        showGlobalNotification('Learning author access is required for this page.', { type: 'warning' })
+        next('/learning')
+        return
+      }
     }
   }
   

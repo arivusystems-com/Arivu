@@ -959,7 +959,7 @@ const appDisplayNames = {
   PORTAL: 'Portal',
   HELPDESK: 'Helpdesk',
   PROJECTS: 'Projects',
-  LMS: 'LMS',
+  LMS: 'Learning',
   INVENTORY: 'Inventory'
 };
 
@@ -985,6 +985,11 @@ const roleDisplayNames = {
   PORTAL: {
     CUSTOMER: 'Customer',
     VIEWER: 'Viewer'
+  },
+  LMS: {
+    ADMIN: 'Admin',
+    AUTHOR: 'Author',
+    LEARNER: 'Learner'
   }
 };
 
@@ -1038,8 +1043,15 @@ const statusSelectOptions = computed(() => [
 ]);
 
 const availableApps = computed(() => {
-  const userType = props.user?.userType || 'INTERNAL';
-  return capabilities.value.filter((app) => app.userTypesAllowed?.includes(userType));
+  const userType = props.user?.userType || 'STANDARD';
+  const t = String(userType).toUpperCase();
+  return capabilities.value.filter((app) => {
+    const allowed = (app.userTypesAllowed || []).map((x) => String(x).toUpperCase());
+    if (allowed.includes(t)) return true;
+    if (allowed.includes('INTERNAL') && (t === 'STANDARD' || t === 'ADMIN' || t === 'INTERNAL')) return true;
+    if ((allowed.includes('STANDARD') || allowed.includes('ADMIN')) && t === 'INTERNAL') return true;
+    return false;
+  });
 });
 
 const selectedApps = computed(() => Object.keys(selectedAppRoles.value));
@@ -1065,9 +1077,16 @@ const inputClass = (readOnly) => [
 ];
 
 const formatUserTypeLabel = (userType) => {
-  if (userType === 'EXTERNAL') return t('settings.inviteExternal');
-  if (userType === 'INTERNAL') return t('settings.inviteInternal');
-  return userType || t('settings.inviteInternal');
+  const roleName = String(props.user?.roleId?.name || props.user?.role || '').toLowerCase();
+  const tType = (() => {
+    if (props.user?.isOwner || roleName === 'owner' || roleName === 'admin' || roleName === 'administrator') {
+      return 'ADMIN';
+    }
+    return String(userType || props.user?.userType || '').toUpperCase();
+  })();
+  if (tType === 'EXTERNAL' || tType === 'PORTAL') return t('settings.inviteExternal');
+  if (tType === 'ADMIN' || tType === 'SYSTEM') return t('settings.userTypeAdmin');
+  return t('settings.userTypeStandard');
 };
 
 const formatStatusLabel = (status) => {

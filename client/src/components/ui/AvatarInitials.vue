@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-shrink-0">
+  <div class="flex-shrink-0 overflow-hidden rounded-full">
     <img
       v-if="resolvedAvatar"
       :src="resolvedAvatar"
@@ -54,6 +54,7 @@ const { t } = useI18n();
 // Size mapping
 const sizeClass = computed(() => {
   const sizes = {
+    xs: 'w-5 h-5 text-[9px]',
     sm: 'w-8 h-8 text-xs',
     md: 'w-12 h-12 text-base',
     lg: 'w-16 h-16 text-xl',

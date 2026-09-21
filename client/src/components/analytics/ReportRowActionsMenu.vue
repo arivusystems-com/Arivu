@@ -45,6 +45,15 @@
             {{ t('analytics.actionDuplicate') }}
           </button>
         </MenuItem>
+        <MenuItem v-if="canShare" v-slot="{ active }">
+          <button
+            type="button"
+            :class="menuItemClass(active)"
+            @click="$emit('share')"
+          >
+            {{ t('analytics.actionShare') }}
+          </button>
+        </MenuItem>
         <MenuItem v-if="canExport" v-slot="{ active }">
           <button
             type="button"
@@ -77,6 +86,7 @@ defineProps<{
   canRun?: boolean;
   canEdit?: boolean;
   canCreate?: boolean;
+  canShare?: boolean;
   canExport?: boolean;
   canArchive?: boolean;
 }>();
@@ -85,6 +95,7 @@ defineEmits<{
   (e: 'run'): void;
   (e: 'edit'): void;
   (e: 'duplicate'): void;
+  (e: 'share'): void;
   (e: 'export'): void;
   (e: 'archive'): void;
 }>();

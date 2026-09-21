@@ -21,6 +21,13 @@ const MODULE_DOCUMENT_CONFIG = {
     seedKey: 'invoice-default',
     envModeKey: 'CONTENT_PLATFORM_INVOICES_MODE'
   },
+  /** Platform SaaS BillingInvoice PDFs — template lives on platform/master org, not customer tenants. */
+  billing_invoices: {
+    purpose: 'billing_invoice',
+    moduleScope: 'billing_invoices',
+    seedKey: 'billing-invoice-default',
+    envModeKey: 'CONTENT_PLATFORM_BILLING_INVOICES_MODE'
+  },
   purchase_orders: {
     purpose: 'purchase_order',
     moduleScope: 'purchase_orders',
@@ -53,9 +60,13 @@ function getModuleRenderMode(moduleKey) {
  * @returns {string | null}
  */
 function getModuleTemplateOverride(moduleKey) {
-  const envKey = moduleKey === 'quotes'
-    ? 'CONTENT_PLATFORM_QUOTE_TEMPLATE_ID'
-    : 'CONTENT_PLATFORM_INVOICE_TEMPLATE_ID';
+  const envKeyByModule = {
+    quotes: 'CONTENT_PLATFORM_QUOTE_TEMPLATE_ID',
+    invoices: 'CONTENT_PLATFORM_INVOICE_TEMPLATE_ID',
+    billing_invoices: 'CONTENT_PLATFORM_BILLING_INVOICE_TEMPLATE_ID',
+  };
+  const envKey = envKeyByModule[moduleKey];
+  if (!envKey) return null;
   const value = String(process.env[envKey] || '').trim();
   return value || null;
 }

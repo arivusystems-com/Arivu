@@ -235,6 +235,7 @@ import { useColorMode } from '@/composables/useColorMode';
 import { getVerticalTrialCardDisplay } from '@/constants/verticalTrialCards';
 
 const SETUP_TOKEN_KEY = 'arivu_demo_setup_token';
+const SESSION_TRANSFER_HASH_KEY = 'ld_session';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -301,11 +302,57 @@ function stepClass(stepNumber) {
   return 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400';
 }
 
+function readStoredSetupToken() {
+  try {
+    return sessionStorage.getItem(SETUP_TOKEN_KEY) || '';
+  } catch (_) {
+    return '';
+  }
+}
+
 function persistSetupToken(token) {
   setupToken.value = token;
   try {
     sessionStorage.setItem(SETUP_TOKEN_KEY, token);
   } catch (_) {}
+}
+
+function resolveInstanceLoginTarget(instance) {
+  if (!instance?.subdomain) return null;
+
+  const configuredTemplate = import.meta.env.VITE_INSTANCE_LOCAL_REDIRECT_TEMPLATE;
+  const localProtocol = window.location.protocol || 'http:';
+  const localPort = window.location.port ? `:${window.location.port}` : '';
+  const defaultLocalTarget = `${localProtocol}//${instance.subdomain}.localhost${localPort}`;
+  const fallbackTarget = instance.frontendUrl || defaultLocalTarget;
+  const template = import.meta.env.DEV ? (configuredTemplate || defaultLocalTarget) : fallbackTarget;
+
+  return String(template)
+    .replace('{subdomain}', instance.subdomain)
+    .replace('{port}', window.location.port || '');
+}
+
+async function navigateAfterSetup(instance, redirectTo = '/onboarding') {
+  const targetBaseUrl = resolveInstanceLoginTarget(instance);
+  if (targetBaseUrl) {
+    try {
+      const target = new URL(targetBaseUrl);
+      if (target.host !== window.location.host) {
+        const transferPayload = authStore.buildSessionTransferPayload();
+        if (transferPayload) {
+          const path = String(redirectTo).startsWith('/') ? String(redirectTo) : `/${redirectTo}`;
+          const redirectUrl = new URL(path, target.origin);
+          redirectUrl.hash = `${SESSION_TRANSFER_HASH_KEY}=${encodeURIComponent(transferPayload)}`;
+          window.location.replace(redirectUrl.toString());
+          return;
+        }
+      }
+    } catch (_error) {
+      // Fall through to in-app redirect.
+    }
+  }
+
+  await router.replace(redirectTo);
 }
 
 async function loadSetupSession(token) {
@@ -325,14 +372,28 @@ async function loadSetupSession(token) {
   }
 }
 
+const inFlightVerifyByToken = new Map();
+
 async function verifyFromLink(rawVerifyToken) {
-  const data = await apiClient.post('/demo/verify-email', { token: rawVerifyToken });
-  if (!data?.success || !data.setupToken) {
-    throw new Error(data?.message || t('auth.trialSetupVerifyFailed'));
+  let pending = inFlightVerifyByToken.get(rawVerifyToken);
+  if (!pending) {
+    pending = apiClient.post('/demo/verify-email', { token: rawVerifyToken }).then((data) => {
+      if (!data?.success || !data.setupToken) {
+        throw new Error(data?.message || t('auth.trialSetupVerifyFailed'));
+      }
+      return data;
+    });
+    inFlightVerifyByToken.set(rawVerifyToken, pending);
   }
-  persistSetupToken(data.setupToken);
-  await loadSetupSession(data.setupToken);
-  router.replace({ name: 'trial-setup' });
+
+  try {
+    const data = await pending;
+    persistSetupToken(data.setupToken);
+    await loadSetupSession(data.setupToken);
+    router.replace({ name: 'trial-setup' });
+  } finally {
+    inFlightVerifyByToken.delete(rawVerifyToken);
+  }
 }
 
 async function bootstrap() {
@@ -344,9 +405,20 @@ async function bootstrap() {
     const verifyToken = String(route.query.verify || '').trim();
     const setupQueryToken = String(route.query.setup || '').trim();
     if (verifyToken) {
-      await verifyFromLink(verifyToken);
-      success(t('auth.trialSetupVerifiedToast'));
-      return;
+      try {
+        await verifyFromLink(verifyToken);
+        success(t('auth.trialSetupVerifiedToast'));
+        return;
+      } catch (verifyErr) {
+        const storedAfterVerify = setupToken.value || readStoredSetupToken();
+        if (storedAfterVerify) {
+          persistSetupToken(storedAfterVerify);
+          await loadSetupSession(storedAfterVerify);
+          router.replace({ name: 'trial-setup' });
+          return;
+        }
+        throw verifyErr;
+      }
     }
 
     if (setupQueryToken) {
@@ -356,13 +428,7 @@ async function bootstrap() {
       return;
     }
 
-    const storedToken = setupToken.value || (() => {
-      try {
-        return sessionStorage.getItem(SETUP_TOKEN_KEY) || '';
-      } catch (_) {
-        return '';
-      }
-    })();
+    const storedToken = setupToken.value || readStoredSetupToken();
 
     if (!storedToken) {
       fatalError.value = t('auth.trialSetupMissingTokenTitle');
@@ -440,7 +506,7 @@ async function submitSetup() {
       sessionStorage.removeItem(SETUP_TOKEN_KEY);
     } catch (_) {}
 
-    await router.replace({ name: 'onboarding' });
+    await navigateAfterSetup(data.user?.instance || data.instance, '/onboarding');
   } catch (err) {
     formError.value = err?.response?.data?.message || err.message || t('auth.trialSetupProvisionFailed');
   } finally {

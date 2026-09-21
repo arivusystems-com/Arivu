@@ -72,7 +72,7 @@ async function createQuote(req, res) {
       organizationId,
       assignedTo,
       quoteTitle: req.body?.quoteTitle ?? null,
-      quoteDate: req.body?.quoteDate ?? new Date(),
+      quoteDate: req.body?.quoteDate ? new Date(req.body.quoteDate) : new Date(),
       validUntil: req.body?.validUntil ?? null,
       status: status ?? undefined,
       currency,

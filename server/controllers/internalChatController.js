@@ -98,6 +98,20 @@ exports.joinChannel = async (req, res) => {
   }
 };
 
+exports.listMembers = async (req, res) => {
+  try {
+    if (!requireView(req, res)) return;
+    const result = await chat.listSpaceMembers({
+      organizationId: req.user.organizationId,
+      user: req.user,
+      spaceId: req.params.spaceId,
+    });
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    return handleServiceError(res, err, 'Failed to list members');
+  }
+};
+
 exports.inviteMembers = async (req, res) => {
   try {
     if (!requireView(req, res)) return;
@@ -110,6 +124,21 @@ exports.inviteMembers = async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (err) {
     return handleServiceError(res, err, 'Failed to invite members');
+  }
+};
+
+exports.removeMember = async (req, res) => {
+  try {
+    if (!requireView(req, res)) return;
+    const result = await chat.removeSpaceMember({
+      organizationId: req.user.organizationId,
+      user: req.user,
+      spaceId: req.params.spaceId,
+      targetUserId: req.params.userId,
+    });
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    return handleServiceError(res, err, 'Failed to remove member');
   }
 };
 
@@ -311,6 +340,52 @@ exports.presence = async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (err) {
     return handleServiceError(res, err, 'Failed to update presence');
+  }
+};
+
+exports.pinSpace = async (req, res) => {
+  try {
+    if (!requireView(req, res)) return;
+    const result = await chat.setSpacePinned({
+      organizationId: req.user.organizationId,
+      user: req.user,
+      spaceId: req.params.spaceId,
+      pin: req.body?.pin !== false,
+    });
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    return handleServiceError(res, err, 'Failed to update chat pin');
+  }
+};
+
+exports.muteSpace = async (req, res) => {
+  try {
+    if (!requireView(req, res)) return;
+    const result = await chat.setSpaceMuted({
+      organizationId: req.user.organizationId,
+      user: req.user,
+      spaceId: req.params.spaceId,
+      muted: req.body?.muted !== false,
+      durationKey: req.body?.durationKey || 'forever',
+    });
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    return handleServiceError(res, err, 'Failed to update mute');
+  }
+};
+
+exports.markUnread = async (req, res) => {
+  try {
+    if (!requireView(req, res)) return;
+    const result = await chat.markSpaceUnread({
+      organizationId: req.user.organizationId,
+      user: req.user,
+      spaceId: req.params.spaceId,
+      messageId: req.body?.messageId || null,
+    });
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    return handleServiceError(res, err, 'Failed to mark unread');
   }
 };
 

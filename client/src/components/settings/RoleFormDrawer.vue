@@ -758,11 +758,18 @@ const availableParentRoles = ref([]);
 const availableProfiles = ref([]);
 const allAppCapabilities = ref([]);
 
+function appAllowsFormUserType(app, userType) {
+  const t = normalizeFormUserType(userType);
+  const allowed = (app.userTypesAllowed || []).map((x) => String(x).toUpperCase());
+  if (allowed.includes(t)) return true;
+  if (allowed.includes('INTERNAL') && (t === 'STANDARD' || t === 'ADMIN')) return true;
+  if (allowed.includes('STANDARD') && t === 'ADMIN') return true;
+  return false;
+}
+
 const appCapabilities = computed(() => {
-  const userType = form.value.userType || 'INTERNAL';
-  return allAppCapabilities.value.filter((app) =>
-    app.userTypesAllowed?.includes(userType)
-  );
+  const userType = form.value.userType || 'STANDARD';
+  return allAppCapabilities.value.filter((app) => appAllowsFormUserType(app, userType));
 });
 const compactMode = ref(false);
 const expandedAdvanced = ref({});
@@ -930,10 +937,22 @@ const privilegeModeOptions = computed(() => [
 ]);
 
 const userTypeOptions = computed(() => [
-  { value: 'INTERNAL', label: t('settings.inviteInternal') },
-  { value: 'EXTERNAL', label: t('settings.inviteExternal') },
-  { value: 'SYSTEM', label: t('settings.roleDrawerUserTypeSystem') }
+  { value: 'STANDARD', label: t('settings.userTypeStandard') },
+  { value: 'ADMIN', label: t('settings.userTypeAdmin') },
+  { value: 'EXTERNAL', label: t('settings.inviteExternal') }
 ]);
+
+/** Map legacy Role.userType into dropdown values (INTERNAL/SYSTEM → STANDARD/ADMIN). */
+function normalizeFormUserType(raw, roleName = '') {
+  const t = String(raw || '').toUpperCase();
+  if (t === 'EXTERNAL' || t === 'PORTAL') return 'EXTERNAL';
+  if (t === 'ADMIN' || t === 'SYSTEM') return 'ADMIN';
+  if (t === 'STANDARD') return 'STANDARD';
+  const name = String(roleName || '').trim();
+  if (name === 'Owner' || name === 'Admin' || name === 'Administrator') return 'ADMIN';
+  // INTERNAL / empty / unknown → Standard (privileged names handled above)
+  return 'STANDARD';
+}
 
 const recordAssignmentUserOptions = computed(() => [
   { value: 'same_role_or_hierarchy', label: t('settings.roleDrawerRecordAssignmentUsersSameHierarchy') },
@@ -1131,7 +1150,7 @@ watch(
     if (!rbacV2.value) return;
     const allowedKeys = new Set(
       allAppCapabilities.value
-        .filter((app) => app.userTypesAllowed?.includes(userType || 'INTERNAL'))
+        .filter((app) => appAllowsFormUserType(app, userType || 'STANDARD'))
         .map((app) => app.appKey)
     );
     const nextEntitlements = [];
@@ -1184,7 +1203,7 @@ function createEmptyForm() {
     canManageTeam: false,
     canExportData: false,
     permissions: {},
-    userType: 'INTERNAL',
+    userType: 'STANDARD',
     privilegeMode: rbacV2.value ? 'profile' : 'inline',
     profileId: '',
     appEntitlements: [],
@@ -1348,7 +1367,7 @@ const loadRoleIntoForm = () => {
     canManageTeam: isFullyPrivilegedSystemRole.value ? true : props.role.canManageTeam || false,
     canExportData: isFullyPrivilegedSystemRole.value ? true : props.role.canExportData || false,
     permissions: basePerms,
-    userType: props.role.userType || 'INTERNAL',
+    userType: normalizeFormUserType(props.role.userType, props.role.name),
     privilegeMode: props.role.privilegeMode || 'inline',
     profileId: props.role.profileId?._id || props.role.profileId || '',
     appEntitlements: Array.isArray(props.role.appEntitlements) && props.role.appEntitlements.length

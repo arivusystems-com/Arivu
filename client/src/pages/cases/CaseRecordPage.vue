@@ -158,9 +158,9 @@
                 <button
                   type="button"
                   class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
-                  @click="openLinkTaskDrawer"
+                  @click="openLinkRecordDrawer"
                 >
-                  {{ t('cases.recordTasksLink') }}
+                  {{ t('records.genericLinkRecord') }}
                 </button>
               </div>
               <div class="min-h-0 flex-1 overflow-y-auto p-4">
@@ -180,6 +180,12 @@
               :case-record-id="caseRecord?._id ? String(caseRecord._id) : ''"
               :suggested-reply="caseRecord?.aiAssist?.suggestedReply || null"
             />
+          </template>
+
+          <template v-if="showLearningTab" #tab-learning>
+            <div class="flex h-full flex-col">
+              <RelatedLearningPanel app-key="HELPDESK" />
+            </div>
           </template>
         </RecordRightPane>
       </div>
@@ -416,9 +422,9 @@
                     <button
                       type="button"
                       class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
-                      @click="openLinkTaskDrawer"
+                      @click="openLinkRecordDrawer"
                     >
-                      {{ t('cases.recordTasksLink') }}
+                      {{ t('records.genericLinkRecord') }}
                     </button>
                   </div>
                 </div>
@@ -439,6 +445,12 @@
               :case-record-id="caseRecord?._id ? String(caseRecord._id) : ''"
               :suggested-reply="caseRecord?.aiAssist?.suggestedReply || null"
             />
+            </template>
+
+            <template v-if="showLearningTab" #tab-learning>
+              <div class="flex h-full flex-col">
+                <RelatedLearningPanel app-key="HELPDESK" />
+              </div>
             </template>
           </RecordRightPane>
       </template>
@@ -463,13 +475,13 @@
 
     <LinkRecordsDrawer
       :is-open="showLinkDrawer"
-      module-key=""
+      :module-key="linkDrawerModuleKey"
       source-app-key="HELPDESK"
       source-module-key="cases"
       :multiple="true"
-      :title="t('cases.recordTasksLink')"
+      :title="linkDrawerTitle"
       :context="{ sourceRecordId: effectiveCaseId }"
-      @close="showLinkDrawer = false"
+      @close="closeLinkDrawer"
       @linked="onRecordsLinked"
     />
 
@@ -539,12 +551,14 @@
 import { computed, inject, onActivated, onBeforeUnmount, provide, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import { useArivuDataChangeRefresh } from '@/composables/useArivuDataChangeRefresh';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import {
   DocumentTextIcon,
   LinkIcon,
   UserIcon,
   BookOpenIcon,
+  AcademicCapIcon,
   ClockIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -569,6 +583,7 @@ import CaseContactProfilePanel from '@/components/cases/CaseContactProfilePanel.
 import CaseKnowledgePanel from '@/components/cases/CaseKnowledgePanel.vue';
 import CaseSlaPanel from '@/components/cases/CaseSlaPanel.vue';
 import RelatedRecordsPanel from '@/components/relationships/RelatedRecordsPanel.vue';
+import RelatedLearningPanel from '@/components/learning/RelatedLearningPanel.vue';
 import CreateRecordDrawer from '@/components/common/CreateRecordDrawer.vue';
 import EmailComposeDrawer from '@/components/communications/EmailComposeDrawer.vue';
 import LinkRecordsDrawer from '@/components/common/LinkRecordsDrawer.vue';
@@ -696,6 +711,17 @@ onActivated(async () => {
   }
 });
 
+useArivuDataChangeRefresh({
+  getModuleKey: () => 'cases',
+  getRecordId: () => String(effectiveCaseId.value || caseRecord.value?._id || ''),
+  onChange: (detail) => {
+    if (detail?.patch && typeof detail.patch === 'object' && caseRecord.value) {
+      Object.assign(caseRecord.value, detail.patch);
+    }
+    void refreshCaseSilently();
+  },
+});
+
 onBeforeUnmount(() => {
   if (chatRefreshTimer) clearTimeout(chatRefreshTimer);
 });
@@ -704,6 +730,12 @@ const activeTab = ref('conversation');
 const showEditDrawer = ref(false);
 const showEmailModal = ref(false);
 const showLinkDrawer = ref(false);
+const linkDrawerModuleKey = ref('');
+const linkDrawerTitle = computed(() =>
+  linkDrawerModuleKey.value === 'tasks'
+    ? t('cases.recordTasksLink')
+    : t('records.genericLinkRecord')
+);
 const showDeleteModal = ref(false);
 const deleting = ref(false);
 const showReopenDialog = ref(false);
@@ -713,6 +745,7 @@ const reopening = ref(false);
 const canEdit = computed(() => authStore.can('cases', 'edit'));
 const canEditPeople = computed(() => authStore.can('people', 'edit'));
 const canDelete = computed(() => authStore.can('cases', 'delete'));
+const showLearningTab = computed(() => authStore.hasAppAccess('LMS'));
 
 const emailRelatedTo = computed(() => {
   const id = effectiveCaseId.value;
@@ -726,13 +759,19 @@ const mainTabs = computed(() => [
   { id: 'notes', label: t('cases.recordTabNotes') }
 ]);
 
-const rightPaneTabs = computed(() => [
-  { id: 'details', name: t('cases.recordTabDetails'), icon: DocumentTextIcon },
-  { id: 'sla', name: t('cases.recordSlaSection'), icon: ClockIcon },
-  { id: 'contact', name: t('cases.recordTabContact'), icon: UserIcon },
-  { id: 'related', name: t('records.relatedTitle'), icon: LinkIcon },
-  { id: 'knowledge', name: t('cases.recordRailKnowledge'), icon: BookOpenIcon }
-]);
+const rightPaneTabs = computed(() => {
+  const tabs = [
+    { id: 'details', name: t('cases.recordTabDetails'), icon: DocumentTextIcon },
+    { id: 'sla', name: t('cases.recordSlaSection'), icon: ClockIcon },
+    { id: 'contact', name: t('cases.recordTabContact'), icon: UserIcon },
+    { id: 'related', name: t('records.relatedTitle'), icon: LinkIcon },
+    { id: 'knowledge', name: t('cases.recordRailKnowledge'), icon: BookOpenIcon }
+  ];
+  if (showLearningTab.value) {
+    tabs.push({ id: 'learning', name: t('learning.relatedLearning'), icon: AcademicCapIcon });
+  }
+  return tabs;
+});
 
 const embedPreviewTabs = computed(() => [
   { id: 'summary', name: t('records.tabSummary'), icon: Squares2X2Icon },
@@ -906,31 +945,71 @@ function openRelatedRecord(task) {
   openTab(`/tasks/${task.recordId}`, { background: false, insertAdjacent: true });
 }
 
-function openLinkTaskDrawer() {
+function openLinkRecordDrawer() {
+  linkDrawerModuleKey.value = '';
   showLinkDrawer.value = true;
+}
+
+function openLinkTaskDrawer() {
+  linkDrawerModuleKey.value = 'tasks';
+  showLinkDrawer.value = true;
+}
+
+function closeLinkDrawer() {
+  showLinkDrawer.value = false;
+  linkDrawerModuleKey.value = '';
 }
 
 async function onRecordsLinked(payload = {}) {
   const ids = Array.isArray(payload?.ids) ? payload.ids : [];
   const moduleKey = String(payload?.moduleKey || 'tasks').toLowerCase();
-  const relationshipKey = payload?.relationshipKey || 'task_cases';
-  const targetAppKey = (payload?.targetAppKey || 'SALES').toUpperCase();
+  const relationshipKey = String(
+    payload?.relationshipKey || (moduleKey === 'tasks' ? 'task_cases' : moduleKey)
+  ).toLowerCase();
+  const linkedModuleAppKey = String(
+    payload?.targetAppKey || (moduleKey === 'tasks' ? 'PLATFORM' : 'SALES')
+  ).toUpperCase();
+  // task_cases is defined as platform.tasks → helpdesk.cases; case is TARGET when linking tasks.
+  const sourceIsCurrent =
+    payload?.sourceIsCurrent !== undefined
+      ? payload.sourceIsCurrent !== false
+      : !(relationshipKey === 'task_cases' || moduleKey === 'tasks');
   const caseId = effectiveCaseId.value;
 
   for (const recordId of ids) {
     try {
-      await apiClient.post('/relationships/link', {
-        relationshipKey,
-        source: { appKey: 'HELPDESK', moduleKey: 'cases', recordId: caseId },
-        target: { appKey: targetAppKey, moduleKey, recordId }
-      });
+      if (moduleKey === 'documents') {
+        const linkRes = await apiClient.post(`/documents/${recordId}/link`, {
+          moduleKey: 'cases',
+          recordId: String(caseId),
+          appKey: 'HELPDESK'
+        });
+        if (!linkRes?.success) {
+          notifications.error(linkRes?.message || t('documents.linkFailed'));
+          return;
+        }
+        continue;
+      }
+
+      const linkPayload = sourceIsCurrent
+        ? {
+            relationshipKey,
+            source: { appKey: 'HELPDESK', moduleKey: 'cases', recordId: caseId },
+            target: { appKey: linkedModuleAppKey, moduleKey, recordId }
+          }
+        : {
+            relationshipKey,
+            source: { appKey: linkedModuleAppKey, moduleKey, recordId },
+            target: { appKey: 'HELPDESK', moduleKey: 'cases', recordId: caseId }
+          };
+      await apiClient.post('/relationships/link', linkPayload);
     } catch (err) {
       notifications.error(err?.response?.data?.message || 'Failed to link record');
       return;
     }
   }
 
-  showLinkDrawer.value = false;
+  closeLinkDrawer();
   invalidateRecordContext('HELPDESK', 'cases', caseId);
   notifications.success(t('cases.recordLinkSuccess'));
   focusRightPaneTab('related');

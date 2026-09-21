@@ -1,4 +1,5 @@
 import {
+  AcademicCapIcon,
   BriefcaseIcon,
   CubeIcon,
   GlobeAltIcon,
@@ -19,7 +20,8 @@ const ICON_BY_APP = {
   PROJECTS: RectangleStackIcon,
   PORTAL: GlobeAltIcon,
   INVENTORY: CubeIcon,
-  MARKETING: MegaphoneIcon
+  MARKETING: MegaphoneIcon,
+  LMS: AcademicCapIcon
 };
 
 /** Light surfaces for light mode; dark:* uses only @theme-defined scales (no -950). */
@@ -58,6 +60,11 @@ const PILL_CLASS_BY_APP = {
     FLAT,
     'bg-primary-50 text-primary-900 border-primary-200/80 hover:bg-primary-100',
     'dark:border-primary-500 dark:bg-primary-900/35 dark:text-primary-200 dark:hover:bg-primary-900/55'
+  ].join(' '),
+  LMS: [
+    FLAT,
+    'bg-primary-50 text-primary-900 border-primary-200/80 hover:bg-primary-100',
+    'dark:border-primary-500 dark:bg-primary-900/35 dark:text-primary-200 dark:hover:bg-primary-900/55'
   ].join(' ')
 };
 
@@ -68,7 +75,8 @@ const ICON_WRAP_CLASS_BY_APP = {
   PROJECTS: 'bg-warning-200/80 text-warning-800 dark:bg-warning-800 dark:text-warning-200',
   PORTAL: 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200',
   INVENTORY: 'bg-neutral-200/80 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200',
-  MARKETING: 'bg-primary-200/80 text-primary-800 dark:bg-primary-800 dark:text-primary-200'
+  MARKETING: 'bg-primary-200/80 text-primary-800 dark:bg-primary-800 dark:text-primary-200',
+  LMS: 'bg-primary-200/80 text-primary-800 dark:bg-primary-800 dark:text-primary-200'
 };
 
 const DEFAULT_PILL_CLASS = [

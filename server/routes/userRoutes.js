@@ -11,6 +11,8 @@ const {
     getUsersForAssignment,
     getUser,
     inviteUser,
+    previewBulkInvite,
+    commitBulkInvite,
     updateUser,
     deactivateUser,
     getUserOwnershipSummary,
@@ -67,6 +69,10 @@ router.get('/list', (req, res, next) => {
 
 // --- Add User Capabilities (requires manageUsers permission) ---
 router.get('/add-capabilities', canManageUsers(), getAddCapabilities);
+
+// --- Bulk invite (CSV) — must be before /:id ---
+router.post('/bulk-invite/preview', canManageUsers(), previewBulkInvite);
+router.post('/bulk-invite', canManageUsers(), commitBulkInvite);
 
 // --- User Management Routes (requires manageUsers permission) ---
 router.get('/', canManageUsers(), getUsers);

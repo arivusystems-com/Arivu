@@ -13,6 +13,7 @@
       :loading="loading"
       :statistics="statistics"
       :stats-config="statsConfig"
+      :selected-stat-key="selectedStatKey"
       :pagination="listPagination"
       table-id="templates-table"
       row-key="_id"
@@ -151,6 +152,7 @@ const importMetadata = ref({});
 const duplicatingId = ref(null);
 const searchQuery = ref('');
 const statusFilter = ref('');
+const selectedStatKey = ref('total');
 
 function closeCreateDrawer() {
   showCreateDrawer.value = false;
@@ -292,7 +294,9 @@ function onStatClick(statItem) {
     review: 'review',
     archived: 'archived'
   };
-  statusFilter.value = statusMap[statItem?.key] ?? '';
+  const key = statItem?.key || 'total';
+  selectedStatKey.value = key;
+  statusFilter.value = statusMap[key] ?? '';
   pagination.currentPage = 1;
   loadTemplates();
 }

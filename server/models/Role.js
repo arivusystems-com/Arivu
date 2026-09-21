@@ -112,8 +112,8 @@ const roleSchema = new mongoose.Schema({
     // --- RBAC v2 ---
     userType: {
         type: String,
-        enum: ['INTERNAL', 'EXTERNAL', 'SYSTEM'],
-        default: 'INTERNAL'
+        enum: ['STANDARD', 'ADMIN', 'EXTERNAL', 'INTERNAL', 'SYSTEM'],
+        default: 'STANDARD'
     },
     privilegeMode: {
         type: String,

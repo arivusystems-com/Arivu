@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import apiClient from '@/utils/apiClient';
 import { getApiUrlForFetch } from '@/config/apiBase';
+import { resolveAssetDownloadUrl } from '@/modules/template/composables/useCompanyLogoAsset';
 import { useAuthStore } from '@/stores/authRegistry';
 
 export function useDocuments() {
@@ -239,7 +240,11 @@ export function useDocuments() {
   async function getPreviewUrl(documentId) {
     const response = await apiClient.get(`/documents/${documentId}/preview`);
     if (response.success) {
-      return response.data;
+      const data = response.data || {};
+      return {
+        ...data,
+        url: data.url ? resolveAssetDownloadUrl(data.url) : data.url
+      };
     }
     throw new Error(response.message || 'Failed to load preview');
   }
@@ -247,7 +252,11 @@ export function useDocuments() {
   async function getDownloadUrl(documentId) {
     const response = await apiClient.get(`/documents/${documentId}/download`);
     if (response.success) {
-      return response.data;
+      const data = response.data || {};
+      return {
+        ...data,
+        url: data.url ? resolveAssetDownloadUrl(data.url) : data.url
+      };
     }
     throw new Error(response.message || 'Failed to load download');
   }

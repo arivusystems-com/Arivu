@@ -90,6 +90,29 @@ const APP_DEFINITIONS = [
       usesAutomation: false
     },
     settingsSchema: null
+  },
+  {
+    appKey: 'lms',
+    name: 'Learning',
+    description: 'An intelligent learning platform for your people, customers, and partners',
+    icon: 'academic-cap',
+    category: 'BUSINESS',
+    owner: 'PLATFORM',
+    enabled: true,
+    order: 8,
+    capabilities: {
+      usesPeople: true,
+      usesOrganization: true,
+      usesTransactions: false,
+      usesAutomation: true
+    },
+    settingsSchema: null,
+    ui: {
+      sidebarOrder: 8,
+      icon: 'academic-cap',
+      defaultRoute: '/learning',
+      showInAppSwitcher: true
+    }
   }
 ];
 

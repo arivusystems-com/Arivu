@@ -74,6 +74,10 @@ async function resolveKey(key, context) {
       return resolvePortalCustomer(context);
     case 'PORTAL_CASE_REQUESTER':
       return resolvePortalCaseRequester(context);
+    case 'LEARNING_LEARNER':
+      return resolveLearningLearner(context);
+    case 'LEARNING_ADMINS':
+      return resolveLearningAdmins(context);
     default:
       console.warn('[notificationRecipientResolver] Unhandled recipient key:', key);
       return [];
@@ -801,6 +805,64 @@ function determineAppKeyFromContext(user) {
     return user.allowedApps[0]; // Use first app
   }
   return 'SALES'; // Default
+}
+
+async function resolveLearningLearner({ entity, eventType }) {
+  const learnerId = entity?.learnerUserId || entity?.userId;
+  if (!learnerId) return [];
+  const user = await User.findById(learnerId).select('_id');
+  if (!user) return [];
+
+  let title = 'Assigned a course';
+  let body = entity?.title
+    ? `You are enrolled in "${entity.title}".`
+    : 'You have a new Learning enrollment.';
+
+  if (eventType === domainEvents.LEARNING_COURSE_COMPLETED) {
+    title = 'Course completed';
+    body = entity?.title
+      ? `You completed "${entity.title}".`
+      : 'You completed a Learning course.';
+  } else if (eventType === domainEvents.LEARNING_ASSIGNMENT_OVERDUE) {
+    title = 'Learning assignment overdue';
+    body = entity?.title
+      ? `"${entity.title}" is past its due date.`
+      : 'A Learning assignment is overdue.';
+  } else if (entity?.type === 'LearningPath') {
+    title = 'Assigned a learning path';
+  } else if (entity?.type === 'LearningCohort') {
+    title = 'Enrolled via cohort';
+  }
+
+  if (entity?.dueAt && eventType !== domainEvents.LEARNING_COURSE_COMPLETED) {
+    const due = new Date(entity.dueAt);
+    if (!Number.isNaN(due.getTime())) {
+      body += ` Due ${due.toLocaleDateString()}.`;
+    }
+  }
+  return [{ userId: user._id, title, body }];
+}
+
+async function resolveLearningAdmins({ organizationId, entity }) {
+  if (!organizationId) return [];
+  const users = await User.find({
+    organizationId,
+    status: { $in: ['active', 'invited'] },
+    appAccess: {
+      $elemMatch: {
+        appKey: 'LMS',
+        status: 'ACTIVE',
+        roleKey: { $in: ['ADMIN', 'AUTHOR'] },
+      },
+    },
+  })
+    .select('_id')
+    .lean();
+  const title = 'Course published';
+  const body = entity?.title
+    ? `"${entity.title}" is now published in Learning.`
+    : 'A course was published in Learning.';
+  return users.map((u) => ({ userId: u._id, title, body }));
 }
 
 module.exports = resolveRecipients;

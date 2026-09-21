@@ -66,16 +66,28 @@
           :can-run="row.status === 'published'"
           :can-edit="canEdit && row.status !== 'archived'"
           :can-create="canCreate"
+          :can-share="canEdit && row.status !== 'archived'"
           :can-export="row.status === 'published'"
           :can-archive="canArchive && row.status !== 'archived'"
           @run="runReport(row._id)"
           @edit="editReport(row._id)"
           @duplicate="duplicateRow(row._id)"
+          @share="openShare(row)"
           @export="exportRow(row._id)"
           @archive="archiveRow(row)"
         />
       </template>
     </ModuleList>
+
+    <ReportShareDialog
+      :open="shareOpen"
+      :report-name="shareTarget?.name"
+      :visibility="shareVisibility"
+      :shared-with="shareSharedWith"
+      :saving="saving"
+      @close="closeShare"
+      @save="saveShare"
+    />
   </div>
 </template>
 
@@ -89,8 +101,10 @@ import BadgeCell from '@/components/common/table/BadgeCell.vue';
 import DateCell from '@/components/common/table/DateCell.vue';
 import Avatar from '@/components/common/Avatar.vue';
 import ReportRowActionsMenu from '@/components/analytics/ReportRowActionsMenu.vue';
+import ReportShareDialog from '@/components/analytics/report-builder/ReportShareDialog.vue';
 import { useAnalyticsReports } from '@/composables/useAnalyticsReports';
 import { useAuthStore } from '@/stores/authRegistry';
+import { useNotifications } from '@/composables/useNotifications';
 import {
   captureAnalyticsModuleVisited,
   captureAnalyticsReportArchived,
@@ -101,15 +115,23 @@ import { confirmAction } from '@/composables/useConfirmAction';
 const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
+const { success, error } = useNotifications();
 const {
   catalogModules,
+  saving,
   fetchCatalog,
+  fetchReport,
+  updateReport,
   archiveReport,
   executeReport,
   exportReport,
 } = useAnalyticsReports();
 
 const moduleListRef = ref(null);
+const shareOpen = ref(false);
+const shareTarget = ref(null);
+const shareVisibility = ref('private');
+const shareSharedWith = ref([]);
 
 const canCreate = computed(() => authStore.can('reports', 'create'));
 const canEdit = computed(() => authStore.can('reports', 'edit'));
@@ -185,6 +207,43 @@ async function runReport(id) {
 
 async function duplicateRow(id) {
   router.push({ name: 'analytics-report-create', query: { duplicateFrom: String(id) } });
+}
+
+async function openShare(row) {
+  const id = row?._id || row?.id;
+  if (!id) return;
+  shareTarget.value = row;
+  shareVisibility.value = row.visibility || 'private';
+  shareSharedWith.value = Array.isArray(row.sharedWith) ? [...row.sharedWith] : [];
+  shareOpen.value = true;
+  const res = await fetchReport(String(id));
+  if (res?.success && res.data) {
+    shareTarget.value = res.data;
+    shareVisibility.value = res.data.visibility || 'private';
+    shareSharedWith.value = Array.isArray(res.data.sharedWith) ? [...res.data.sharedWith] : [];
+  }
+}
+
+function closeShare() {
+  shareOpen.value = false;
+  shareTarget.value = null;
+}
+
+async function saveShare(payload) {
+  const id = shareTarget.value?._id || shareTarget.value?.id;
+  if (!id) return;
+  const res = await updateReport(String(id), {
+    visibility: payload.visibility,
+    sharedWith: payload.sharedWith,
+  });
+  if (res?.success) {
+    shareOpen.value = false;
+    shareTarget.value = null;
+    success(t('analytics.shareReportSaved'));
+    await refreshList();
+    return;
+  }
+  error(res?.message || t('errors.permission_denied'));
 }
 
 async function exportRow(id) {

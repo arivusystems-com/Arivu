@@ -998,6 +998,7 @@
         :initialData="lookupCreateInitialData"
         :prefillText="lookupSearchQuery"
         :prefillFieldKey="lookupCreatePrefillFieldKey"
+        :open-record-on-save="false"
         @close="closeLookupCreateDrawer"
         @saved="handleLookupRecordCreated"
       />
@@ -2748,12 +2749,13 @@ const closeLookupCreateDrawer = () => {
 };
 
 const handleLookupRecordCreated = (savedRecord) => {
-  if (!savedRecord || !savedRecord._id) return;
-  const exists = lookupOptions.value.some((opt) => String(opt?._id) === String(savedRecord._id));
+  const recordId = savedRecord?._id || savedRecord?.id;
+  if (!savedRecord || !recordId) return;
+  const exists = lookupOptions.value.some((opt) => String(opt?._id || opt?.id) === String(recordId));
   if (!exists) {
-    lookupOptions.value = [savedRecord, ...lookupOptions.value];
+    lookupOptions.value = [{ ...savedRecord, _id: recordId }, ...lookupOptions.value];
   }
-  updateValue(savedRecord._id);
+  updateValue(recordId);
   emit('blur');
   closeLookupCreateDrawer();
 };

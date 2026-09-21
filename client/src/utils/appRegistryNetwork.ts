@@ -176,6 +176,58 @@ function ensureAuditAppNavigationModules(registry: AppRegistry): void {
 }
 
 /**
+ * Learning (LMS) is a dedicated shell (`/learning/*`), not ModuleDefinition-backed lists.
+ * Inject static nav when platform module metadata is absent so the app lens is usable.
+ */
+function ensureLearningAppNavigationModules(registry: AppRegistry): void {
+  const learningKey = Object.keys(registry).find((k) => String(k).toUpperCase() === 'LMS');
+  if (!learningKey) return;
+  const app = registry[learningKey];
+  if (!app) return;
+
+  const defaults = [
+    { moduleKey: 'learning_my', label: 'My Learning', route: '/learning/my', icon: 'bookmark', order: 1, learningAudience: 'learner' },
+    { moduleKey: 'learning_explore', label: 'Explore', route: '/learning/explore', icon: 'magnifying-glass', order: 2, learningAudience: 'learner' },
+    { moduleKey: 'learning_courses', label: 'Courses', route: '/learning/courses', icon: 'book-open', order: 3, learningAudience: 'author' },
+    { moduleKey: 'learning_paths', label: 'Paths', route: '/learning/paths', icon: 'map', order: 4, learningAudience: 'learner' },
+    { moduleKey: 'learning_programs', label: 'Programs', route: '/learning/programs', icon: 'rectangle-stack', order: 5, learningAudience: 'author' },
+    { moduleKey: 'learning_live', label: 'Live Sessions', route: '/learning/live', icon: 'video-camera', order: 6, learningAudience: 'learner' },
+    { moduleKey: 'learning_assessments', label: 'Assessments', route: '/learning/assessments', icon: 'clipboard-document-check', order: 7, learningAudience: 'learner' },
+    { moduleKey: 'learning_certificates', label: 'Certificates', route: '/learning/certificates', icon: 'trophy', order: 8, learningAudience: 'learner' },
+    { moduleKey: 'learning_skills', label: 'Skills & Badges', route: '/learning/skills', icon: 'sparkles', order: 9, learningAudience: 'learner' },
+    { moduleKey: 'learning_content', label: 'Content Library', route: '/learning/content', icon: 'folder', order: 10, learningAudience: 'author' },
+    { moduleKey: 'learning_compliance', label: 'Compliance', route: '/learning/compliance', icon: 'shield-check', order: 11, learningAudience: 'author' },
+    { moduleKey: 'learning_analytics', label: 'Analytics', route: '/learning/analytics', icon: 'chart-bar', order: 12, learningAudience: 'admin' },
+    { moduleKey: 'learning_settings', label: 'Settings', route: '/learning/settings', icon: 'cog-6-tooth', order: 13, learningAudience: 'admin' },
+  ];
+
+  app.modules = app.modules || [];
+  for (const mod of defaults) {
+    const idx = app.modules.findIndex(
+      (m) =>
+        String(m.moduleKey || '').toLowerCase() === mod.moduleKey ||
+        String(m.route || '').replace(/\/+$/, '') === mod.route
+    );
+    const navModule = {
+      ...mod,
+      permission: undefined,
+      appKey: learningKey,
+      navigationCore: false,
+      navigationEntity: false,
+      excludeFromApps: false,
+      system: false,
+      coreEntity: false,
+    };
+    if (idx >= 0) {
+      app.modules[idx] = { ...app.modules[idx], ...navModule };
+    } else {
+      app.modules.push(navModule);
+    }
+  }
+  app.modules.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+}
+
+/**
  * Portal app sidebar modules — each gated by the matching core module permission.
  */
 function injectPortalCustomerSupportModule(registry: AppRegistry): void {
@@ -590,7 +642,8 @@ function buildRegistryFromPayload(payload: {
 }): AppRegistry {
   const apps = payload.apps || [];
   const registry: AppRegistry = {};
-  const specialAppRoutes = ['/audit/', '/portal/', '/helpdesk/', '/projects/', '/marketing/'];
+  // Dedicated app shells — do not rewrite to /dashboard/:appKey
+  const specialAppRoutes = ['/audit/', '/portal/', '/helpdesk/', '/projects/', '/marketing/', '/learning'];
 
   for (const app of apps) {
     const rawModules = payload.modulesByAppKey?.[app.appKey] || [];
@@ -651,6 +704,7 @@ function buildRegistryFromPayload(payload: {
 
   addPlatformModulesToRegistry(registry, payload.entityModules);
   ensureAuditAppNavigationModules(registry);
+  ensureLearningAppNavigationModules(registry);
   injectPortalCustomerSupportModule(registry);
   injectPortalInvoicesModule(registry);
   injectPortalKnowledgeModule(registry);

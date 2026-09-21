@@ -8,7 +8,9 @@ const {
 } = require('../../utils/contentPlatformErrors');
 const { writeContentAuditLog } = require('./contentPlatformEventService');
 
-const SUPPORTED_MODULE_KEYS = new Set(Object.keys(MODULE_DOCUMENT_CONFIG));
+const SUPPORTED_MODULE_KEYS = new Set(
+  Object.keys(MODULE_DOCUMENT_CONFIG).filter((key) => key !== 'billing_invoices')
+);
 
 function notDeletedFilter() {
   return { deletedAt: null };

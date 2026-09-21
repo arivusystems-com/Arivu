@@ -19,6 +19,7 @@ const INTENT_SPECIALISTS = {
   activity_log: ['task-activity'],
   case_create: ['case-intelligence', 'record-creation'],
   deal_update: ['deal-intelligence', 'record-update'],
+  record_update: ['record-update'],
   quote_draft: ['deal-intelligence', 'record-creation'],
   research: ['customer-360', 'relationship-intelligence', 'search'],
   meeting_prep: [
@@ -49,6 +50,7 @@ const QUERY_HINTS = [
   { re: /\b(relationship|stakeholder|champion|influencer)\b/i, keys: ['relationship-intelligence'] },
   { re: /\b(conversation|sentiment|transcript|call notes)\b/i, keys: ['conversation-intelligence'] },
   { re: /\b(knowledge|faq|article|documentation|how do i)\b/i, keys: ['knowledge-intelligence'] },
+  { re: /\b(learn(ing)?|course|lms|training|curriculum|onboarding course|lesson)\b/i, keys: ['knowledge-intelligence', 'search'] },
   { re: /\b(process|workflow|automation|playbook)\b/i, keys: ['process-intelligence'] },
   { re: /\b(kpi|analytics|dashboard|metric|trend|anomaly)\b/i, keys: ['analytics-decision'] },
   { re: /\b(duplicate|data quality|incomplete|stale|dedup)\b/i, keys: ['data-quality'] },

@@ -78,8 +78,10 @@ export function useAnalyticsReports() {
     }
   }
 
-  async function fetchReport(id: string) {
-    loading.value = true;
+  async function fetchReport(id: string, options: { silent?: boolean } = {}) {
+    if (!options.silent) {
+      loading.value = true;
+    }
     try {
       const response = await apiClient.get(`/analytics/reports/${id}`, { cache: 'no-store' });
       if (response?.success) {
@@ -87,7 +89,9 @@ export function useAnalyticsReports() {
       }
       return response;
     } finally {
-      loading.value = false;
+      if (!options.silent) {
+        loading.value = false;
+      }
     }
   }
 

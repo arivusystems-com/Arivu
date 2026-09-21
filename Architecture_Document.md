@@ -75,6 +75,8 @@
 
 **Default unresolved API path:** `SALES` (legacy `/api` namespace).
 
+**Learning (`LMS`):** First-class App (display name **Learning**), not an addon. Commercial model `TIERED_CAPACITY` / `LEARNER_SEAT` — **one shared seat pool**. Dual surface: **Learning App** (`/learning`, internal) + **Learning Academy** (`/academy`, EXTERNAL learners). Reuse `User.userType: EXTERNAL` + People master identity + LMS LEARNER; `/portal` remains CRM stakeholder portal. **Locked invariant:** two surfaces, one identity, explicit switching, independent authorization — no combined Customer Home, no Academy inside `/portal`, no CRM chrome inside `/academy`, no second user/LMS; Portal vs Academy entitlements must not auto grant/revoke each other (`LearningAcademyAccess` owns Academy). V1/V1.1 frozen; V2 Academy: [`docs/LEARNING_PRODUCT_DECISION.md`](docs/LEARNING_PRODUCT_DECISION.md), [`docs/LEARNING_PORTAL_ACADEMY_V2.md`](docs/LEARNING_PORTAL_ACADEMY_V2.md).
+
 ### Addon Keys (`server/constants/addonKeys.js`)
 
 Installable tenant capabilities (not apps): `live_chat` | `email_credits` | `articles` | `blog` | `announcements` | `telephony` | `internal_chat` | `ai` | `ai_credits` | `tally` | `stockroom` | `cpq` (+ legacy AI aliases)
@@ -392,6 +394,7 @@ Nav + `entitledAddons.internal_chat` + API `canViewInternalChat` reject `userTyp
 Record spaces: lazy-create on Discuss; unique `(organizationId, moduleKey, recordId)` for `type=record`; access inherits record view ACL (enforced in P1+).
 Routes: `/api/internal-chat` (bootstrap, spaces, channels, DMs, discuss, messages, read, SSE stream). Realtime: `internalChatSSEHub` + client `useInternalChatStream` (SSE only).
 **Channels:** public (`isPrivate=false`) appear in every staff member’s space list with `canJoin`; `POST /spaces/:spaceId/join` creates membership. Private channels are invite-only (`POST /spaces/:spaceId/members`); not listed to non-members. Channel create accepts optional `memberIds`. Rename: `PATCH /spaces/:spaceId` (`name` / `topic`) for members; SSE `space.updated` `action=renamed`.
+**Members:** `GET /spaces/:spaceId/members` lists roster for any space the caller belongs to. `POST /spaces/:spaceId/members` invites into `channel` or `group_dm` (recomputes `dmKey` + display name for group DMs; 409 if another group already has that member set). `DELETE /spaces/:spaceId/members/:userId` removes a member or leaves (self): channel remove-others is admin-only; group DMs allow any member; last admin is auto-promoted on leave/remove; group DMs cannot shrink below 2 members.
 **Alerts:** `INTERNAL_CHAT_MENTIONED` / `INTERNAL_CHAT_MESSAGE_POSTED` → in-app toast + sound (client `alertForInternalChatNotification`); suppress when viewing that space. Background Chat browser tab gets Live-Chat-style pulse + title prefix (`internalChatTabAlerts`). DMs always notify; channel/record posts notify only when tenant `settings.notifyChannelMessages` is true. Chat SSE is a process singleton (starts with entitled session); notification stream also dispatches `arivu:internal-chat-workspace` so an open conversation merges missed messages if chat SSE lags. SSE plays a debounced chime as fallback when not focused on the space.
 **Seenzone (seen receipts):** Derived from `InternalChatMembership.lastReadAt` / `lastReadMessageId` (no per-message read rows). SSE `read.updated` on `POST /spaces/:spaceId/read`. UI under last own message only: DM ticks, ≤12-member avatar stack, large-space aggregate counts. Tenant `settings.seenReceiptsMode`: `off` | `private` (default; DMs/small groups + @mention/@all focus) | `on` (aggregates in large channels). `listMessages` returns `readState`.
 P1: create channel/DM, post/list messages, threads (`threadRootId` + root `replyCount`; Gmail-style right thread panel + “N replies” indicator), quote-in-reply (`quote` snapshot + composer chip; separate from threads), message edit (`PATCH …/messages/:id` + `editedAt` + “Edited” label; author-only), mentions (`mentionUserIds` + `<@userId>`), inline text formatting (TipTap like record descriptions: `/` slash commands + selection BubbleMenu H1–H3/B/I/S/lists/link; HTML in `body` + DOMPurify; server scrub + plain-text for empty/quote/notify), read cursors, record Discuss + module `view` ACL.
@@ -720,6 +723,98 @@ Emit via `server/constants/domainEvents.js` / `domainEventHelpers`; `notificatio
 | Platform Home focus | Rule-based (`platformHomeFocusService`) — **no LLM** |
 
 **Legacy AI roadmap (historical):** `docs/AI_PLATFORM_ARCHITECTURE_AND_ROADMAP.md` — superseded as source of truth by `docs/ASTRA_V2_ARCHITECTURE.md`.
+
+---
+
+## Commercial Billing (Founder's Launch)
+
+**Source of truth for SaaS commercial entitlements** (distinct from CRM AR invoices and from legacy `OrganizationSubscription` seat packs).
+
+**Subscription Module** = `server/services/commercial/*` (not Inventory). Inventory Items / Pricebook / CRM Invoice remain **tenant CRM AR** only. Do not generate SaaS invoices via master-instance Inventory.
+
+### Model
+
+```
+Catalog (BillingProduct + BillingPrice)
+  → BillingSubscription + BillingSubscriptionItem (price snapshots)
+  → BillingEntitlement / BillingUsage
+  → BillingEvent (idempotent)
+  → BillingInvoice + BillingInvoiceLine (paid immutable; unpaid revisable for discounts)
+  → BillingPayment
+```
+
+**Do not** collapse catalog / subscription / entitlement / usage.  
+**Do not** recalculate historical invoices from live catalog prices.  
+**Do not** embed commercial prices in app controllers — use `server/services/commercial/*`.  
+**Do not** use Inventory as the SaaS billing foundation.
+
+### Founder's Launch
+
+| Component | Monthly (paise) |
+|-----------|----------------:|
+| Platform (legacy flat — unused for seats) | 0 |
+| Admin user | 99900 |
+| Standard user | 69900 |
+| Portal user (from) | 19900 |
+| Helpdesk / Sales / Audit / Inventory / Field Sales / Marketing | 14900–49900 |
+| Learning (`learning_app`) — `TIERED_CAPACITY` learner seats | 199900 / 599900 / 1199900 (50 / 200 / 500) |
+
+**Identity seats:** `User.userType` is `STANDARD` | `ADMIN` | `EXTERNAL`. Every Admin bills @ ₹999; every Standard @ ₹699; **no free included seat**. Standard users may only open Settings **profile** + **personal notifications** (type wins over `settings.*` / Profile). Elevate via assigning an Admin-type role (syncs `userType` → `ADMIN`).
+
+Annual = **10 × monthly**. Capacity **100** Founder customers; **24-month** price protection via `FounderAllocation` (not `isFounder` boolean).
+
+Internal/master orgs (`Instance.isInternal`): commercial **sandbox** allowed; **never** consume Founder capacity; `metadata.notBillable`. Platform admin `/control/billing` **hides** sandbox/internal by default (`?includeSandbox=true` to show). Sandbox detail: suspend / restore / status override **blocked** (API + UI); credits/discounts allowed for practice.
+
+### Trial → first bill
+
+- Default **14-day** trial (`status: trialing`). Catalog/usage tracked; **no payable invoices** while trialing.
+- Paid period clock starts at Subscribe activation (`currentPeriodEnd = trialEnd` during trial).
+- Hourly scheduler **expires** due trials → `trial_expired` (instance locked) — does **not** auto-convert or auto-invoice.
+- Customer Subscribe (`POST /api/billing/subscribe`): set cycle → bill-to → finalize first invoice → `payment_pending` → Razorpay or manual proof → on verify → `active`.
+- Hourly scheduler also renews ended paid periods: ensure ending-period invoice → advance window → finalize next period invoice (in advance). Idempotent per period.
+- Hourly dunning: finalized invoices past `dueAt` (+ optional `COMMERCIAL_BILLING_GRACE_DAYS`) → `past_due`; subscription → `past_due`; renewal overdue → instance Suspended. Unpaid **proration** invoices hold new components only.
+- Collect: Razorpay Order checkout + confirm + webhook → `BillingPayment`. Manual: customer submits UTR/proof (`submitted`) → platform admin approve/reject. Ops mark-paid is platform-admin only.
+- Mid-cycle **adds** (seats, app licenses, add-ons/boosters): immediate prorated invoice; **removes** → `creditBalanceMinor`. No proration while trialing / trial_expired / not-billable.
+- Early convert with payment: `POST /api/billing/subscribe` (or `end-trial` with invoice + pay).
+- Sandbox/not-billable orgs never auto-invoice.
+- `FEATURE_COMMERCIAL_BILLING_ENFORCEMENT=true`: deny app access when `trial_expired` / `payment_pending` / `past_due` / canceled / expired / missing entitlements.
+
+### Ops adjustments (platform admin)
+
+Finalized invoice **identity** (number / `_id`) is stable. Paid invoices are never rewritten — use credit notes. **Unpaid** `draft` / `finalized` / `past_due` invoices may be **revised in place** for negotiation discounts (audited). Otherwise use ledger instruments on `/control/billing`:
+
+| Action | When | Effect |
+|--------|------|--------|
+| **Revise unpaid** | Negotiation on open invoice | In-place line `discountMinor` + header `discountMinor`; same `invoiceNumber`; prior money fields append to `snapshot.revisions[]` + `OPS_INVOICE_REVISED`. Multiple revises allowed while unpaid. Qty/unit/products unchanged. Open pending payments invalidated when total changes. |
+| **Apply credit** | Goodwill / negotiated discount | ↑ `creditBalanceMinor` + `BillingCreditNote` (`goodwill`) → reduces **next** invoice |
+| **Pending discount** | Sales deal one-shot | Set `pendingDiscountMinor` → applied as `discountMinor` on next **period** invoice draft (not proration), then cleared |
+| **Recurring discount** | Multi-month sales deal | Set `recurringDiscountMinor` + `recurringDiscountPeriodsRemaining` → ₹ off each period invoice until remaining hits 0 (monthly: 12 ≈ 1y; annual: 1 ≈ 1y). Stacks with one-shot |
+| **Void & reissue** | Unpaid `finalized` / `past_due` / `draft` with no payments | Status → `void` (audit in snapshot); optional regenerate current-period invoice |
+| **Credit note** | Paid / partially paid invoice | Immutable `BillingCreditNote` linked to invoice + ↑ `creditBalanceMinor` |
+| **Correct bill-to** | Support break-glass | Tenant owns bill-to in Settings → Subscriptions; master is read-only by default. “Correct as support” requires reason → updates org party for **future** invoices only + `OPS_BILLING_PARTY_CORRECTED` |
+
+All actions require a reason and emit `BillingEvent` (`OPS_INVOICE_REVISED` / `OPS_CREDIT_APPLIED` / `OPS_PENDING_DISCOUNT_SET` / `OPS_RECURRING_DISCOUNT_SET` / `OPS_INVOICE_VOIDED` / `OPS_CREDIT_NOTE_ISSUED` / `OPS_BILLING_PARTY_CORRECTED`). Period invoice math: line nets → `subtotal − discount − credit → tax → total`.
+
+### Key APIs
+
+| Path | Purpose |
+|------|---------|
+| `GET/POST /api/billing/*` | Catalog, estimate, subscription, bootstrap, reconcile, cycle, subscribe, cancel, invoices, payments, PDF, admin verify |
+| `FEATURE_COMMERCIAL_BILLING_ENFORCEMENT=true` | Soft gate in `requireAppEntitlement` (default off) |
+
+### Jobs
+
+`ENABLE_COMMERCIAL_BILLING_PERIOD_SCHEDULER` (default on) — hourly: apply `pendingBillingCycle`; convert ended trials; renew ended paid periods; mark overdue invoices/`past_due` subscriptions.
+
+Env: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` (commercial collect); `COMMERCIAL_BILLING_GRACE_DAYS` (optional dunning grace).
+
+**SaaS invoice PDF** (`commercialInvoicePdfService`): prefers a **platform-scoped Content Platform template** (`billing_invoices` moduleScope on the internal/master org, or `COMMERCIAL_INVOICE_TEMPLATE_ORG_ID`) when linked via `CommercialInvoicePdfSettings.templateId` — reuses the existing Templates builder, not a second designer. Ops: Control → Commercial billing → PDF settings → **Edit layout**. Falls back to PDFKit when no published template / `CONTENT_PLATFORM_BILLING_INVOICES_MODE=legacy`. Seller/payment copy still from PDF settings (DB → env). Customer tenants’ CRM invoice templates are never used.
+
+### Tax
+
+Catalog amounts are tax-exclusive. `taxService` applies `COMMERCIAL_TAX_RATE_BPS` (default 1800 = 18% GST), `COMMERCIAL_TAX_NAME` (default `GST`), `COMMERCIAL_TAX_ENABLED` on draft invoices unless org is sandbox/not billable. Stored on `invoice.taxDetails` and rendered on the PDF.
+
+---
 
 ### When Adding Features (Checklist)
 

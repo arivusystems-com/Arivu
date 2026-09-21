@@ -171,6 +171,35 @@ const APP_DEFINITIONS = [
     }
   },
   {
+    appKey: 'lms',
+    name: 'Learning',
+    description: 'An intelligent learning platform for your people, customers, and partners',
+    icon: 'academic-cap',
+    category: 'BUSINESS',
+    owner: 'PLATFORM',
+    enabled: true,
+    order: 7,
+    capabilities: {
+      usesPeople: true,
+      usesOrganization: true,
+      usesTransactions: false,
+      usesAutomation: true
+    },
+    settingsSchema: null,
+    ui: {
+      sidebarOrder: 7,
+      icon: 'academic-cap',
+      defaultRoute: '/learning',
+      showInAppSwitcher: true
+    },
+    marketplace: {
+      category: 'People',
+      beta: true,
+      comingSoon: false,
+      shortDescription: 'Courses, paths, assessments, and certificates priced by learner seats'
+    }
+  },
+  {
     appKey: 'control_plane',
     name: 'Control Plane',
     description: 'Platform control plane for system administration (internal only)',

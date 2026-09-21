@@ -998,5 +998,33 @@
   "internalChat": {
     "message": "Chat",
     "description": "Internal Chat addon navigation label"
+  },
+  "appLearning": {
+    "message": "Learning",
+    "description": "Learning app name in app switcher"
+  },
+  "learningDashboardBlurb": {
+    "message": "An intelligent learning platform for your people, customers, and partners.",
+    "description": "Short description on Learning app"
+  },
+  "goToAcademy": {
+    "message": "Learning Academy",
+    "description": "Switch from Portal to Learning Academy"
+  },
+  "goToPortal": {
+    "message": "Customer Portal",
+    "description": "Switch from Learning Academy to Customer Portal"
+  },
+  "goToAudit": {
+    "message": "Audit",
+    "description": "Cross-link from Learning Academy to Audit app (dual-entitled EXTERNAL)"
+  },
+  "expandSidebar": {
+    "message": "Expand sidebar",
+    "description": "Expand app sidebar tooltip"
+  },
+  "portalNav": {
+    "message": "Portal navigation",
+    "description": "Aria label for Customer Portal sidebar and mobile tab bar"
   }
 }

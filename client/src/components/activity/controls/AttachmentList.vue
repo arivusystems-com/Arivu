@@ -4,7 +4,7 @@
       v-for="(attachment, idx) in attachments"
       :key="idx"
       :is="ui.hasAttachmentUrl(attachment) ? 'a' : 'div'"
-      :href="ui.hasAttachmentUrl(attachment) ? ui.getAttachmentUrl(attachment) : undefined"
+      :href="ui.hasAttachmentUrl(attachment) ? resolveAttachmentUrl(attachment) : undefined"
       :target="ui.hasAttachmentUrl(attachment) ? '_blank' : undefined"
       :rel="ui.hasAttachmentUrl(attachment) ? 'noopener noreferrer' : undefined"
       :class="[
@@ -24,19 +24,19 @@
           type="button"
           class="pointer-events-none absolute right-2 top-2 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300/90 bg-white/90 text-gray-600 opacity-0 shadow-sm transition-opacity duration-150 hover:bg-white group-hover/attachment:pointer-events-auto group-hover/attachment:opacity-100 dark:border-gray-600 dark:bg-gray-800/90 dark:text-gray-200 dark:hover:bg-gray-800"
           :aria-label="`Download ${ui.getAttachmentName(attachment)}`"
-          @click.prevent.stop="ui.downloadAttachment(attachment)"
+          @click.prevent.stop="downloadResolved(attachment)"
         >
           <ArrowDownTrayIcon class="h-5 w-5" />
         </button>
         <object
           v-if="ui.isSvgAttachment(attachment)"
-          :data="ui.getAttachmentUrl(attachment)"
+          :data="resolveAttachmentUrl(attachment)"
           type="image/svg+xml"
           class="block max-h-[240px] w-full object-contain"
         />
         <img
           v-else
-          :src="ui.getAttachmentUrl(attachment)"
+          :src="resolveAttachmentUrl(attachment)"
           :alt="ui.getAttachmentName(attachment)"
           class="block max-h-[240px] w-full object-contain"
           loading="lazy"
@@ -60,13 +60,30 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
 import { ArrowDownTrayIcon, PaperClipIcon } from '@heroicons/vue/24/outline';
+import { resolveAssetDownloadUrl } from '@/modules/template/composables/useCompanyLogoAsset';
 
-defineProps({
+const props = defineProps({
   attachments: { type: Array, default: () => [] },
   ui: { type: Object, required: true }
 });
+
+function resolveAttachmentUrl(attachment) {
+  const raw = props.ui.getAttachmentUrl(attachment);
+  if (!raw || raw === '#') return '';
+  return resolveAssetDownloadUrl(raw) || raw;
+}
+
+function downloadResolved(attachment) {
+  const url = resolveAttachmentUrl(attachment);
+  if (!url) return;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = props.ui.getAttachmentName(attachment) || 'attachment';
+  link.rel = 'noopener noreferrer';
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 </script>

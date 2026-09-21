@@ -187,7 +187,10 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Extension } from '@tiptap/core';
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import StarterKit from '@tiptap/starter-kit';
 import Heading from '@tiptap/extension-heading';
@@ -200,6 +203,8 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
+  /** Display names used to highlight `@Name` / `@all` in the composer. */
+  mentionLabels: { type: Array, default: () => [] },
   /** Unique when multiple composers are mounted (channel + thread). */
   bubblePluginKey: { type: String, default: 'internalChatComposerBubble' },
 });
@@ -209,6 +214,69 @@ const emit = defineEmits(['update:modelValue', 'update:text', 'submit', 'input']
 const { t } = useI18n();
 const linkUrl = ref('https://');
 const linkInputRef = ref(null);
+
+const mentionHighlightKey = new PluginKey('icComposerMentionHighlight');
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildMentionDecorations(doc, labels) {
+  const sorted = [...new Set(
+    (labels || [])
+      .map((l) => String(l || '').trim())
+      .filter(Boolean)
+  )].sort((a, b) => b.length - a.length);
+
+  const patterns = [
+    ...sorted.map((label) => `@${escapeRegExp(label)}(?![\\w])`),
+    '@all\\b',
+  ];
+  if (!patterns.length) return DecorationSet.empty;
+
+  const re = new RegExp(`(?:${patterns.join('|')})`, 'gi');
+  const decos = [];
+  doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) return;
+    const text = node.text;
+    re.lastIndex = 0;
+    let match = re.exec(text);
+    while (match) {
+      const from = pos + match.index;
+      const to = from + match[0].length;
+      decos.push(Decoration.inline(from, to, { class: 'ic-mention' }));
+      match = re.exec(text);
+    }
+  });
+  return DecorationSet.create(doc, decos);
+}
+
+const MentionHighlight = Extension.create({
+  name: 'icComposerMentionHighlight',
+  addOptions() {
+    return { getLabels: () => [] };
+  },
+  addProseMirrorPlugins() {
+    const extension = this;
+    return [
+      new Plugin({
+        key: mentionHighlightKey,
+        state: {
+          init: (_, state) => buildMentionDecorations(state.doc, extension.options.getLabels()),
+          apply(tr, oldState, _old, newState) {
+            if (!tr.docChanged && !tr.getMeta(mentionHighlightKey)) return oldState;
+            return buildMentionDecorations(newState.doc, extension.options.getLabels());
+          },
+        },
+        props: {
+          decorations(state) {
+            return this.getState(state);
+          },
+        },
+      }),
+    ];
+  },
+});
 
 /** Escape composer `overflow-hidden` so the menu isn't clipped. */
 const bubbleTippyOptions = {
@@ -251,8 +319,11 @@ function applyLink(close) {
   close?.();
 }
 
-function isSlashMenuOpen() {
-  return Boolean(typeof document !== 'undefined' && document.querySelector('.slash-command-list'));
+function isSlashMenuBlockingEnter() {
+  if (typeof document === 'undefined') return false;
+  const list = document.querySelector('.slash-command-list');
+  if (!list) return false;
+  return list.querySelectorAll('.slash-command-item').length > 0;
 }
 
 const editor = useEditor({
@@ -277,6 +348,9 @@ const editor = useEditor({
       placeholder: props.placeholder || '',
     }),
     InternalChatSlashCommands,
+    MentionHighlight.configure({
+      getLabels: () => props.mentionLabels || [],
+    }),
   ],
   editorProps: {
     attributes: {
@@ -285,7 +359,7 @@ const editor = useEditor({
     },
     handleKeyDown: (_view, event) => {
       if (event.key === 'Enter' && !event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey) {
-        if (event.isComposing || isSlashMenuOpen()) return false;
+        if (event.isComposing || isSlashMenuBlockingEnter()) return false;
         event.preventDefault();
         emit('submit');
         return true;
@@ -320,6 +394,16 @@ watch(
   }
 );
 
+watch(
+  () => props.mentionLabels,
+  () => {
+    const ed = editor.value;
+    if (!ed) return;
+    ed.view.dispatch(ed.state.tr.setMeta(mentionHighlightKey, true));
+  },
+  { deep: true }
+);
+
 function onSurfaceMouseDown(event) {
   const ed = editor.value;
   if (!ed || props.disabled) return;
@@ -340,12 +424,26 @@ function insertText(text) {
   ed.chain().focus().insertContent(String(text)).run();
 }
 
+/** Text immediately before the caret (cursor-local; not full-doc getText). */
+function getTextBeforeCursor(maxLen = 80) {
+  const ed = editor.value;
+  if (!ed) return '';
+  const { from } = ed.state.selection;
+  return ed.state.doc.textBetween(Math.max(0, from - maxLen), from, '\n', '\n');
+}
+
+function getActiveMentionQuery() {
+  const textBefore = getTextBeforeCursor();
+  const match = textBefore.match(/(?:^|\s)@([^\s@]*)$/);
+  return match ? match[1] : null;
+}
+
 function replaceTrailingMentionQuery(label) {
   const ed = editor.value;
   if (!ed) return false;
   const { state } = ed;
   const { from } = state.selection;
-  const textBefore = state.doc.textBetween(Math.max(0, from - 80), from, '\n', '\n');
+  const textBefore = getTextBeforeCursor();
   const match = textBefore.match(/(?:^|\s)(@[^\s@]*)$/);
   if (!match) {
     insertText(`${label} `);
@@ -365,6 +463,7 @@ defineExpose({
   focus,
   insertText,
   replaceTrailingMentionQuery,
+  getActiveMentionQuery,
   getPlainText: () => editor.value?.getText() || '',
   editor,
 });
@@ -451,6 +550,19 @@ onBeforeUnmount(() => {
   color: rgb(79 70 229);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.ic-composer-tiptap :deep(.ic-mention) {
+  border-radius: 0.25rem;
+  padding: 0.05rem 0.3rem;
+  font-weight: 600;
+  background: rgb(219 234 254);
+  color: rgb(30 64 175);
+}
+
+:global(.dark) .ic-composer-tiptap :deep(.ic-mention) {
+  background: rgb(30 58 138 / 0.55);
+  color: rgb(191 219 254);
 }
 
 .ic-composer-tiptap :deep(.ProseMirror p.is-editor-empty:first-child::before) {
