@@ -119,6 +119,11 @@ const PeopleSchema = new Schema({
   importHistoryId: { type: Schema.Types.ObjectId, ref: 'ImportHistory', default: null, index: true },
   deletionReason: { type: String, trim: true, maxlength: 500 },
 
+  // Duplicate merge (master survives; duplicate points here)
+  mergedInto: { type: Schema.Types.ObjectId, ref: 'People', default: null, index: true },
+  mergedAt: { type: Date, default: null },
+  mergedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+
   // Activity Logs (Generic audit trail - app-agnostic structure)
   // ⚠️ NOTE: The action field is a generic string, but action values may be app-specific
   //    SALES app may use values like "lead_status_changed", "contact_created", etc.

@@ -369,6 +369,32 @@ exports.createDeal = async (req, res) => {
                 { $inc: { stageOrder: 1 } }
             );
         }
+
+        try {
+            const { evaluateDuplicates } = require('../services/duplicates');
+            const dupResult = await evaluateDuplicates({
+                organizationId: req.user.organizationId,
+                moduleKey: 'deals',
+                candidate: payload,
+                emitEvent: true,
+                triggeredBy: req.user._id,
+                limit: 5,
+            });
+            if (dupResult.enabled && dupResult.hasMatch) {
+                const policy = dupResult.policy || 'warn';
+                if (policy === 'reject' || policy === 'warn') {
+                    return res.status(409).json({
+                        success: false,
+                        code: policy === 'reject' ? 'DUPLICATE_REJECTED' : 'DUPLICATE_WARNING',
+                        message: 'A matching Deal already exists.',
+                        data: { matches: dupResult.matches, policy },
+                    });
+                }
+            }
+        } catch (dupErr) {
+            console.warn('[dealController.createDeal] duplicate check failed:', dupErr.message);
+        }
+
         const newDeal = await Deal.create(payload);
 
         await syncLegacyToRoleBased(newDeal, req.user._id);

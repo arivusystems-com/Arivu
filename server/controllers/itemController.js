@@ -88,21 +88,46 @@ exports.createItem = async (req, res) => {
             });
         }
 
-        // Unique item name per org (active records) — duplicate flow forces rename on create
+        // Unique item via Core Duplicate Engine (default: item_code Exact)
         const trimmedName = String(payload.item_name).trim();
         payload.item_name = trimmedName;
-        const existingByName = await Item.findOne({
-            organizationId: req.user.organizationId,
-            item_name: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
-            deletedAt: null
-        }).select('_id').lean();
-        if (existingByName) {
-            return res.status(409).json({
-                success: false,
-                code: 'DUPLICATE_ITEM_NAME',
-                message: 'An Item with this name already exists.',
-                errors: { item_name: 'An Item with this name already exists.' }
+        try {
+            const { evaluateDuplicates } = require('../services/duplicates');
+            const dupResult = await evaluateDuplicates({
+                organizationId: req.user.organizationId,
+                moduleKey: 'items',
+                candidate: payload,
+                emitEvent: true,
+                triggeredBy: req.user._id,
+                limit: 5,
             });
+            if (dupResult.enabled && dupResult.hasMatch) {
+                const policy = dupResult.policy || 'reject';
+                if (policy === 'reject' || policy === 'warn') {
+                    return res.status(409).json({
+                        success: false,
+                        code: 'DUPLICATE_ITEM',
+                        message: 'A matching Item already exists.',
+                        errors: { item_code: 'A matching Item already exists.' },
+                        data: { matches: dupResult.matches },
+                    });
+                }
+            }
+        } catch (dupErr) {
+            console.warn('[itemController.create] duplicate check failed:', dupErr.message);
+            const existingByName = await Item.findOne({
+                organizationId: req.user.organizationId,
+                item_name: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
+                deletedAt: null
+            }).select('_id').lean();
+            if (existingByName) {
+                return res.status(409).json({
+                    success: false,
+                    code: 'DUPLICATE_ITEM_NAME',
+                    message: 'An Item with this name already exists.',
+                    errors: { item_name: 'An Item with this name already exists.' }
+                });
+            }
         }
 
         // Set defaults

@@ -205,6 +205,31 @@ exports.create = async (req, res) => {
         timestamp: new Date()
       }]
     };
+
+    try {
+      const { evaluateDuplicates } = require('../services/duplicates');
+      const dupResult = await evaluateDuplicates({
+        organizationId: req.user.organizationId,
+        moduleKey: 'organizations',
+        candidate: body,
+        emitEvent: true,
+        triggeredBy: req.user?._id,
+        limit: 5,
+      });
+      if (dupResult.enabled && dupResult.hasMatch) {
+        const policy = dupResult.policy || 'warn';
+        if (policy === 'reject' || policy === 'warn') {
+          return res.status(409).json({
+            success: false,
+            code: policy === 'reject' ? 'DUPLICATE_REJECTED' : 'DUPLICATE_WARNING',
+            message: 'A matching Organization already exists.',
+            data: { matches: dupResult.matches, policy },
+          });
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[organizationV2Controller.create] duplicate check failed:', dupErr.message);
+    }
     
     const org = await Organization.create(body);
     
@@ -686,6 +711,35 @@ exports.update = async (req, res) => {
     for (const [key, value] of Object.entries(req.body || {})) {
       if (blockedFields.has(key)) continue;
       updatePayload[key] = value;
+    }
+
+    {
+      const dupFields = ['name', 'domain', 'website', 'taxId', 'tax_id', 'email', 'phone'];
+      if (dupFields.some((f) => Object.prototype.hasOwnProperty.call(updatePayload, f))) {
+        try {
+          const { evaluateDuplicates } = require('../services/duplicates');
+          const candidate = { ...(org.toObject ? org.toObject() : org), ...updatePayload };
+          const dupResult = await evaluateDuplicates({
+            organizationId: tenantOrganizationId,
+            moduleKey: 'organizations',
+            candidate,
+            excludeRecordId: org._id,
+            emitEvent: true,
+            triggeredBy: req.user?._id,
+            limit: 5,
+          });
+          if (dupResult.enabled && dupResult.hasMatch) {
+            return res.status(409).json({
+              success: false,
+              code: 'DUPLICATE_WARNING',
+              message: 'This update matches another Organization record.',
+              data: { matches: dupResult.matches, policy: dupResult.policy },
+            });
+          }
+        } catch (dupErr) {
+          console.warn('[organizationV2Controller.update] duplicate check failed:', dupErr.message);
+        }
+      }
     }
 
     const { getOrganizationTypesConfig } = require('../utils/tenantMetadata');

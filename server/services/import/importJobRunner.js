@@ -25,9 +25,27 @@ async function buildProcessorContext(importRecord) {
   const organizationId = importRecord.organizationId;
   const userId = importRecord.importedBy;
   const duplicateAction = importRecord.duplicateAction || 'skip';
-  const updateExisting = duplicateAction === 'update';
+  // Never allow create-duplicates when platform duplicate prevention is on for master modules
+  let resolvedAction = duplicateAction;
+  const masterModules = {
+    contacts: 'people',
+    people: 'people',
+    organizations: 'organizations',
+    items: 'items',
+    deals: 'deals',
+    tasks: 'tasks',
+  };
+  const dupModule = masterModules[importRecord.module];
+  if (dupModule && duplicateAction === 'import-all') {
+    try {
+      const { getConfig } = require('../duplicates/configService');
+      const cfg = await getConfig(organizationId, dupModule);
+      if (cfg.enabled) resolvedAction = 'skip';
+    } catch (_) { /* keep original */ }
+  }
+  const updateExisting = resolvedAction === 'update';
   const shouldCheckDuplicates = importRecord.duplicateCheckEnabled !== false
-    && duplicateAction !== 'import-all';
+    && resolvedAction !== 'import-all';
   const fieldMapping = importRecord.metadata?.fieldMapping || {};
   const fieldDefaultValues = importRecord.metadata?.fieldDefaultValues || {};
   const duplicateCheckFields = importRecord.duplicateCheckFields?.length

@@ -23385,5 +23385,9 @@
   "usersImportStatusSkipped": {
     "message": "Skipped",
     "description": "Row status"
+  },
+  "modFieldsTabDuplicatePrevention": {
+    "message": "Duplicate Prevention",
+    "description": "Top tab for duplicate rules"
   }
 }

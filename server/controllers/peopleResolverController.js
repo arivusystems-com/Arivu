@@ -579,13 +579,65 @@ exports.createOrAttach = async (req, res) => {
       validatedRole
     });
 
-    // Check for duplicate by email (identity rule)
+    // Check for duplicate via Core Duplicate Engine (email Exact → attach by default)
     let existingPerson = null;
-    if (coreFields.email) {
-      existingPerson = await People.findOne({
-        organizationId: req.user.organizationId,
-        email: coreFields.email.toLowerCase().trim()
-      });
+    try {
+      const { evaluateDuplicates, getConfig } = require('../services/duplicates');
+      const config = await getConfig(req.user.organizationId, 'people');
+      if (config.enabled) {
+        const result = await evaluateDuplicates({
+          organizationId: req.user.organizationId,
+          moduleKey: 'people',
+          candidate: coreFields,
+          config,
+          emitEvent: true,
+          triggeredBy: req.user._id,
+          limit: 1,
+        });
+        if (result.hasMatch && result.matches[0]?.record?._id) {
+          const policy = result.policy || config.apiMatchPolicy || 'attach';
+          if (policy === 'reject') {
+            return res.status(409).json({
+              success: false,
+              code: 'DUPLICATE_REJECTED',
+              message: 'A matching People record already exists.',
+              data: { matches: result.matches },
+            });
+          }
+          if (policy === 'warn') {
+            // Still attach for createOrAttach identity flow when exact email matched;
+            // warn is for generic create endpoints. Prefer attach when email exact.
+            const emailExact = result.matches[0].matchedFields?.some(
+              (f) => f.field === 'email' && f.matchType === 'exact'
+            );
+            if (!emailExact) {
+              return res.status(409).json({
+                success: false,
+                code: 'DUPLICATE_WARNING',
+                message: 'Possible duplicate People record found.',
+                data: { matches: result.matches },
+              });
+            }
+          }
+          existingPerson = await People.findOne({
+            _id: result.matches[0].record._id,
+            organizationId: req.user.organizationId,
+          });
+        }
+      } else if (coreFields.email) {
+        existingPerson = await People.findOne({
+          organizationId: req.user.organizationId,
+          email: coreFields.email.toLowerCase().trim(),
+        });
+      }
+    } catch (dupErr) {
+      console.warn('[createOrAttach] duplicate engine error, falling back to email:', dupErr.message);
+      if (coreFields.email) {
+        existingPerson = await People.findOne({
+          organizationId: req.user.organizationId,
+          email: coreFields.email.toLowerCase().trim(),
+        });
+      }
     }
 
     // Get user name for activity log

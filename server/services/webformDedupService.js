@@ -153,6 +153,51 @@ async function evaluateSubmissionDedup({ webform, fieldValues, organizationId })
   const moduleKey = String(webform?.targetModuleKey || 'people').toLowerCase();
   const payload = buildCrmPayload(webform, fieldValues);
   const tenantUserIds = moduleKey === 'organizations' ? await getTenantUserIds(organizationId) : [];
+
+  // Prefer Core Duplicate Engine for master modules when tenant rules are enabled
+  if (moduleKey === 'people' || moduleKey === 'organizations' || moduleKey === 'items') {
+    try {
+      const { getConfig, evaluateDuplicates } = require('./duplicates');
+      const config = await getConfig(organizationId, moduleKey);
+      if (config.enabled) {
+        const result = await evaluateDuplicates({
+          organizationId,
+          moduleKey,
+          candidate: payload,
+          config,
+          limit: 1,
+        });
+        const record = result.hasMatch && result.matches[0]?.record?._id
+          ? await (async () => {
+            const { MODULE_MODELS } = require('./duplicates/evaluate');
+            return MODULE_MODELS[moduleKey].findById(result.matches[0].record._id);
+          })()
+          : null;
+
+        // create_anyway blocked when platform rules are ON
+        const webformForPolicy = {
+          ...webform,
+          dedup: {
+            ...(webform.dedup || {}),
+            enabled: true,
+            action: webform?.dedup?.action === 'create_anyway' ? 'reject' : (webform?.dedup?.action || 'update'),
+          },
+        };
+        const policy = resolveEffectiveRecordAction(webformForPolicy, { record });
+        return {
+          matched: Boolean(record),
+          matchedRecordId: record?._id || null,
+          matchedKey: result.matches[0]?.matchedFields?.[0]?.field || null,
+          existingRecord: record,
+          shouldReject: policy.shouldReject,
+          recordAction: policy.recordAction,
+        };
+      }
+    } catch (err) {
+      console.warn('[webformDedup] engine fallback:', err.message);
+    }
+  }
+
   const keys = normalizeDedupKeys(webform);
 
   const { record, matchedKey } = await findExistingByDedupKeys({

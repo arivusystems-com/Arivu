@@ -227,6 +227,43 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email format.' });
     }
 
+    try {
+      const { evaluateDuplicates } = require('../services/duplicates');
+      const dupResult = await evaluateDuplicates({
+        organizationId: req.user.organizationId,
+        moduleKey: 'people',
+        candidate: body,
+        emitEvent: true,
+        triggeredBy: req.user._id,
+        limit: 5,
+      });
+      if (dupResult.enabled && dupResult.hasMatch) {
+        const policy = dupResult.policy || 'warn';
+        if (policy === 'reject' || policy === 'warn') {
+          return res.status(409).json({
+            success: false,
+            code: policy === 'reject' ? 'DUPLICATE_REJECTED' : 'DUPLICATE_WARNING',
+            message: 'A matching People record already exists.',
+            data: { matches: dupResult.matches, policy },
+          });
+        }
+        // attach policy on plain create: return existing instead of creating
+        if (policy === 'attach' && dupResult.matches[0]?.record?._id) {
+          const existing = await People.findById(dupResult.matches[0].record._id);
+          if (existing) {
+            return res.status(200).json({
+              success: true,
+              data: flattenPeopleForResponse(existing),
+              code: 'DUPLICATE_ATTACHED',
+              message: 'Existing People record returned (duplicate prevention).',
+            });
+          }
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[PeopleController.create] duplicate check failed:', dupErr.message);
+    }
+
     {
       const ModuleDefinition = require('../models/ModuleDefinition');
       const { validatePicklistDependencyValues } = require('../utils/dependencyEvaluation');
@@ -897,6 +934,41 @@ exports.update = async (req, res) => {
 
     if (Object.prototype.hasOwnProperty.call(updateData, 'email') && !isOptionalEmailWellFormed(updateData.email)) {
       return res.status(400).json({ success: false, message: 'Invalid email format.' });
+    }
+
+    {
+      const dupFields = ['email', 'phone', 'mobile', 'first_name', 'last_name'];
+      if (dupFields.some((f) => Object.prototype.hasOwnProperty.call(updateData, f))) {
+        try {
+          const existing = await People.findOne({
+            _id: req.params.id,
+            organizationId: req.user.organizationId,
+          }).lean();
+          if (existing) {
+            const { evaluateDuplicates } = require('../services/duplicates');
+            const candidate = { ...existing, ...updateData };
+            const dupResult = await evaluateDuplicates({
+              organizationId: req.user.organizationId,
+              moduleKey: 'people',
+              candidate,
+              excludeRecordId: req.params.id,
+              emitEvent: true,
+              triggeredBy: req.user._id,
+              limit: 5,
+            });
+            if (dupResult.enabled && dupResult.hasMatch) {
+              return res.status(409).json({
+                success: false,
+                code: 'DUPLICATE_WARNING',
+                message: 'This update matches another People record.',
+                data: { matches: dupResult.matches, policy: dupResult.policy },
+              });
+            }
+          }
+        } catch (dupErr) {
+          console.warn('[PeopleController.update] duplicate check failed:', dupErr.message);
+        }
+      }
     }
     
     // If someone tried to change createdBy, log a warning (but don't fail the request)

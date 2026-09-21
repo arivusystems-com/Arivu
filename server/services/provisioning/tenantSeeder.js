@@ -431,6 +431,16 @@ async function seedTenantDatabase(orgConnection, organization, options = {}) {
         summary.moduleNumbering = { created: 0, skipped: 0, error: err.message };
     }
 
+    try {
+        const { seedDefaultsForOrg } = require('../duplicates/configService');
+        const dupConfigs = await seedDefaultsForOrg(organization._id);
+        summary.duplicatePrevention = { created: dupConfigs.filter((c) => !c.isDefault).length, modules: dupConfigs.map((c) => c.moduleKey) };
+        log(`  ✅ DuplicatePrevention: seeded for ${summary.duplicatePrevention.modules.join(', ')}`);
+    } catch (err) {
+        log(`  ⚠️ DuplicatePrevention seed skipped: ${err.message}`);
+        summary.duplicatePrevention = { error: err.message };
+    }
+
     log(`✅ Tenant DB seed complete: ${dbName}\n`);
     return summary;
 }

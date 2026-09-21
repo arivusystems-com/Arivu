@@ -38,7 +38,7 @@
 
 <template>
   <WorkspaceScopedDrawerShell
-    :is-open="isOpen"
+    :is-open="isOpen && !compareMergeOpen"
     draft-module-key="organizations"
     :draft-record-id="orgDraftRecordId"
     @backdrop="handleDialogClose"
@@ -200,6 +200,23 @@
                 </form>
               </div>
   </WorkspaceScopedDrawerShell>
+
+  <DuplicateWarningDialog
+    :open="duplicateWarningOpen"
+    module-key="organizations"
+    :matches="duplicateMatches"
+    @cancel="duplicateWarningOpen = false"
+    @view="onDuplicateView"
+    @compare="onDuplicateCompare"
+  />
+  <RecordCompareMergeDrawer
+    :open="compareMergeOpen"
+    module-key="organizations"
+    :record-id-a="compareRecordIdA"
+    :record-id-b="compareRecordIdB"
+    @close="compareMergeOpen = false"
+    @merged="onDuplicateMerged"
+  />
 </template>
 
 <script setup>
@@ -210,6 +227,8 @@ import DynamicForm from '@/components/common/DynamicForm.vue';
 import WorkspaceScopedDrawerShell from '@/components/common/WorkspaceScopedDrawerShell.vue';
 import OrganizationParticipationSection from '@/components/organizations/OrganizationParticipationSection.vue';
 import VendorCatalogSection from '@/components/organizations/VendorCatalogSection.vue';
+import DuplicateWarningDialog from '@/components/duplicates/DuplicateWarningDialog.vue';
+import RecordCompareMergeDrawer from '@/components/duplicates/RecordCompareMergeDrawer.vue';
 import apiClient from '@/utils/apiClient';
 import { fetchModuleDefinitionCached } from '@/utils/tenantSchemaApiCache';
 import { ensureModuleCreateLayout } from '@/platform/fields/createSurface';
@@ -328,6 +347,43 @@ function setOrgDrawerMode(nextMode, { animate = true } = {}) {
 const formData = ref({ ...props.initialData });
 const errors = ref({});
 const saving = ref(false);
+const duplicateWarningOpen = ref(false);
+const duplicateMatches = ref([]);
+const compareMergeOpen = ref(false);
+const compareRecordIdA = ref(null);
+const compareRecordIdB = ref(null);
+
+function onDuplicateView(id) {
+  duplicateWarningOpen.value = false;
+  compareMergeOpen.value = false;
+  if (id) openTab(`/organizations/${id}`, { insertAdjacent: true });
+  closeDrawer();
+}
+
+function onDuplicateCompare(id) {
+  duplicateWarningOpen.value = false;
+  const existingId = props.organizationId || null;
+  compareRecordIdA.value = existingId || id;
+  compareRecordIdB.value = existingId
+    ? id
+    : (duplicateMatches.value[1]?.record?._id || id);
+  if (
+    compareRecordIdA.value
+    && compareRecordIdB.value
+    && String(compareRecordIdA.value) !== String(compareRecordIdB.value)
+  ) {
+    // Hide create shell while compare is open (same component stays mounted)
+    compareMergeOpen.value = true;
+  } else {
+    onDuplicateView(id);
+  }
+}
+
+function onDuplicateMerged() {
+  compareMergeOpen.value = false;
+  saving.value = false;
+  closeDrawer();
+}
 const moduleDefinition = ref(null);
 /** Draft Vendor Catalog lines (persisted via inventory vendor-catalog API). */
 const vendorCatalogLines = ref([]);
@@ -900,6 +956,20 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('[OrganizationQuickCreate] Error creating organization:', error);
+    const dupCode = error.response?.data?.code || error?.response?.data?.code;
+    if (
+      error.status === 409
+      || error.response?.status === 409
+      || dupCode === 'DUPLICATE_WARNING'
+      || dupCode === 'DUPLICATE_REJECTED'
+    ) {
+      // Single surface: warning dialog only (no banner + field double-error)
+      errors.value = {};
+      duplicateMatches.value = error.response?.data?.data?.matches || [];
+      duplicateWarningOpen.value = true;
+      saving.value = false;
+      return;
+    }
     if (error.response?.data?.errors) {
       errors.value = { ...error.response.data.errors };
       scrollToFirstErrorField();

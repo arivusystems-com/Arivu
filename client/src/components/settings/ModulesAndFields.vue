@@ -1913,6 +1913,17 @@
           <PeopleTypesSettings embedded />
         </div>
 
+        <!-- Duplicate Prevention (People / Organizations / Items / Deals / Tasks / Cases) -->
+        <div
+          class="flex-1 overflow-y-auto"
+          v-else-if="activeTopTab === 'duplicate-prevention' && (isPeopleModule || isOrganizationsModule || isItemsModule || isDealsModule || isTasksModule || isCasesModule)"
+        >
+          <DuplicatePreventionSettings
+            :module-key="duplicatePreventionModuleKey"
+            embedded
+          />
+        </div>
+
         <!-- Status & Priority Tab (Tasks module only) - Summary view, edit in Field Configurations -->
         <div class="flex-1 overflow-y-auto" v-else-if="activeTopTab === 'status-priority' && isTasksModule">
           <div class="p-6">
@@ -4104,6 +4115,7 @@ import DateTimePicker from '@/components/common/DateTimePicker.vue';
 import ModuleFormModal from './ModuleFormModal.vue';
 import PeopleTypesSettings from './PeopleTypesSettings.vue';
 import OrganizationTypesSettings from './OrganizationTypesSettings.vue';
+import DuplicatePreventionSettings from './DuplicatePreventionSettings.vue';
 import EventStatusLifecycleSettings from './EventStatusLifecycleSettings.vue';
 import { invalidateOrganizationTypesCache } from '@/utils/organizationTypesInvalidate';
 import { isRetiredOrganizationTypeValue } from '@/utils/organizationTypeConfig';
@@ -4665,18 +4677,21 @@ function getAllowedTopTabs(moduleKey) {
     return ['details', 'fields', 'logic', 'outcomes', 'access', 'relationships'];
   }
   if (moduleKey === 'deals') {
-    return [...TOP_TAB_IDS_BASE, 'pipeline'];
+    return [...TOP_TAB_IDS_BASE, 'pipeline', 'duplicate-prevention'];
   }
   if (moduleKey === 'people') {
-    return [...TOP_TAB_IDS_BASE, 'people-types'];
+    return [...TOP_TAB_IDS_BASE, 'people-types', 'duplicate-prevention'];
   }
   if (moduleKey === 'organizations') {
     // Types = app participation roles (status picklists live under Field Configurations)
-    return [...TOP_TAB_IDS_BASE, 'organization-types'];
+    return [...TOP_TAB_IDS_BASE, 'organization-types', 'duplicate-prevention'];
   }
   if (moduleKey === 'tasks') {
     // Tasks module has Status & Priority tab (Tasks-specific, unlike People)
-    return [...TOP_TAB_IDS_BASE, 'status-priority'];
+    return [...TOP_TAB_IDS_BASE, 'status-priority', 'duplicate-prevention'];
+  }
+  if (moduleKey === 'cases') {
+    return [...TOP_TAB_IDS_BASE, 'duplicate-prevention'];
   }
   if (moduleKey === 'events') {
     // Events module has Status tab and Roles & Rules tab (Events-specific)
@@ -4688,7 +4703,7 @@ function getAllowedTopTabs(moduleKey) {
   }
   if (moduleKey === 'items') {
     // Items module has Status & Types tab (Items-specific, similar to Tasks)
-    return [...TOP_TAB_IDS_BASE, 'status-types'];
+    return [...TOP_TAB_IDS_BASE, 'status-types', 'duplicate-prevention'];
   }
   if (moduleKey === 'documents') {
     return [...TOP_TAB_IDS_BASE, 'status-types'];
@@ -4718,12 +4733,14 @@ const topTabs = computed(() => {
     if (!props.excludedTabs.includes('pipeline')) {
       tabs.push({ id: 'pipeline', nameKey: 'settings.modFieldsTabPipeline' });
     }
+    tabs.push({ id: 'duplicate-prevention', nameKey: 'settings.modFieldsTabDuplicatePrevention' });
   }
   if (moduleKey === 'people') {
     const fieldsTabIndex = tabs.findIndex(tab => tab.id === 'fields');
     if (fieldsTabIndex >= 0) {
       tabs.splice(fieldsTabIndex + 1, 0, { id: 'people-types', nameKey: 'settings.modFieldsTabPeopleTypes' });
     }
+    tabs.push({ id: 'duplicate-prevention', nameKey: 'settings.modFieldsTabDuplicatePrevention' });
   }
   if (moduleKey === 'organizations') {
     const fieldsTabIndex = tabs.findIndex(tab => tab.id === 'fields');
@@ -4732,6 +4749,7 @@ const topTabs = computed(() => {
         { id: 'organization-types', nameKey: 'settings.modFieldsTabOrganizationTypes' }
       );
     }
+    tabs.push({ id: 'duplicate-prevention', nameKey: 'settings.modFieldsTabDuplicatePrevention' });
   }
   if (moduleKey === 'tasks') {
     // Insert "Status & Priority" tab after "Field Configurations" and before "Relationships"
@@ -4741,6 +4759,7 @@ const topTabs = computed(() => {
     if (fieldsTabIndex >= 0) {
       tabs.splice(fieldsTabIndex + 1, 0, { id: 'status-priority', nameKey: 'settings.modFieldsTabStatusPriority' });
     }
+    tabs.push({ id: 'duplicate-prevention', nameKey: 'settings.modFieldsTabDuplicatePrevention' });
   }
   if (moduleKey === 'events') {
     // Insert "Status" tab and "Roles & Rules" tab after "Field Configurations" and before "Relationships"
@@ -4761,6 +4780,10 @@ const topTabs = computed(() => {
     if (fieldsTabIndex >= 0) {
       tabs.splice(fieldsTabIndex + 1, 0, { id: 'status-types', nameKey: 'settings.modFieldsTabStatusTypes' });
     }
+    tabs.push({ id: 'duplicate-prevention', nameKey: 'settings.modFieldsTabDuplicatePrevention' });
+  }
+  if (moduleKey === 'cases') {
+    tabs.push({ id: 'duplicate-prevention', nameKey: 'settings.modFieldsTabDuplicatePrevention' });
   }
   if (moduleKey === 'documents') {
     const fieldsTabIndex = tabs.findIndex(tab => tab.id === 'fields');
@@ -4775,6 +4798,7 @@ const tabTitleMap = {
   fields: 'Field Configurations',
   'people-types': 'Types',
   'organization-types': 'Types',
+  'duplicate-prevention': 'Duplicate Prevention',
   'status-types': 'Status & Types',
   'status-priority': 'Status & Priority',
   'status': 'Status',
@@ -4792,7 +4816,7 @@ const getInitialTab = () => {
   // First check URL query
   const route = useRoute();
   const modeKey = typeof route.query.mode === 'string' ? route.query.mode : null;
-  if (modeKey && ['details', 'fields', 'people-types', 'organization-types', 'status-types', 'status-priority', 'status', 'roles-rules', 'relationships', 'quick', 'logic', 'outcomes', 'access'].includes(modeKey)) {
+  if (modeKey && ['details', 'fields', 'people-types', 'organization-types', 'duplicate-prevention', 'status-types', 'status-priority', 'status', 'roles-rules', 'relationships', 'quick', 'logic', 'outcomes', 'access'].includes(modeKey)) {
     return modeKey;
   }
   // If no URL param, we'll check localStorage after module loads
@@ -5992,6 +6016,15 @@ const isDealsModule = computed(() => {
 });
 const isCasesModule = computed(() => {
   return selectedModule.value?.key?.toLowerCase() === 'cases';
+});
+const duplicatePreventionModuleKey = computed(() => {
+  if (isPeopleModule.value) return 'people';
+  if (isOrganizationsModule.value) return 'organizations';
+  if (isItemsModule.value) return 'items';
+  if (isDealsModule.value) return 'deals';
+  if (isTasksModule.value) return 'tasks';
+  if (isCasesModule.value) return 'cases';
+  return 'people';
 });
 const isInventoryWorkbenchModule = computed(() => {
   return isInventoryWorkbenchModuleKey(selectedModule.value?.key);

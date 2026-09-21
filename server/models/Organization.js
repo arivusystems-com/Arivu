@@ -778,7 +778,12 @@ const OrganizationSchema = new mongoose.Schema({
     deletedAt: { type: Date, default: null, index: true },
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     deletionReason: { type: String, trim: true, maxlength: 500 },
-    importHistoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'ImportHistory', default: null, index: true }
+    importHistoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'ImportHistory', default: null, index: true },
+
+    // Duplicate merge (CRM orgs)
+    mergedInto: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', default: null, index: true },
+    mergedAt: { type: Date, default: null },
+    mergedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { 
     timestamps: true 
 });

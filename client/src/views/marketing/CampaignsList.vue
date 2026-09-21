@@ -12,13 +12,22 @@
       @bulk-action="handleBulkAction"
     >
       <template #header-actions>
-        <router-link
-          v-if="canView"
-          :to="{ name: 'marketing-campaign-approvals' }"
-          class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-        >
-          {{ t('marketing.campaignsApprovalsNav') }}
-        </router-link>
+        <div class="flex gap-3 items-center">
+          <router-link
+            v-if="canView"
+            :to="{ name: 'marketing-campaign-approvals' }"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            {{ t('marketing.campaignsApprovalsNav') }}
+          </router-link>
+          <ModuleActions
+            module="campaigns"
+            :create-label="t('marketing.campaignsNew')"
+            :show-import="false"
+            :show-export="false"
+            @create="goToCreate"
+          />
+        </div>
       </template>
 
       <template #cell-name="{ row }">
@@ -55,6 +64,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import ModuleList from '@/components/module-list/ModuleList.vue';
+import ModuleActions from '@/components/common/ModuleActions.vue';
 import BadgeCell from '@/components/common/table/BadgeCell.vue';
 import DateCell from '@/components/common/table/DateCell.vue';
 import CampaignTenantSendStats from '@/components/marketing/CampaignTenantSendStats.vue';

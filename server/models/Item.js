@@ -280,7 +280,12 @@ const ItemSchema = new Schema({
     // Trash (soft delete) - See docs/TRASH_IMPLEMENTATION_SPEC.md
     deletedAt: { type: Date, default: null, index: true },
     deletedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
-    deletionReason: { type: String, trim: true, maxlength: 500 }
+    deletionReason: { type: String, trim: true, maxlength: 500 },
+
+    // Duplicate merge
+    mergedInto: { type: Schema.Types.ObjectId, ref: 'Item', default: null, index: true },
+    mergedAt: { type: Date, default: null },
+    mergedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
 }, {
     timestamps: true // Automatically handles 'createdAt' and 'updatedAt'
 });

@@ -71,6 +71,7 @@ export const SHARED_NAMESPACES = [
   'astra',
   'astraStudio',
   'internalChat',
+  'duplicates',
 ] as const;
 
 export type SharedNamespace = (typeof SHARED_NAMESPACES)[number];
