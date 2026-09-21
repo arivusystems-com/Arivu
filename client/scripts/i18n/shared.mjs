@@ -49,6 +49,7 @@ export const SHARED_NAMESPACES = [
   'astra',
   'astraStudio',
   'internalChat',
+  'duplicates',
 ];
 
 export const SUPPORTED_LANGUAGES = [

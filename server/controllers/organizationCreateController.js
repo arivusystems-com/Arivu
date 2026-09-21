@@ -222,6 +222,32 @@ exports.create = async (req, res) => {
     };
 
     assignResolvedSource(body, 'ui');
+
+    try {
+      const { evaluateDuplicates } = require('../services/duplicates');
+      const dupResult = await evaluateDuplicates({
+        organizationId: req.user.organizationId,
+        moduleKey: 'organizations',
+        candidate: body,
+        emitEvent: true,
+        triggeredBy: req.user?._id,
+        limit: 5,
+      });
+      if (dupResult.enabled && dupResult.hasMatch) {
+        const policy = dupResult.policy || 'warn';
+        if (policy === 'reject' || policy === 'warn') {
+          return res.status(409).json({
+            success: false,
+            code: policy === 'reject' ? 'DUPLICATE_REJECTED' : 'DUPLICATE_WARNING',
+            message: 'A matching Organization already exists.',
+            errors: { name: 'An organization with this name already exists.' },
+            data: { matches: dupResult.matches, policy },
+          });
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[organizationCreateController] duplicate check failed:', dupErr.message);
+    }
     
     // Create organization
     const org = await Organization.create(body);

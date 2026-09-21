@@ -1010,5 +1010,65 @@
   "untitledCourse": {
     "message": "Untitled course",
     "description": "Fallback course title"
+  },
+  "academyBrowseCatalog": {
+    "message": "Browse catalog",
+    "description": "Academy home secondary CTA"
+  },
+  "academyContinueLearning": {
+    "message": "Continue learning",
+    "description": "Academy home continue section title"
+  },
+  "academyContinueBlurb": {
+    "message": "Pick up where you left off.",
+    "description": "Academy home continue section blurb"
+  },
+  "academyContinueCta": {
+    "message": "Continue learning",
+    "description": "Academy home primary CTA when in progress"
+  },
+  "academyStartLearning": {
+    "message": "Start learning",
+    "description": "Academy home primary CTA when no progress"
+  },
+  "academyViewAllLearning": {
+    "message": "View all",
+    "description": "Link to My Learning from home"
+  },
+  "academyResume": {
+    "message": "Progress",
+    "description": "Progress label on continue cards"
+  },
+  "academyExplore": {
+    "message": "Explore",
+    "description": "Academy home destinations title"
+  },
+  "academyExploreBlurb": {
+    "message": "Everything you need in one place.",
+    "description": "Academy home destinations blurb"
+  },
+  "academyCertificatesHomeBlurb": {
+    "message": "Credentials you’ve earned.",
+    "description": "Academy home certificates destination blurb"
+  },
+  "academyFeatured": {
+    "message": "From the catalog",
+    "description": "Academy home featured courses title"
+  },
+  "academyFeaturedBlurb": {
+    "message": "Courses available for your audience.",
+    "description": "Academy home featured courses blurb"
+  },
+  "academyViewCatalog": {
+    "message": "View catalog",
+    "description": "Link to full catalog from home"
+  },
+  "academyOpenCourse": {
+    "message": "Open course",
+    "description": "Featured course card CTA"
+  },
+  "academyCourseNoDescription": {
+    "message": "No description yet.",
+    "description": "Fallback when course has no description"
   }
 }

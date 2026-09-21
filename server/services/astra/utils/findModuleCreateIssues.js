@@ -164,6 +164,46 @@ async function findModuleCreateIssues({
       return { ...report, moduleKey: 'events' };
     }
 
+    if (
+      key === 'people'
+      || key === 'organizations'
+      || key === 'items'
+      || key === 'deals'
+      || key === 'tasks'
+      || key === 'cases'
+    ) {
+      try {
+        const { evaluateDuplicates } = require('../../duplicates');
+        const candidate = { name: title, email, item_name: title, first_name: title, title };
+        if (key === 'people' && title) {
+          const parts = String(title).trim().split(/\s+/);
+          candidate.first_name = parts[0];
+          candidate.last_name = parts.slice(1).join(' ') || undefined;
+        }
+        if (key === 'organizations' || key === 'deals') candidate.name = title;
+        if (key === 'tasks' || key === 'cases') candidate.title = title;
+        const result = await evaluateDuplicates({
+          organizationId,
+          moduleKey: key,
+          candidate,
+          limit: 8,
+        });
+        if (result.enabled) {
+          const duplicates = (result.matches || []).map((m) => ({
+            id: String(m.record._id),
+            title: m.record.name || m.record.title || m.record.email || m.record.item_code || m.record.caseId || String(m.record._id),
+            subtitle: (m.matchedFields || []).map((f) => `${f.field}=${f.value}`).join(', '),
+          }));
+          return {
+            moduleKey: key,
+            conflicts: [],
+            duplicates,
+            hits: duplicates,
+          };
+        }
+      } catch (_) { /* fall through to title heuristics */ }
+    }
+
     return findTitleDuplicates({
       moduleKey: key,
       organizationId,

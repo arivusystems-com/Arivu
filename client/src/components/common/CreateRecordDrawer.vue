@@ -1,6 +1,6 @@
 <template>
   <WorkspaceScopedDrawerShell
-    :is-open="isOpen"
+    :is-open="isOpen && !compareMergeOpen"
     :title-id="drawerTitleId"
     :draft-module-key="moduleKey"
     :draft-record-id="draftRecordIdForShell"
@@ -244,6 +244,23 @@
                 </form>
               </div>
   </WorkspaceScopedDrawerShell>
+
+  <DuplicateWarningDialog
+    :open="duplicateWarningOpen"
+    :module-key="duplicateModuleKey"
+    :matches="duplicateMatches"
+    @cancel="duplicateWarningOpen = false"
+    @view="onDuplicateView"
+    @compare="onDuplicateCompare"
+  />
+  <RecordCompareMergeDrawer
+    :open="compareMergeOpen"
+    :module-key="duplicateModuleKey"
+    :record-id-a="compareRecordIdA"
+    :record-id-b="compareRecordIdB"
+    @close="compareMergeOpen = false"
+    @merged="onDuplicateMerged"
+  />
 </template>
 
 <script setup>
@@ -340,6 +357,8 @@ import {
 } from '@/utils/quickCreatePayloadFilter';
 import { augmentPeopleQuickCreateAllowedFieldKeys } from '@/platform/fields/peopleSalutationField';
 import { useCreationContext } from '@/utils/creationContext';
+import DuplicateWarningDialog from '@/components/duplicates/DuplicateWarningDialog.vue';
+import RecordCompareMergeDrawer from '@/components/duplicates/RecordCompareMergeDrawer.vue';
 import { getParticipationFields, getCoreIdentityFields, mergePeopleVirtualFieldDefinitions } from '@/platform/fields/peopleFieldModel';
 import {
   buildOrganizationSubmitPayload,
@@ -1162,6 +1181,54 @@ async function fetchModuleForDrawer() {
 const formData = ref({ ...props.initialData });
 const errors = ref({});
 const saving = ref(false);
+const duplicateWarningOpen = ref(false);
+const duplicateMatches = ref([]);
+const compareMergeOpen = ref(false);
+const compareRecordIdA = ref(null);
+const compareRecordIdB = ref(null);
+
+const duplicateModuleKey = computed(() => {
+  const k = String(props.moduleKey || '').toLowerCase();
+  if (k === 'contacts') return 'people';
+  return k;
+});
+
+function onDuplicateView(id) {
+  duplicateWarningOpen.value = false;
+  if (id && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('arivu:open-record', {
+      detail: { moduleKey: duplicateModuleKey.value, recordId: id },
+    }));
+  }
+}
+
+function onDuplicateCompare(id) {
+  duplicateWarningOpen.value = false;
+  const mergeable = ['people', 'organizations', 'items'].includes(duplicateModuleKey.value);
+  if (!mergeable) {
+    onDuplicateView(id);
+    return;
+  }
+  compareRecordIdA.value = props.record?._id || null;
+  compareRecordIdB.value = id;
+  // On create, A is the unsaved candidate — compare needs two existing ids.
+  // Open merge between matched records if editing; otherwise just view+cancel flow.
+  if (!compareRecordIdA.value) {
+    compareRecordIdA.value = id;
+    compareRecordIdB.value = duplicateMatches.value[1]?.record?._id || id;
+  }
+  if (compareRecordIdA.value && compareRecordIdB.value
+    && String(compareRecordIdA.value) !== String(compareRecordIdB.value)) {
+    compareMergeOpen.value = true;
+  } else {
+    onDuplicateView(id);
+  }
+}
+
+function onDuplicateMerged() {
+  saving.value = false;
+  closeDrawer();
+}
 const moduleDefinition = ref(null);
 /** True when the user has interacted with the form (backdrop/Escape blocked); not set by programmatic sync */
 const userHasEdited = ref(false);
@@ -3907,6 +3974,19 @@ const handleSubmit = async () => {
     console.error('Error creating record:', error);
     console.error('Error response data:', error.response?.data);
     console.error('Full error object:', JSON.stringify(error, null, 2));
+
+    const dupCode = error.response?.data?.code;
+    if (
+      error.response?.status === 409
+      && (dupCode === 'DUPLICATE_WARNING' || dupCode === 'DUPLICATE_REJECTED' || dupCode === 'DUPLICATE_ITEM')
+      && ['people', 'organizations', 'items', 'deals', 'tasks', 'cases'].includes(duplicateModuleKey.value)
+    ) {
+      duplicateMatches.value = error.response.data?.data?.matches || [];
+      duplicateWarningOpen.value = true;
+      errors.value = { _general: error.response.data?.message || t('duplicates.warningTitle') };
+      saving.value = false;
+      return;
+    }
     
     // Reset errors
     errors.value = {};

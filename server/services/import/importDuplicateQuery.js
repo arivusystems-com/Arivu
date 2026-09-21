@@ -475,6 +475,85 @@ async function findImportDuplicate({
   organizationId,
   crmBaseQuery = null,
 }) {
+  const engineModule = module === 'contacts' ? 'people' : module;
+  if (
+    engineModule === 'people'
+    || engineModule === 'organizations'
+    || engineModule === 'items'
+    || engineModule === 'deals'
+    || engineModule === 'tasks'
+  ) {
+    try {
+      const { getConfig, evaluateDuplicates } = require('../duplicates');
+      const { MODULE_MODELS: models } = require('../duplicates/evaluate');
+      const config = await getConfig(organizationId, engineModule);
+      if (config.enabled) {
+        const candidate = {};
+        for (const cond of config.conditions || []) {
+          if (engineModule === 'people' && cond.field === 'name') {
+            const firstName = mapCsvField(row, fieldMapping, 'first_name');
+            const lastName = mapCsvField(row, fieldMapping, 'last_name');
+            candidate.first_name = firstName;
+            candidate.last_name = lastName;
+            candidate.name = [firstName, lastName].filter(Boolean).join(' ');
+          } else if (engineModule === 'items' && cond.field === 'item_name') {
+            candidate.item_name = mapCsvField(row, fieldMapping, 'item_name')
+              || mapCsvField(row, fieldMapping, 'name');
+          } else if (engineModule === 'organizations' && cond.field === 'taxId') {
+            candidate.taxId = mapCsvField(row, fieldMapping, 'taxId')
+              || mapCsvField(row, fieldMapping, 'tax_id');
+          } else if (engineModule === 'organizations' && cond.field === 'domain') {
+            candidate.domain = mapCsvField(row, fieldMapping, 'domain')
+              || mapCsvField(row, fieldMapping, 'website');
+          } else if (engineModule === 'deals' && cond.field === 'name') {
+            candidate.name = mapCsvField(row, fieldMapping, 'name');
+          } else if (engineModule === 'deals' && cond.field === 'contactId') {
+            candidate.contactId = mapCsvField(row, fieldMapping, 'contactId')
+              || mapCsvField(row, fieldMapping, 'contact');
+          } else if (engineModule === 'tasks' && cond.field === 'title') {
+            candidate.title = mapCsvField(row, fieldMapping, 'title')
+              || mapCsvField(row, fieldMapping, 'name');
+          } else {
+            candidate[cond.field] = mapCsvField(row, fieldMapping, cond.field);
+          }
+        }
+        // Also map common import check fields onto candidate for better coverage
+        if (engineModule === 'people') {
+          candidate.email = candidate.email || mapCsvField(row, fieldMapping, 'email');
+          candidate.phone = candidate.phone || mapCsvField(row, fieldMapping, 'phone');
+        }
+        if (engineModule === 'deals') {
+          candidate.name = candidate.name || mapCsvField(row, fieldMapping, 'name');
+        }
+        if (engineModule === 'tasks') {
+          candidate.title = candidate.title || mapCsvField(row, fieldMapping, 'title');
+        }
+        const result = await evaluateDuplicates({
+          organizationId,
+          moduleKey: engineModule,
+          candidate,
+          config,
+          limit: 1,
+        });
+        if (result.hasMatch && result.matches[0]?.record?._id) {
+          const Model = models[engineModule];
+          const existing = await Model.findById(result.matches[0].record._id).lean();
+          if (existing) {
+            const mf = result.matches[0].matchedFields || [];
+            return {
+              existing,
+              matchedField: mf.map((f) => f.field).join(` ${config.matchLogic} `) || 'duplicate',
+              matchedValue: mf.map((f) => f.value).join(', '),
+            };
+          }
+        }
+        return null;
+      }
+    } catch (err) {
+      console.warn('[findImportDuplicate] engine fallback:', err.message);
+    }
+  }
+
   const handler = MODULE_HANDLERS[module];
   if (!handler) return null;
 

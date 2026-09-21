@@ -726,6 +726,24 @@ Emit via `server/constants/domainEvents.js` / `domainEventHelpers`; `notificatio
 
 ---
 
+## Duplicate Prevention (Core Platform)
+
+**Source of truth:** [`docs/DUPLICATE_PREVENTION.md`](docs/DUPLICATE_PREVENTION.md)
+
+Instance-level **Core Duplicate Engine** (`server/services/duplicates/`) evaluates master records using **module-level** rules (People, Organizations, Items). Max 3 fields per module; AND/OR; Exact/Similar; ignore blanks; optional inactive scope.
+
+| Layer | Responsibility |
+|-------|----------------|
+| Engine | Normalize → match → warn/reject/attach policy → merge → audit/events |
+| Module config | Enablement, conditions, match types (`DuplicatePreventionConfig`) |
+| UI | Core module tab `duplicate-prevention` |
+
+**Non-goals:** Mailroom message dedup, marketing audience list dedup, payment idempotency, generic merge for transactional modules (deals, invoices, cases).
+
+**Product decisions:** Exact People email may `attach` (default), `warn`, or `reject`. Import All / create_anyway disabled when module rules are ON. Items default on `item_code` Exact.
+
+---
+
 ## Commercial Billing (Founder's Launch)
 
 **Source of truth for SaaS commercial entitlements** (distinct from CRM AR invoices and from legacy `OrganizationSubscription` seat packs).
@@ -849,6 +867,7 @@ Catalog amounts are tax-exclusive. `taxService` applies `COMMERCIAL_TAX_RATE_BPS
 
 | Need | File |
 |------|------|
+| Duplicate Prevention | `docs/DUPLICATE_PREVENTION.md`, `server/services/duplicates/`, `DuplicatePreventionConfig.js`, `DuplicatePreventionSettings.vue` |
 | Express mounts | `server/server.js` |
 | Auth | `server/middleware/authMiddleware.js` |
 | Tenant DB | `server/middleware/organizationMiddleware.js` |

@@ -14143,6 +14143,10 @@
     "message": "Types",
     "description": "Top tab"
   },
+  "modFieldsTabDuplicatePrevention": {
+    "message": "Duplicate Prevention",
+    "description": "Top tab for duplicate rules"
+  },
   "modFieldsTabStatusTypes": {
     "message": "Status & Types",
     "description": "Top tab"

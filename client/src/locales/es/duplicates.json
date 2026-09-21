@@ -1,0 +1,226 @@
+{
+  "configTitle": {
+    "message": "Duplicate Prevention",
+    "description": "Settings section title"
+  },
+  "introPeople": {
+    "message": "Prevent multiple records representing the same person from being created.",
+    "description": "People intro"
+  },
+  "introOrganizations": {
+    "message": "Prevent multiple records representing the same organization from being created.",
+    "description": "Org intro"
+  },
+  "introItems": {
+    "message": "Prevent duplicate catalog items using configured identity fields.",
+    "description": "Items intro"
+  },
+  "enableLabel": {
+    "message": "Enable Duplicate Check",
+    "description": "Toggle label"
+  },
+  "enableHint": {
+    "message": "When enabled, Arivu evaluates records using the rules below on create, edit, import, and API.",
+    "description": "Toggle hint"
+  },
+  "matchCriteria": {
+    "message": "Match Criteria",
+    "description": "Section"
+  },
+  "logicAnd": {
+    "message": "All conditions match (AND)",
+    "description": "AND option"
+  },
+  "logicOr": {
+    "message": "Any condition matches (OR)",
+    "description": "OR option"
+  },
+  "fieldCol": {
+    "message": "Field",
+    "description": "Table column"
+  },
+  "matchTypeCol": {
+    "message": "Match Type",
+    "description": "Table column"
+  },
+  "matchExact": {
+    "message": "Exact",
+    "description": "Match type"
+  },
+  "matchSimilar": {
+    "message": "Similar",
+    "description": "Match type"
+  },
+  "maxFieldsHint": {
+    "message": "Select up to 3 fields for duplicate checking.",
+    "description": "Hint"
+  },
+  "addCondition": {
+    "message": "+ Add Condition",
+    "description": "Button"
+  },
+  "additionalOptions": {
+    "message": "Additional Options",
+    "description": "Section"
+  },
+  "ignoreBlank": {
+    "message": "Ignore blank values",
+    "description": "Checkbox"
+  },
+  "checkInactive": {
+    "message": "Check inactive / closed records",
+    "description": "Checkbox"
+  },
+  "apiPolicyLabel": {
+    "message": "API / Quick Create match policy",
+    "description": "People policy"
+  },
+  "policyAttach": {
+    "message": "Attach to existing (email)",
+    "description": "Policy"
+  },
+  "policyWarn": {
+    "message": "Warn and block save",
+    "description": "Policy"
+  },
+  "policyReject": {
+    "message": "Reject create",
+    "description": "Policy"
+  },
+  "loadFailed": {
+    "message": "Failed to load duplicate prevention settings.",
+    "description": "Error"
+  },
+  "saveFailed": {
+    "message": "Failed to save duplicate prevention settings.",
+    "description": "Error"
+  },
+  "saveSuccess": {
+    "message": "Duplicate prevention settings saved.",
+    "description": "Toast"
+  },
+  "warningTitle": {
+    "message": "Possible Duplicate Found",
+    "description": "Dialog title"
+  },
+  "warningBody": {
+    "message": "A matching {module} record already exists.",
+    "description": "Dialog body"
+  },
+  "modulePeople": {
+    "message": "People",
+    "description": "Module label"
+  },
+  "moduleOrganizations": {
+    "message": "Organizations",
+    "description": "Module label"
+  },
+  "moduleItems": {
+    "message": "Items",
+    "description": "Module label"
+  },
+  "viewRecord": {
+    "message": "View Record",
+    "description": "Action"
+  },
+  "compareMerge": {
+    "message": "Compare & Merge",
+    "description": "Action"
+  },
+  "compareTitle": {
+    "message": "Compare & Merge",
+    "description": "Drawer title"
+  },
+  "compareHint": {
+    "message": "Select the master record and resolve field conflicts before merging.",
+    "description": "Drawer hint"
+  },
+  "recordA": {
+    "message": "Record A",
+    "description": "Label"
+  },
+  "recordB": {
+    "message": "Record B",
+    "description": "Label"
+  },
+  "selectAsMaster": {
+    "message": "Use as master",
+    "description": "Hint"
+  },
+  "selected": {
+    "message": "Selected",
+    "description": "Column"
+  },
+  "keepMaster": {
+    "message": "Keep master value",
+    "description": "Option"
+  },
+  "keepDuplicate": {
+    "message": "Keep other value",
+    "description": "Option"
+  },
+  "mergeSafety": {
+    "message": "The merge will combine selected field values, preserve related records and app participations, reassign relationships to the master, and archive the duplicate.",
+    "description": "Safety copy"
+  },
+  "markNotDuplicate": {
+    "message": "Mark as Not Duplicate",
+    "description": "Action"
+  },
+  "mergeRecords": {
+    "message": "Merge Records",
+    "description": "Action"
+  },
+  "compareFailed": {
+    "message": "Failed to load comparison.",
+    "description": "Error"
+  },
+  "mergeSuccess": {
+    "message": "Records merged successfully.",
+    "description": "Toast"
+  },
+  "mergeFailed": {
+    "message": "Merge failed.",
+    "description": "Error"
+  },
+  "notDuplicateSaved": {
+    "message": "Marked as not duplicate.",
+    "description": "Toast"
+  },
+  "notDuplicateFailed": {
+    "message": "Could not save that decision.",
+    "description": "Error"
+  },
+  "ignoreBlankHint": {
+    "message": "When a selected field is empty on the new or existing record, that condition is skipped so blanks do not count as a match.",
+    "description": "Tooltip for ignore blank values"
+  },
+  "checkInactiveHint": {
+    "message": "When enabled, duplicate checks also consider inactive or closed records. Turn off to only compare against active records.",
+    "description": "Tooltip for check inactive records"
+  },
+  "introDeals": {
+    "message": "Warn when a new deal looks like an existing one (detect only — no merge).",
+    "description": "Deals intro"
+  },
+  "introTasks": {
+    "message": "Warn when a new task title matches an existing task (detect only — no merge).",
+    "description": "Tasks intro"
+  },
+  "introCases": {
+    "message": "Prevent duplicate cases using configured identity fields (detect only — no merge).",
+    "description": "Cases intro"
+  },
+  "moduleDeals": {
+    "message": "Deals",
+    "description": "Module label"
+  },
+  "moduleTasks": {
+    "message": "Tasks",
+    "description": "Module label"
+  },
+  "moduleCases": {
+    "message": "Cases",
+    "description": "Module label"
+  }
+}

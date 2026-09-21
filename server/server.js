@@ -505,6 +505,7 @@ app.use('/api/responses', responseRoutes);
 
 // Settings Routes
 app.use('/api/settings', settingsRoutes);
+app.use('/api/duplicates', require('./routes/duplicatePreventionRoutes'));
 app.use('/api/mailroom', mailroomRoutes);
 
 // Targets & Quotas (platform performance)

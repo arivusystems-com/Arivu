@@ -1370,9 +1370,11 @@ const loadRoleIntoForm = () => {
     userType: normalizeFormUserType(props.role.userType, props.role.name),
     privilegeMode: props.role.privilegeMode || 'inline',
     profileId: props.role.profileId?._id || props.role.profileId || '',
-    appEntitlements: Array.isArray(props.role.appEntitlements) && props.role.appEntitlements.length
-      ? JSON.parse(JSON.stringify(props.role.appEntitlements))
-      : buildDefaultAppEntitlements(),
+    appEntitlements: isFullyPrivilegedSystemRole.value
+      ? buildDefaultAppEntitlements()
+      : Array.isArray(props.role.appEntitlements) && props.role.appEntitlements.length
+        ? JSON.parse(JSON.stringify(props.role.appEntitlements))
+        : buildDefaultAppEntitlements(),
     fieldPermissions: toPlainFieldPerms(props.role.fieldPermissions),
     recordAssignment: {
       ...defaultRecordAssignment(),

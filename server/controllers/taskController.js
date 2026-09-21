@@ -357,6 +357,32 @@ const createTask = async (req, res) => {
       }]
     };
     assignResolvedSource(taskPayload, 'ui');
+
+    try {
+      const { evaluateDuplicates } = require('../services/duplicates');
+      const dupResult = await evaluateDuplicates({
+        organizationId: req.user.organizationId,
+        moduleKey: 'tasks',
+        candidate: taskPayload,
+        emitEvent: true,
+        triggeredBy: req.user._id,
+        limit: 5,
+      });
+      if (dupResult.enabled && dupResult.hasMatch) {
+        const policy = dupResult.policy || 'warn';
+        if (policy === 'reject' || policy === 'warn') {
+          return res.status(409).json({
+            success: false,
+            code: policy === 'reject' ? 'DUPLICATE_REJECTED' : 'DUPLICATE_WARNING',
+            message: 'A matching Task already exists.',
+            data: { matches: dupResult.matches, policy },
+          });
+        }
+      }
+    } catch (dupErr) {
+      console.warn('[taskController.createTask] duplicate check failed:', dupErr.message);
+    }
+
     const task = await Task.create(taskPayload);
 
     try {
