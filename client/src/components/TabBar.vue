@@ -542,7 +542,7 @@ onUnmounted(() => {
 <template>
   <div 
     ref="tabBarRef"
-    data-onboarding-target="tabs"
+    :data-onboarding-target="tabsArray.some((tab) => tab.closable) ? 'tabs' : undefined"
     class="tab-strip bg-neutral-100 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-700 fixed top-[var(--mobile-top-offset)] left-0 right-0 z-30 transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:z-40 lg:w-full lg:max-w-full lg:flex-shrink-0 lg:border-b-0"
     :class="{ 'tab-strip--settings-active': isSettingsRouteActive }"
     :style="tabBarPositionStyle"

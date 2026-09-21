@@ -3002,5 +3002,13 @@
   "sysFieldDeal": {
     "message": "Deal",
     "description": "Lookup field label for dealId on quotes, invoices, and sales orders"
+  },
+  "drawerCloseConfirm": {
+    "message": "You have unsaved changes. Discard them and close?",
+    "description": "Confirm discard when closing a dirty create/edit drawer"
+  },
+  "drawerDiscardClose": {
+    "message": "Discard & close",
+    "description": "Confirm button label for discarding dirty drawer changes"
   }
 }

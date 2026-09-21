@@ -13,6 +13,7 @@ import {
 } from '@/modules/template/composables/useCompanyLogoAsset';
 import AvatarInitials from '@/components/ui/AvatarInitials.vue';
 import {
+  AcademicCapIcon,
   UserCircleIcon,
   ShieldCheckIcon,
   Cog6ToothIcon,
@@ -100,6 +101,12 @@ const settingsAccessCtx = computed(() => ({
 
 const canViewSettings = computed(() => hasAnySettingsAccess(settingsAccessCtx.value));
 const canViewTrash = computed(() => authStore.can('settings', 'view'));
+
+/** EXTERNAL + LMS: Academy is a separate surface — menu cross-link, never app rail. */
+const showAcademyLink = computed(() => (
+  authStore.isExternalUser
+  && (authStore.hasAssignedAppAccess('LMS') || authStore.hasAppAccess('LMS'))
+));
 
 const isDark = computed(() => {
   if (colorMode.value === 'dark') return true;
@@ -190,6 +197,9 @@ function go(action) {
 
 function viewProfile() {
   go(() => router.push('/profile'));
+}
+function openAcademy() {
+  go(() => router.push({ name: 'academy-home' }));
 }
 function openControlPanel() {
   go(() => router.push('/control'));
@@ -487,6 +497,16 @@ function chooseStatus(typeId) {
         >
           <UserCircleIcon class="h-5 w-5 text-gray-400 dark:text-gray-500" />
           {{ t('navigation.userYourProfile') }}
+        </button>
+        <button
+          v-if="showAcademyLink"
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-3 px-5 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
+          @click="openAcademy"
+        >
+          <AcademicCapIcon class="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          {{ t('navigation.goToAcademy') }}
         </button>
         <button
           v-if="canViewControlPanel"

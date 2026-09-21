@@ -1167,6 +1167,14 @@
     "message": "Show all fields",
     "description": "Expand quick create drawer to full form"
   },
+  "drawerCloseConfirm": {
+    "message": "You have unsaved changes. Discard them and close?",
+    "description": "Confirm discard when closing a dirty create/edit drawer"
+  },
+  "drawerDiscardClose": {
+    "message": "Discard & close",
+    "description": "Confirm button label for discarding dirty drawer changes"
+  },
   "formQuickCreateFields": {
     "message": "Quick Create Fields",
     "description": "Section heading for quick-create field group"

@@ -138,6 +138,24 @@ module.exports = {
                 seatLimit: null
             }
         }
+    },
+
+    /**
+     * Learning — commercial model is TIERED_CAPACITY learner seats (learning_app),
+     * not PER_USER org-subscription seats. Invite grants appAccess (LEARNER|AUTHOR|ADMIN);
+     * billable capacity is enforced at enroll via LearningSeatService.
+     * FLAT here = always allow assigning Learning access in invite/edit user flows.
+     */
+    LMS: {
+        billingType: 'FLAT',
+        defaultSeatLimit: null,
+        defaultPlan: 'BASIC',
+        trialDays: 14,
+        plans: {
+            BASIC: {},
+            PRO: {},
+            ENTERPRISE: {}
+        }
     }
 };
 

@@ -41,8 +41,8 @@ const UserSessionSchema = new Schema(
     },
     userType: {
       type: String,
-      enum: ['INTERNAL', 'EXTERNAL', 'SYSTEM'],
-      default: 'INTERNAL'
+      enum: ['STANDARD', 'ADMIN', 'EXTERNAL', 'INTERNAL', 'SYSTEM'],
+      default: 'STANDARD'
     },
     deviceClass: {
       type: String,

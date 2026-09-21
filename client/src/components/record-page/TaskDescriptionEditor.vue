@@ -274,6 +274,11 @@ import { getApiUrlForFetch } from '@/config/apiBase';
 import { useAuthStore } from '@/stores/authRegistry';
 import { useRichDescriptionImagePreview } from '@/composables/useRichDescriptionImagePreview';
 import RichDescriptionImageLightbox from '@/components/common/RichDescriptionImageLightbox.vue';
+import {
+  stripDescriptionImageAuthTokens,
+  withResolvedDescriptionImageUrls
+} from '@/utils/richDescriptionHtml';
+import { resolveAssetDownloadUrl } from '@/modules/template/composables/useCompanyLogoAsset';
 
 import { useNotifications } from '@/composables/useNotifications';
 const props = defineProps({
@@ -597,7 +602,8 @@ async function insertUploadedImage(file) {
   try {
     const url = await uploadDescriptionImage(file);
     if (!editorInstance.current) return;
-    editorInstance.current.chain().focus().setImage({ src: url, alt: file.name || '', width: '100%' }).run();
+    const displayUrl = resolveAssetDownloadUrl(url) || url;
+    editorInstance.current.chain().focus().setImage({ src: displayUrl, alt: file.name || '', width: '100%' }).run();
     emit('image-uploaded', url);
   } catch (error) {
     console.error('Description image upload error:', error);
@@ -744,7 +750,7 @@ function buildEditorExtensions() {
 }
 
 const editor = useEditor({
-  content: props.modelValue || '',
+  content: withResolvedDescriptionImageUrls(props.modelValue || ''),
   extensions: buildEditorExtensions(),
   editorProps: {
     attributes: {
@@ -868,7 +874,7 @@ const editor = useEditor({
     editorInstance.current = null;
   },
   onUpdate: ({ editor: e }) => {
-    emit('update:modelValue', e.getHTML());
+    emit('update:modelValue', stripDescriptionImageAuthTokens(e.getHTML()));
   }
 });
 
@@ -876,10 +882,13 @@ watch(
   () => props.modelValue,
   (newVal) => {
     const current = editorInstance.current?.getHTML();
-    const normalized = newVal?.trim() || '';
-    const currentNorm = current?.trim() || '';
+    const normalized = String(newVal || '').trim();
+    const currentNorm = stripDescriptionImageAuthTokens(current || '').trim();
     if (editorInstance.current && normalized !== currentNorm) {
-      editorInstance.current.commands.setContent(normalized, false);
+      editorInstance.current.commands.setContent(
+        withResolvedDescriptionImageUrls(normalized),
+        false
+      );
     }
   },
   { immediate: false }

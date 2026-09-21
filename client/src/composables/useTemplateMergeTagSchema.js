@@ -49,9 +49,24 @@ export function useTemplateModuleOptions() {
   async function loadModuleOptions() {
     loading.value = true;
     try {
-      moduleOptions.value = await fetchAllModuleOptions(t, te, getModuleLabelKey);
+      const options = await fetchAllModuleOptions(t, te, getModuleLabelKey);
+      const hasBilling = options.some((o) => o.key === 'billing_invoices');
+      moduleOptions.value = hasBilling
+        ? options
+        : [
+          ...options,
+          {
+            key: 'billing_invoices',
+            label: t('platform.commercialAdminPdfSettingsBillingModuleScope')
+          }
+        ];
     } catch {
-      moduleOptions.value = [];
+      moduleOptions.value = [
+        {
+          key: 'billing_invoices',
+          label: t('platform.commercialAdminPdfSettingsBillingModuleScope')
+        }
+      ];
     } finally {
       loading.value = false;
     }

@@ -51,7 +51,7 @@ export const INTERNAL_CHAT_SLASH_COMMANDS = DESCRIPTION_SLASH_COMMANDS.filter(
 
 function createSlashCommandList() {
   const list = document.createElement('div');
-  list.className = 'slash-command-list rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg py-1 overflow-hidden min-w-[180px] max-h-[280px] overflow-y-auto';
+  list.className = 'slash-command-list w-max min-w-[10rem] max-w-[12rem] rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg py-1 overflow-hidden max-h-[280px] overflow-y-auto';
   return list;
 }
 
@@ -74,7 +74,17 @@ export function createSlashCommands(commands = DESCRIPTION_SLASH_COMMANDS, optio
           pluginKey,
           char: '/',
           startOfLine: false,
-          allowedPrefixes: null,
+          // Default [' '] — null matched `/` inside URLs (https://…) and ate Enter.
+          // Still not enough alone: TipTap only inspects the current text node, so a
+          // mid-word `/` at a node boundary (marks) was treated as a valid trigger.
+          allowedPrefixes: [' '],
+          allow: ({ state, range }) => {
+            if (range.from <= 0) return true;
+            const $from = state.doc.resolve(range.from);
+            if ($from.parentOffset === 0) return true;
+            const charBefore = state.doc.textBetween(range.from - 1, range.from);
+            return /\s/.test(charBefore);
+          },
           items: ({ query }) => commands.filter((cmd) => matchesSlashQuery(cmd, query)),
           command: ({ editor, range, props }) => {
             props.command(editor, range);
@@ -86,26 +96,47 @@ export function createSlashCommands(commands = DESCRIPTION_SLASH_COMMANDS, optio
             let viewportListenerBound = false;
             let outsidePointerListenerBound = false;
 
+            function destroyList() {
+              unbindGlobalListeners();
+              list?.remove();
+              list = null;
+              currentProps = null;
+            }
+
+            function ensureList() {
+              if (list) return;
+              list = createSlashCommandList();
+              document.body.appendChild(list);
+              bindGlobalListeners();
+            }
+
             return {
               onStart: (props) => {
                 currentProps = props;
-                list = createSlashCommandList();
-                document.body.appendChild(list);
+                if (!props.items?.length) {
+                  destroyList();
+                  return;
+                }
+                ensureList();
                 selectedIndex = 0;
                 updateList(props);
                 positionList(props);
                 requestAnimationFrame(() => positionList(props));
-                bindGlobalListeners();
               },
               onUpdate: (props) => {
                 currentProps = props;
+                if (!props.items?.length) {
+                  destroyList();
+                  return;
+                }
+                ensureList();
                 selectedIndex = 0;
                 updateList(props);
                 positionList(props);
                 requestAnimationFrame(() => positionList(props));
               },
               onKeyDown: ({ event }) => {
-                if (!currentProps || !list) return false;
+                if (!currentProps || !list || !currentProps.items?.length) return false;
                 if (event.key === 'ArrowUp') {
                   selectedIndex = (selectedIndex - 1 + list.children.length) % Math.max(1, list.children.length);
                   updateSelection();
@@ -121,17 +152,22 @@ export function createSlashCommands(commands = DESCRIPTION_SLASH_COMMANDS, optio
                   if (item?.dataset?.index !== undefined) {
                     const idx = parseInt(item.dataset.index, 10);
                     const cmd = currentProps.items[idx];
-                    if (cmd) currentProps.command(cmd);
+                    if (cmd) {
+                      currentProps.command(cmd);
+                      return true;
+                    }
                   }
+                  // Empty / no match — let Enter insert a newline (or send in chat)
+                  return false;
+                }
+                if (event.key === 'Escape') {
+                  destroyList();
                   return true;
                 }
                 return false;
               },
               onExit: () => {
-                unbindGlobalListeners();
-                list?.remove();
-                list = null;
-                currentProps = null;
+                destroyList();
               },
             };
 
@@ -169,7 +205,7 @@ export function createSlashCommands(commands = DESCRIPTION_SLASH_COMMANDS, optio
 
               const gap = 4;
               const menuHeight = list.offsetHeight || 280;
-              const menuWidth = list.offsetWidth || 180;
+              const menuWidth = list.offsetWidth || 192;
               const spaceBelow = window.innerHeight - rect.bottom - gap;
               const spaceAbove = rect.top - gap;
               const placeAbove = preferAbove

@@ -11,8 +11,10 @@ const {
 const { ContentPlatformError } = require('../../../utils/contentPlatformErrors');
 
 describe('contentPlatformDocumentSettingsService', () => {
-  it('supports quotes and invoices module keys', () => {
-    assert.deepEqual([...SUPPORTED_MODULE_KEYS].sort(), ['invoices', 'quotes']);
+  it('supports tenant document modules (excludes platform billing_invoices)', () => {
+    assert.ok(SUPPORTED_MODULE_KEYS.has('invoices'));
+    assert.ok(SUPPORTED_MODULE_KEYS.has('quotes'));
+    assert.equal(SUPPORTED_MODULE_KEYS.has('billing_invoices'), false);
   });
 
   it('normalizes supported module keys', () => {

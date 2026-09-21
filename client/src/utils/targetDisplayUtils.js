@@ -84,16 +84,75 @@ export function getMonthRange(year, monthIndex) {
   return { start: toLocalDateString(start), end: toLocalDateString(end) };
 }
 
-/** @param quarter 1–4 */
-export function getQuarterRange(year, quarter) {
+function clampFyStartMonth(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 1 || n > 12) return 1;
+  return Math.trunc(n);
+}
+
+/**
+ * @param {number} year — calendar year in which the fiscal year begins
+ * @param {number} quarter — 1–4
+ * @param {number} [fiscalYearStartMonth=1] — 1–12
+ */
+export function getQuarterRange(year, quarter, fiscalYearStartMonth = 1) {
   const q = Math.min(4, Math.max(1, quarter));
-  const start = new Date(year, (q - 1) * 3, 1);
-  const end = new Date(year, q * 3, 0);
+  const sm = clampFyStartMonth(fiscalYearStartMonth);
+  const y = Number.isFinite(Number(year)) ? Math.trunc(Number(year)) : new Date().getFullYear();
+  const offsetMonths = sm - 1 + (q - 1) * 3;
+  const startMonthIndex = offsetMonths % 12;
+  const yearOffset = Math.floor(offsetMonths / 12);
+  const start = new Date(y + yearOffset, startMonthIndex, 1);
+  const end = new Date(y + yearOffset, startMonthIndex + 3, 0);
   return { start: toLocalDateString(start), end: toLocalDateString(end) };
 }
 
+/** @deprecated Prefer currentFiscalQuarter — kept for callers expecting calendar Q. */
 export function currentCalendarQuarter() {
-  return Math.floor(new Date().getMonth() / 3) + 1;
+  return currentFiscalQuarter(new Date(), 1);
+}
+
+/**
+ * @param {Date} [date]
+ * @param {number} [fiscalYearStartMonth=1]
+ * @returns {number} 1–4
+ */
+export function currentFiscalQuarter(date = new Date(), fiscalYearStartMonth = 1) {
+  const sm = clampFyStartMonth(fiscalYearStartMonth) - 1;
+  const d = date instanceof Date ? date : new Date(date);
+  const monthsIntoFy = (d.getMonth() - sm + 12) % 12;
+  return Math.floor(monthsIntoFy / 3) + 1;
+}
+
+/**
+ * Calendar year in which the current fiscal year started.
+ * @param {Date} [date]
+ * @param {number} [fiscalYearStartMonth=1]
+ */
+export function currentFiscalYear(date = new Date(), fiscalYearStartMonth = 1) {
+  const sm = clampFyStartMonth(fiscalYearStartMonth);
+  const d = date instanceof Date ? date : new Date(date);
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
+  return month < sm ? year - 1 : year;
+}
+
+/**
+ * Short month-range label for a fiscal quarter, e.g. "Apr–Jun".
+ * @param {number} quarter — 1–4
+ * @param {number} [fiscalYearStartMonth=1]
+ * @param {string} [locale]
+ */
+export function getQuarterMonthLabels(quarter, fiscalYearStartMonth = 1, locale) {
+  const q = Math.min(4, Math.max(1, Number(quarter) || 1));
+  const sm = clampFyStartMonth(fiscalYearStartMonth);
+  const offsetMonths = sm - 1 + (q - 1) * 3;
+  const startMonthIndex = offsetMonths % 12;
+  const endMonthIndex = (startMonthIndex + 2) % 12;
+  const fmt = new Intl.DateTimeFormat(locale, { month: 'short' });
+  const startLabel = fmt.format(new Date(2000, startMonthIndex, 1));
+  const endLabel = fmt.format(new Date(2000, endMonthIndex, 1));
+  return `${startLabel}–${endLabel}`;
 }
 
 export function typeIconKey(key) {

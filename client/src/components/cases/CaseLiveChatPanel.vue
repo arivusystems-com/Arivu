@@ -69,7 +69,7 @@ import {
 } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
-import { withApiOrigin } from '@/config/apiBase';
+import { getApiUrlForEventSource } from '@/config/apiBase';
 import { useAuthStore } from '@/stores/authRegistry';
 import { useTabs } from '@/composables/useTabs';
 import ChatMessageReceiptIcon from '@/components/cases/ChatMessageReceiptIcon.vue';
@@ -100,6 +100,12 @@ const typingLabel = ref('');
 
 let es = null;
 let markReadTimer = null;
+let streamPollTimer = null;
+let streamReconnectTimer = null;
+let streamAttempt = 0;
+
+const STREAM_POLL_MS = 2500;
+const MAX_STREAM_RECONNECTS = 5;
 
 const visitorLabel = computed(() => {
   const v = visitor.value || {};
@@ -134,11 +140,55 @@ async function scrollToBottom() {
   el.scrollTop = el.scrollHeight;
 }
 
-function closeStream() {
+function stopStreamPoll() {
+  if (streamPollTimer) {
+    clearInterval(streamPollTimer);
+    streamPollTimer = null;
+  }
+}
+
+function stopStreamReconnect() {
+  if (streamReconnectTimer) {
+    clearTimeout(streamReconnectTimer);
+    streamReconnectTimer = null;
+  }
+}
+
+function closeStream({ resetAttempts = true } = {}) {
   try {
     es?.close?.();
   } catch (_) {}
   es = null;
+  stopStreamPoll();
+  stopStreamReconnect();
+  if (resetAttempts) streamAttempt = 0;
+}
+
+function streamAfterCursor() {
+  const last = messages.value[messages.value.length - 1];
+  const ts = last?.createdAt ? new Date(last.createdAt).getTime() : NaN;
+  return Number.isFinite(ts) && ts > 0 ? ts : Date.now();
+}
+
+function startStreamMessagePoll() {
+  stopStreamPoll();
+  streamPollTimer = setInterval(() => {
+    void refreshMessages().catch(() => {});
+  }, STREAM_POLL_MS);
+}
+
+function scheduleStreamReconnect() {
+  if (streamReconnectTimer) return;
+  streamAttempt += 1;
+  if (streamAttempt > MAX_STREAM_RECONNECTS) {
+    startStreamMessagePoll();
+    return;
+  }
+  const delay = Math.min(1000 * 2 ** (streamAttempt - 1), 15000);
+  streamReconnectTimer = setTimeout(() => {
+    streamReconnectTimer = null;
+    openStream({ isReconnect: true });
+  }, delay);
 }
 
 function patchReceipts(patches) {
@@ -174,9 +224,9 @@ function appendMessage(msg) {
 }
 
 async function markChatReadForAgent() {
-  if (!props.caseId) return;
+  if (!sessionId.value) return;
   try {
-    await apiClient.post(`/helpdesk/cases/${props.caseId}/chat/read`);
+    await apiClient.post(`/live-chat/sessions/${sessionId.value}/read`);
     clearHelpdeskTabAlertForCase?.(props.caseId, 'chat');
     messages.value = messages.value.map((m) => {
       if (m.direction !== 'inbound' || m.readAt) return m;
@@ -197,9 +247,9 @@ function scheduleMarkChatRead() {
 }
 
 async function refreshMessages() {
-  if (!props.caseId) return;
+  if (!sessionId.value) return;
   try {
-    const msgsRes = await apiClient.get(`/helpdesk/cases/${props.caseId}/chat/messages`, {
+    const msgsRes = await apiClient.get(`/live-chat/sessions/${sessionId.value}/messages`, {
       params: { limit: 500 }
     });
     if (msgsRes?.success) {
@@ -212,18 +262,28 @@ async function refreshMessages() {
   }
 }
 
-function openStream() {
-  closeStream();
+function openStream({ isReconnect = false } = {}) {
+  try {
+    es?.close?.();
+  } catch (_) {}
+  es = null;
+  stopStreamReconnect();
+  stopStreamPoll();
+  if (!isReconnect) streamAttempt = 0;
+
   if (!sessionId.value) return;
   const authStore = useAuthStore();
   const token = authStore.user?.token;
   if (!token) return;
 
-  const after = Date.now();
-  const url = withApiOrigin(
-    `/api/helpdesk/cases/${props.caseId}/chat/stream?after=${after}&token=${encodeURIComponent(token)}`
+  const after = streamAfterCursor();
+  const url = getApiUrlForEventSource(
+    `/live-chat/sessions/${sessionId.value}/stream?after=${after}&token=${encodeURIComponent(token)}`
   );
   es = new EventSource(url, { withCredentials: true });
+  es.addEventListener('open', () => {
+    streamAttempt = 0;
+  });
   es.addEventListener('messages', (evt) => {
     try {
       const rows = JSON.parse(evt.data || '[]');
@@ -251,6 +311,14 @@ function openStream() {
       emit('typing-label', typingLabel.value);
     } catch (_) {}
   });
+  es.onerror = () => {
+    if (es && es.readyState === EventSource.CONNECTING) return;
+    try {
+      es?.close?.();
+    } catch (_) {}
+    es = null;
+    scheduleStreamReconnect();
+  };
 }
 
 let chatUpdatedEmitTimer = null;
@@ -282,16 +350,28 @@ async function load(options = {}) {
   }
 
   try {
-    const sessionRes = await apiClient.get(`/helpdesk/cases/${props.caseId}/chat/session`);
+    const sessionRes = await apiClient.get(`/helpdesk/cases/${props.caseId}/live-chat-session`);
     if (!sessionRes?.success) {
       error.value = sessionRes?.message || t('cases.chatSessionLoadFailed');
       return;
     }
-    sessionId.value = sessionRes.data?.sessionId || null;
-    visitor.value = sessionRes.data?.visitor || null;
-    sessionStatus.value = sessionRes.data?.status || '';
+    const summary = sessionRes.data;
+    if (!summary?.sessionId || summary.missing) {
+      sessionId.value = null;
+      messages.value = [];
+      return;
+    }
+    sessionId.value = summary.sessionId;
+    sessionStatus.value = summary.status || '';
+    visitor.value = summary.visitorName ? { name: summary.visitorName } : null;
 
-    const msgsRes = await apiClient.get(`/helpdesk/cases/${props.caseId}/chat/messages`, {
+    const detailRes = await apiClient.get(`/live-chat/sessions/${sessionId.value}`);
+    if (detailRes?.success) {
+      visitor.value = detailRes.data?.visitor || visitor.value;
+      sessionStatus.value = detailRes.data?.status || sessionStatus.value;
+    }
+
+    const msgsRes = await apiClient.get(`/live-chat/sessions/${sessionId.value}/messages`, {
       params: { limit: 500 }
     });
     if (msgsRes?.success) {

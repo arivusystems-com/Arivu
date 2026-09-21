@@ -31,6 +31,7 @@ const {
   extractEventTitle,
   extractEventSchedule,
   extractCaseTitle,
+  extractRecordUpdatePatch,
 } = require('./intentRegistry');
 const {
   classifyIntentPrecise,
@@ -135,13 +136,16 @@ function confirmationToProposal(confirmation, kind, extras = {}) {
   if (!confirmation || confirmation.type !== 'confirm_action') return null;
   const payload = extras.payload || confirmation.payload || {};
   const moduleKey = confirmation.moduleKey
+    || extras.moduleKey
+    || payload.moduleKey
     || (kind === 'calendar.createEvent' ? 'events'
       : kind === 'crm.tasks.create' ? 'tasks'
         : kind === 'crm.deals.create' ? 'deals'
           : kind === 'crm.cases.create' ? 'cases'
             : kind === 'crm.people.create' ? 'people'
               : kind === 'crm.organizations.create' ? 'organizations'
-                : null);
+                : kind === 'module.update' || kind === 'module.create' ? (payload.moduleKey || null)
+                  : null);
   const details = Array.isArray(extras.details) && extras.details.length
     ? extras.details
     : (Array.isArray(confirmation.details) && confirmation.details.length
@@ -158,6 +162,7 @@ function confirmationToProposal(confirmation, kind, extras = {}) {
     risk: confirmation.risk,
     toolName: confirmation.toolName,
     moduleKey: moduleKey || undefined,
+    recordId: String(payload.recordId || payload.id || extras.recordId || '').trim() || undefined,
     payload,
     fields: payload,
     confirmation,
@@ -1168,6 +1173,182 @@ async function runOrchestrator(request = {}, deps = {}) {
       actions: proposal ? [proposal] : [],
       suggestions: ['List my open deals', 'Create a follow-up task'],
       claims: dealId ? [{ type: 'record', id: dealId, title: focus?.name || dealId }] : [],
+      tool: toolName,
+      toolResult,
+      polishedUsed: polish.polishedUsed,
+      usage: polish.usage,
+      creditsDebited: Number(polish.creditsDebited || 0),
+    });
+  }
+
+  if (intent === 'record_update') {
+    const toolName = 'module.update';
+    const tool = registry.getTool(toolName);
+    const parsed = extractRecordUpdatePatch(query, focus);
+    const llmEntity = String(classification.entityHint || classification.entity || '').trim().toLowerCase();
+    const moduleKey = parsed.moduleKey
+      || llmEntity
+      || String(focus?.moduleKey || focus?.kind || '').trim().toLowerCase()
+      || null;
+    let recordId = String(focus?.id || focus?.recordId || '').trim() || null;
+    let recordName = focus?.name || parsed.recordTitle || classification.llmTitle || null;
+    const fields = { ...(parsed.fields || {}) };
+
+    // Prefer LLM title slot when user named a record and focus id is missing
+    if (!recordId && classification.llmTitle) {
+      recordName = String(classification.llmTitle).trim() || recordName;
+    }
+    if (!recordId && parsed.recordTitle) {
+      recordName = parsed.recordTitle;
+    }
+
+    let resolveGuidance = null;
+    let candidateHits = [];
+    if (!recordId && moduleKey && recordName) {
+      const search = registry.getTool('module.search') || registry.getTool('search.crm');
+      if (search) {
+        const found = await search.run({
+          moduleKey,
+          entity: moduleKey,
+          query: recordName,
+          searchTerm: recordName,
+          limit: 5,
+        }, ctx);
+        candidateHits = Array.isArray(found?.hits) ? found.hits : [];
+        if (candidateHits.length === 1 && candidateHits[0]?.id) {
+          recordId = String(candidateHits[0].id);
+          recordName = candidateHits[0].title || recordName;
+        } else if (candidateHits.length > 1) {
+          const needle = String(recordName).toLowerCase();
+          const exact = candidateHits.find((h) => String(h.title || '').toLowerCase() === needle);
+          if (exact?.id) {
+            recordId = String(exact.id);
+            recordName = exact.title || recordName;
+          } else {
+            resolveGuidance = `I found ${candidateHits.length} matching ${moduleKey}. Which one should I update?`;
+          }
+        } else {
+          resolveGuidance = `I couldn't find a ${moduleKey || 'record'} named "${recordName}". Open it or give the exact title.`;
+        }
+      }
+    }
+
+    if (!moduleKey) {
+      const lead = 'Which module should I update (events, tasks, deals, cases, people, organizations, …)?';
+      return finish({
+        answer: lead,
+        blocks: [],
+        proposals: [],
+        actions: [],
+        suggestions: ['Mark this event completed', 'Mark this task completed', 'Update deal stage'],
+        claims: [],
+        tool: toolName,
+        toolResult: { ok: false, guidance: lead },
+      });
+    }
+
+    if (!Object.keys(fields).length) {
+      const lead = `What should I change on this ${moduleKey.slice(0, -1) || 'record'}? Say the field and new value (e.g. status to Completed).`;
+      return finish({
+        answer: lead,
+        blocks: [],
+        proposals: [],
+        actions: [],
+        suggestions: [
+          `Mark this ${moduleKey === 'events' ? 'event' : moduleKey === 'tasks' ? 'task' : 'record'} as completed`,
+          `Set ${moduleKey} priority to high`,
+        ],
+        claims: [],
+        tool: toolName,
+        toolResult: { ok: false, guidance: lead },
+      });
+    }
+
+    if (resolveGuidance || !recordId) {
+      const lead = resolveGuidance
+        || (recordName
+          ? `I need the record id for "${recordName}" before I can update it.`
+          : `Focus a ${moduleKey} record (or name its title) so I can update it.`);
+      const blocks = candidateHits.length > 1
+        ? [{
+          type: 'list',
+          entity: moduleKey,
+          title: `Matching ${moduleKey}`,
+          items: candidateHits.slice(0, 5).map((h) => ({
+            id: h.id,
+            title: h.title,
+            subtitle: h.subtitle || h.status || null,
+          })),
+        }]
+        : [];
+      return finish({
+        answer: lead,
+        blocks,
+        proposals: [],
+        actions: [],
+        suggestions: candidateHits.slice(0, 3).map((h) => `Update ${h.title}`),
+        claims: [],
+        tool: toolName,
+        toolResult: { ok: false, guidance: lead, hits: candidateHits },
+        focus: memory.getFocus?.(request.organizationId, conversationId) || focus,
+      });
+    }
+
+    if (request.organizationId && recordId) {
+      memory.setFocus?.(request.organizationId, conversationId, {
+        kind: moduleKey,
+        moduleKey,
+        id: recordId,
+        recordId,
+        name: recordName || recordId,
+      });
+    }
+
+    const toolResult = tool
+      ? await tool.run({ moduleKey, recordId, fields }, ctx)
+      : { ok: false, guidance: 'module.update is not available.' };
+
+    if (toolResult?.ok === false && !toolResult?.needsConfirmation && toolResult?.type !== 'confirm_action') {
+      const lead = toolResult.guidance || 'Could not prepare that update.';
+      return finish({
+        answer: lead,
+        blocks: [],
+        proposals: [],
+        actions: [],
+        suggestions: ['List matching records', 'Try again with the exact title'],
+        claims: [],
+        tool: toolName,
+        toolResult,
+      });
+    }
+
+    const fieldSummary = Object.entries(fields).map(([k, v]) => `${k} → ${v}`).join(', ');
+    const proposal = confirmationToProposal(toolResult, 'module.update', {
+      moduleKey,
+      label: `Update ${moduleKey}: ${recordName || recordId}`,
+      rationale: fieldSummary,
+      payload: { moduleKey, recordId, fields, action: 'update' },
+      details: Object.entries(fields).map(([k, v]) => ({ label: k, value: String(v) })),
+    });
+    const lead = `I can update "${recordName || recordId}" (${moduleKey}): ${fieldSummary}. Confirm to apply.`;
+    const polish = await polishWithAgent({
+      llm,
+      request,
+      query,
+      draft: lead,
+      lead,
+      toolResults: JSON.stringify({ moduleKey, recordId, fields }),
+      history: priorHistory,
+      claims: [{ type: 'record', id: recordId, title: recordName || recordId }],
+      write: true,
+    });
+    return finish({
+      answer: polish.answer,
+      blocks: [],
+      proposals: proposal ? [proposal] : [],
+      actions: proposal ? [proposal] : [],
+      suggestions: [`Open ${moduleKey}`, 'Undo is not available — review before confirming'],
+      claims: [{ type: 'record', id: recordId, title: recordName || recordId }],
       tool: toolName,
       toolResult,
       polishedUsed: polish.polishedUsed,

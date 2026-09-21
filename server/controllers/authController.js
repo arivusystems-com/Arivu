@@ -425,6 +425,24 @@ exports.registerUser = async (req, res) => {
         await user.save();
         console.log('✅ Permissions set and user saved\n');
 
+        try {
+            const {
+                bootstrapCommercialBillingForOrganization,
+            } = require('../services/commercial/orgCommercialBootstrap');
+            await bootstrapCommercialBillingForOrganization({
+                organizationId: organization._id,
+                ownerUserId: user._id,
+                appAccess: user.appAccess,
+                initiatedByUserId: user._id,
+                claimFounder: true,
+                billingCycle: 'monthly',
+                trialDays: require('../constants/commercialBilling').DEFAULT_TRIAL_DAYS,
+            });
+            console.log('✅ Commercial Founder billing provisioned\n');
+        } catch (commercialErr) {
+            console.warn('[authController] Commercial billing bootstrap failed:', commercialErr?.message || commercialErr);
+        }
+
         if (ownerRoleId) {
             await Role.findByIdAndUpdate(ownerRoleId, { $inc: { userCount: 1 } });
         }

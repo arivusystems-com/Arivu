@@ -11,6 +11,8 @@
 
 Enable external stakeholders to securely access Arivu through **configurable external roles** (portals). Portal access is **platform-wide** — not tied to a single application shell — though the **PORTAL app** is the default UX container for external users.
 
+**Learning Academy (separate surface):** External **learning** uses `/academy/*` on the shared Learning (`LMS`) domain — not CRM portal modules. Same EXTERNAL identity + People master; LMS LEARNER + Academy access lifecycle. Spec: [`../LEARNING_PORTAL_ACADEMY_V2.md`](../LEARNING_PORTAL_ACADEMY_V2.md). `/portal` remains CRM stakeholder UX.
+
 **Baseline requirement doc:** Customer-provided functional spec (External User / Portal Framework). This document resolves ambiguities against the existing codebase and locks architectural decisions.
 
 ---
@@ -366,8 +368,20 @@ Unchanged from baseline spec. Key additions:
 
 ---
 
-## 19. Non-goals (V1)
+## 19. Learning Academy vs CRM Portal
+
+| Surface | Path | Purpose |
+|---------|------|---------|
+| CRM Portal | `/portal/*` | Stakeholder CRM UX (cases, knowledge, documents, …) |
+| Learning Academy | `/academy/*` | Learning-only external experience |
+
+Both use `userType: EXTERNAL` + People. Academy grants are tracked via `LearningAcademyAccess` and LMS LEARNER; CRM portal grants remain via portal enablement + external roles. Seat billing for Learning is the shared `LEARNER_SEAT` pool — not a separate portal SKU. See [`../LEARNING_PORTAL_ACADEMY_V2.md`](../LEARNING_PORTAL_ACADEMY_V2.md).
+
+---
+
+## 20. Non-goals (V1)
 
 - Seat enforcement (V1.5)
 - SSO/OIDC/SAML
 - Custom domain, branding, delegated admin, bulk enablement, self-registration
+- Using `/portal` modules as the Learning Academy UX

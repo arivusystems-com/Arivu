@@ -80,6 +80,16 @@
           </button>
 
           <button
+            v-if="canShareReport"
+            type="button"
+            class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            @click="openShare"
+          >
+            <ShareIcon class="h-4 w-4" aria-hidden="true" />
+            {{ t('analytics.actionShare') }}
+          </button>
+
+          <button
             v-if="canEditReport"
             type="button"
             class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
@@ -292,6 +302,16 @@
           />
         </div>
       </section>
+
+      <ReportShareDialog
+        :open="shareOpen"
+        :report-name="report.name"
+        :visibility="shareVisibility"
+        :shared-with="shareSharedWith"
+        :saving="saving"
+        @close="shareOpen = false"
+        @save="saveShare"
+      />
     </template>
   </div>
 </template>
@@ -314,14 +334,21 @@ import {
   ExclamationTriangleIcon,
   EyeIcon,
   PencilSquareIcon,
+  ShareIcon,
   ShieldCheckIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/authRegistry';
 import ReportTypePreviewPanel from '@/components/analytics/ReportTypePreviewPanel.vue';
+import ReportShareDialog from '@/components/analytics/report-builder/ReportShareDialog.vue';
 import type { MatrixExpandedRowState } from '@/components/analytics/ReportMatrixPreviewPanel.vue';
 import { useAnalyticsReports } from '@/composables/useAnalyticsReports';
+import { useNotifications } from '@/composables/useNotifications';
 import { useTabs } from '@/composables/useTabs';
-import type { AnalyticsExecuteResult } from '@/types/analytics.types';
+import type {
+  AnalyticsExecuteResult,
+  AnalyticsShareTarget,
+  AnalyticsVisibility,
+} from '@/types/analytics.types';
 import {
   captureAnalyticsReportCertified,
   captureAnalyticsReportExecuted,
@@ -343,14 +370,18 @@ const {
   catalogModules,
   fetchReport,
   fetchCatalog,
+  updateReport,
   executeReport,
   exportReport,
   certifyReport,
   uncertifyReport,
 } = useAnalyticsReports();
 
+const { success, error } = useNotifications();
+
 const runResult = ref<AnalyticsExecuteResult | null>(null);
 const expandedMatrixRows = ref<Record<string, MatrixExpandedRowState>>({});
+const shareOpen = ref(false);
 
 const canCertify = computed(() => authStore.can('analytics_admin', 'certify'));
 const isPublished = computed(() => report.value?.status === 'published');
@@ -363,6 +394,15 @@ const canEditReport = computed(() => {
     : report.value.ownerId;
   return ownerId && String(ownerId) === String(authStore.user?._id);
 });
+const canShareReport = computed(
+  () => canEditReport.value && report.value?.status !== 'archived',
+);
+const shareVisibility = computed<AnalyticsVisibility>(
+  () => report.value?.visibility || 'private',
+);
+const shareSharedWith = computed<AnalyticsShareTarget[]>(() =>
+  Array.isArray(report.value?.sharedWith) ? report.value.sharedWith : [],
+);
 
 const previewModeLabel = computed(() => {
   const type = String(report.value?.type || '').toLowerCase();
@@ -483,6 +523,26 @@ function goEdit() {
   router.push({ name: 'analytics-report-edit', params: { id: route.params.id } });
 }
 
+function openShare() {
+  shareOpen.value = true;
+}
+
+async function saveShare(payload: {
+  visibility: AnalyticsVisibility;
+  sharedWith: AnalyticsShareTarget[];
+}) {
+  const res = await updateReport(String(route.params.id), {
+    visibility: payload.visibility,
+    sharedWith: payload.sharedWith,
+  });
+  if (res?.success) {
+    shareOpen.value = false;
+    success(t('analytics.shareReportSaved'));
+    return;
+  }
+      error(res?.message || t('errors.permission_denied'));
+}
+
 function goCreateWidget() {
   router.push({
     name: 'analytics-widget-create',
@@ -521,7 +581,7 @@ async function runReport() {
   if (res?.success) {
     runResult.value = res.data;
     captureAnalyticsReportExecuted({ report_id: route.params.id });
-    await fetchReport(String(route.params.id));
+    await fetchReport(String(route.params.id), { silent: true });
   }
 }
 

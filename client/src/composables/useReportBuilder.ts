@@ -30,6 +30,10 @@ import {
   resolveActiveFilterChipLabel,
 } from '@/platform/filters/filterQueryCompiler';
 import type { FilterOperatorId } from '@/platform/filters/filterOperators';
+import {
+  getMissingShareTargetType,
+  shareValidationMessageKey,
+} from '@/components/analytics/report-builder/reportShareValidation';
 
 export const DEFAULT_REPORT_PERMISSIONS: AnalyticsReportPermissions = {
   view: 'viewers',
@@ -783,6 +787,14 @@ function onFilterStateChange(nextState: ReportFilterState | null) {
     if (!form.name.trim()) {
       notifyError(t('analytics.builderNameRequired'));
       return { success: false, message: t('analytics.builderNameRequired') };
+    }
+
+    const shareKey = shareValidationMessageKey(
+      getMissingShareTargetType(form.visibility, form.sharedWith),
+    );
+    if (shareKey) {
+      notifyError(t(shareKey));
+      return { success: false, message: t(shareKey) };
     }
 
     const payload = buildPayload();

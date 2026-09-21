@@ -36,6 +36,12 @@ import { getActivePinia } from 'pinia';
 import { fetchCoreModulesSettingsCached } from '@/utils/tenantSchemaApiCache';
 import { INVENTORY_WORKBENCH_MODULES } from '@/utils/inventoryWorkbenchNav';
 import {
+  learningAudienceForModule,
+  learningRoleCanSeeAudience,
+  resolveLearningRole,
+} from '@/utils/learningRoles';
+import { useAuthStore } from '@/stores/auth';
+import {
   getAppNameKey,
   getModuleLabelKey,
   getSurfaceLabelKey,
@@ -146,10 +152,15 @@ function resolveActiveAppId(
     ['/marketing/', 'MARKETING'],
     ['/projects/', 'PROJECTS'],
     ['/sales/', 'SALES'],
+    ['/learning/', 'LMS'],
   ];
   for (const [prefix, appKey] of pathPrefixToAppKey) {
     if (!normalizedPath.startsWith(prefix)) continue;
     const matched = apps.find((a) => String(a.appKey || '').toUpperCase() === appKey);
+    if (matched) return matched.appKey;
+  }
+  if (normalizedPath === '/learning') {
+    const matched = apps.find((a) => String(a.appKey || '').toUpperCase() === 'LMS');
     if (matched) return matched.appKey;
   }
 
@@ -537,6 +548,18 @@ function buildAppNav(appRegistry: AppRegistry, activeAppId: string, snapshot: Pe
         if (!resolvePortalModulePermission(m.moduleKey)) return false;
         return hasPortalModuleAccess(snapshot, m.moduleKey);
       }
+      if (normalizedAppId === 'LMS') {
+        const pinia = getActivePinia();
+        const learningRole = pinia
+          ? resolveLearningRole(useAuthStore(pinia).user)
+          : null;
+        const audience =
+          (m as { learningAudience?: string }).learningAudience
+          || learningAudienceForModule(m.moduleKey);
+        if (!learningRoleCanSeeAudience(learningRole, audience as 'learner' | 'author' | 'admin')) {
+          return false;
+        }
+      }
       return hasPermission(m.permission, snapshot);
     })
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
@@ -584,12 +607,12 @@ function buildAppNav(appRegistry: AppRegistry, activeAppId: string, snapshot: Pe
     id: activeAppId,
     // The first app-nav entry is always the app dashboard.
     // Portal uses "Home"; other apps use "Dashboard" to avoid duplicating the app name.
-    ...(isPortalApp
+    ...(isPortalApp || normalizedAppId === 'LMS'
       ? sidebarLabel(getSurfaceLabelKey('home'), 'Home')
       : sidebarLabel(getModuleLabelKey('dashboard'), 'Dashboard')),
     route: app.dashboardRoute,
     // Use route-context-aware dashboard icons so tab and sidebar stay visually aligned.
-    icon: isPortalApp
+    icon: isPortalApp || normalizedAppId === 'LMS'
       ? 'home'
       : normalizedAppId === 'AUDIT'
         ? 'presentation-chart'

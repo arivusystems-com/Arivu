@@ -102,7 +102,11 @@ class UICompositionService {
         const defaultHomeByApp = {
           sales: '/sales/dashboard',
           audit: '/audit/dashboard',
-          portal: '/portal/dashboard'
+          portal: '/portal/dashboard',
+          marketing: '/dashboard/marketing',
+          inventory: '/dashboard/inventory',
+          helpdesk: '/dashboard/helpdesk',
+          lms: '/learning',
         };
         let defaultRoute = app.ui?.defaultRoute;
         if (!defaultRoute || defaultRoute === '/dashboard') {

@@ -712,6 +712,7 @@ const settingsAccessCtx = computed(() => ({
   permissions: authStore.user?.permissions,
   entitledAddons: authStore.user?.entitledAddons || null,
   inventoryEnabled: authStore.inventoryEnabled === true,
+  userType: authStore.user?.userType,
 }));
 
 const tabs = computed(() => {

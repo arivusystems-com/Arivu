@@ -268,8 +268,9 @@ exports.listPortals = async (req, res) => {
     return res.json({
       success: true,
       portals: session.portals,
-      activeExternalRoleId: req.user.activeExternalRoleId || null,
-      defaultExternalRoleId: user.defaultExternalRoleId || null
+      activeExternalRoleId: session.activeExternalRoleId || req.user.activeExternalRoleId || null,
+      defaultExternalRoleId: user.defaultExternalRoleId || null,
+      requiresPortalSelection: session.requiresPortalSelection === true,
     });
   } catch (error) {
     console.error('[portalAuth] listPortals error:', error);

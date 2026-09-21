@@ -161,30 +161,66 @@ async function runModuleGet(input = {}, ctx = {}) {
   };
 }
 
+/** Platform / infra keys Astra must never $set via NL update. */
+const WRITE_FIELD_DENYLIST = new Set([
+  '_id',
+  'id',
+  'organizationId',
+  'createdBy',
+  'modifiedBy',
+  'updatedBy',
+  'deletedAt',
+  'deletedBy',
+  'deletionReason',
+  'createdAt',
+  'updatedAt',
+  '__v',
+  'isTenant',
+]);
+
+/**
+ * Map common NL aliases onto module-native keys (title → eventName, etc.).
+ */
+function normalizeFieldAliases(moduleKey, fields = {}) {
+  const out = { ...fields };
+  const mod = String(moduleKey || '').toLowerCase();
+  if (mod === 'events') {
+    if (out.title != null && out.eventName == null) {
+      out.eventName = out.title;
+      delete out.title;
+    }
+    if (out.name != null && out.eventName == null) {
+      out.eventName = out.name;
+      delete out.name;
+    }
+  }
+  if (mod === 'tasks') {
+    if (out.name != null && out.title == null) {
+      out.title = out.name;
+      delete out.name;
+    }
+    if (out.subject != null && out.title == null) {
+      out.title = out.subject;
+      delete out.subject;
+    }
+  }
+  if (mod === 'deals' || mod === 'organizations' || mod === 'cases') {
+    if (out.title != null && out.name == null) {
+      out.name = out.title;
+      delete out.title;
+    }
+  }
+  return out;
+}
+
 function pickWritableFields(moduleKey, fields = {}) {
-  const mod = getModule(moduleKey);
-  const allowed = new Set([
-    ...(mod?.titleFields || []),
-    ...(mod?.subtitleFields || []),
-    'name',
-    'title',
-    'status',
-    'priority',
-    'description',
-    'amount',
-    'dueDate',
-    'stage',
-    'email',
-    'first_name',
-    'last_name',
-    'phone',
-    'subject',
-    'body',
-    'notes',
-  ]);
+  const aliased = normalizeFieldAliases(moduleKey, fields);
   const out = {};
-  for (const [k, v] of Object.entries(fields || {})) {
-    if (allowed.has(k) && v !== undefined) out[k] = v;
+  for (const [k, v] of Object.entries(aliased || {})) {
+    const key = String(k || '').trim();
+    if (!key || WRITE_FIELD_DENYLIST.has(key)) continue;
+    if (v === undefined) continue;
+    out[key] = v;
   }
   return out;
 }
@@ -218,6 +254,17 @@ async function runModuleCreate(input = {}, ctx = {}) {
     createdBy: ctx.userId || null,
   };
   const created = await model.create(doc);
+  try {
+    const { publishDataChange } = require('../../dataChangeService');
+    publishDataChange({
+      organizationId: ctx.organizationId,
+      moduleKey,
+      recordId: String(created._id),
+      op: 'create',
+    });
+  } catch {
+    /* non-blocking */
+  }
   return {
     ok: true,
     moduleKey,
@@ -243,11 +290,13 @@ async function runModuleUpdate(input = {}, ctx = {}) {
     return { ok: false, guidance: 'No writable fields provided.' };
   }
   if (input.confirmed !== true) {
+    const label = fields.eventName || fields.title || fields.name || recordId;
     return buildConfirmation({
       toolName: 'module.update',
       risk: RISK.WRITE,
-      summary: `Update ${moduleKey} ${recordId}`,
+      summary: `Update ${moduleKey}: ${label}`,
       payload: { moduleKey, recordId, fields, action: 'update' },
+      effects: Object.entries(fields).map(([k, v]) => ({ field: k, to: v })),
     });
   }
   const model = resolveModuleModel(moduleKey, ctx.deps);
@@ -262,6 +311,17 @@ async function runModuleUpdate(input = {}, ctx = {}) {
   const updated = await model.findOneAndUpdate(filter, { $set: fields }, { new: true }).lean();
   if (!updated) {
     return { ok: false, guidance: 'Record not found.' };
+  }
+  try {
+    const { publishDataChange } = require('../../dataChangeService');
+    publishDataChange({
+      organizationId: ctx.organizationId,
+      moduleKey,
+      recordId,
+      op: 'update',
+    });
+  } catch {
+    /* non-blocking */
   }
   return {
     ok: true,

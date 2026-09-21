@@ -24,7 +24,7 @@ const {
   CASE_PRIORITIES,
   CASE_CHANNELS
 } = require('../constants/caseLifecycle');
-const { buildCasesListQuery } = require('../utils/listQueryBuilders/casesListQuery');
+const { buildCasesListQuery, computeCasesListStatistics } = require('../utils/listQueryBuilders/casesListQuery');
 const { fetchListMeta, sendListMetaResponse } = require('../utils/listMetaService');
 const {
   isValidCaseStatus,
@@ -368,14 +368,12 @@ exports.createCase = async (req, res) => {
     const now = new Date();
     let caseId = req.body?.caseId ? String(req.body.caseId).trim() : '';
     if (!caseId) {
-      const { allocate } = require('../services/moduleNumberingService');
-      const result = await allocate({
+      const { allocateRequired } = require('../services/moduleNumberingService');
+      caseId = await allocateRequired({
         organizationId: req.user.organizationId,
         moduleKey: 'cases',
         at: now,
       });
-      caseId = result?.recordId
-        || `CAS-${now.getUTCFullYear()}-${String(Date.now()).slice(-6)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     }
     const actorName = getActorDisplayName(req.user);
 
@@ -472,7 +470,11 @@ exports.createCase = async (req, res) => {
 
 exports.getCases = async (req, res) => {
   try {
-    const parsedQuery = parseCaseListQuery(req.query || {}, {
+    const queryParams = { ...(req.query || {}) };
+    if (queryParams.assignedTo === 'me') {
+      queryParams.assignedTo = req.user?._id;
+    }
+    const parsedQuery = parseCaseListQuery(queryParams, {
       CASE_STATUSES: Case.CASE_STATUSES || [],
       CASE_PRIORITIES: CASE_PRIORITIES,
       CASE_TYPES: CASE_TYPES,
@@ -484,23 +486,25 @@ exports.getCases = async (req, res) => {
         message: parsedQuery.errors[0]
       });
     }
-    if (parsedQuery.filters.assignedTo && !mongoose.Types.ObjectId.isValid(parsedQuery.filters.assignedTo)) {
-      return res.status(400).json({ success: false, message: 'Invalid assignedTo filter' });
+
+    let query;
+    try {
+      query = buildCasesListQuery(req);
+    } catch (error) {
+      const statusCode = error.statusCode || 500;
+      return res.status(statusCode).json({
+        success: false,
+        message: error.message || 'Failed to fetch cases'
+      });
     }
 
-    const query = {
-      organizationId: req.user.organizationId,
-      deletedAt: null,
-      ...parsedQuery.filters
-    };
-    const { applyListSharingToQuery } = require('../utils/sharingQueryUtils');
-    applyListSharingToQuery(query, req, 'cases');
     const limit = parsedQuery.limit;
     const skip = parsedQuery.skip;
 
-    const [rows, total] = await Promise.all([
+    const [rows, total, listCardBreakdown] = await Promise.all([
       Case.find(query).sort(parsedQuery.sort).skip(skip).limit(limit).lean(),
-      Case.countDocuments(query)
+      Case.countDocuments(query),
+      computeCasesListStatistics(query)
     ]);
     for (const row of rows) {
       promoteCaseReferenceIdsFromCustomFields(row);
@@ -519,7 +523,17 @@ exports.getCases = async (req, res) => {
         patchCaseFlattenedAliases(flat);
         return flat;
       }),
-      meta: { total, skip, limit }
+      meta: { total, totalRecords: total, skip, limit },
+      pagination: {
+        totalRecords: total,
+        totalCases: total,
+        limit
+      },
+      listStatistics: {
+        ...listCardBreakdown,
+        totalCases: total,
+        myCases: total
+      }
     });
   } catch (error) {
     console.error('[caseController] getCases error', error);

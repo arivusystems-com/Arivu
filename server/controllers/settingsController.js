@@ -1714,8 +1714,8 @@ exports.getApplications = async (req, res) => {
                 icon: 'audit'
             },
             'LMS': {
-                name: 'LMS',
-                description: 'Learning management and training',
+                name: 'Learning',
+                description: 'An intelligent learning platform for your people, customers, and partners',
                 icon: 'lms'
             },
             'INVENTORY': {
@@ -1870,8 +1870,8 @@ exports.getApplication = async (req, res) => {
                 icon: 'audit'
             },
             'LMS': {
-                name: 'LMS',
-                description: 'Learning management and training',
+                name: 'Learning',
+                description: 'An intelligent learning platform for your people, customers, and partners',
                 icon: 'lms'
             },
             'INVENTORY': {
@@ -2026,8 +2026,8 @@ exports.getSubscriptions = async (req, res) => {
                 usageMetrics: ['audits', 'users']
             },
             'LMS': {
-                name: 'LMS',
-                description: 'Learning Management System',
+                name: 'Learning',
+                description: 'An intelligent learning platform for your people, customers, and partners',
                 usageMetrics: ['courses', 'learners', 'users']
             }
         };
@@ -2253,8 +2253,8 @@ exports.getSubscription = async (req, res) => {
                 usageMetrics: ['audits', 'users']
             },
             'LMS': {
-                name: 'LMS',
-                description: 'Learning Management System',
+                name: 'Learning',
+                description: 'An intelligent learning platform for your people, customers, and partners',
                 usageMetrics: ['courses', 'learners', 'users']
             }
         };
@@ -2400,7 +2400,10 @@ exports.getOrganizationSettings = async (req, res) => {
         }
 
         const { normalizeCurrenciesForResponse } = require('../utils/orgCurrencies');
+        const { resolveFiscalYearStartMonth } = require('../utils/fiscalYear');
         const currency = organization.settings?.currency || 'USD';
+        const companyAddress = organization.settings?.companyAddress || {};
+        const social = organization.settings?.social || {};
 
         // Return only organization identity and settings fields
         // Exclude subscription, billing, app enablement, etc.
@@ -2417,7 +2420,23 @@ exports.getOrganizationSettings = async (req, res) => {
                 language: organization.settings?.language || 'en',
                 defaultPhoneCountry: organization.settings?.defaultPhoneCountry || '',
                 dataRegion: organization.dataRegion || 'us-east-1',
-                industry: organization.industry || null
+                industry: organization.industry || null,
+                phone: organization.phone || '',
+                website: organization.website || '',
+                taxId: organization.taxId || '',
+                gstin: organization.gstin || '',
+                companyAddress: {
+                    line1: companyAddress.line1 || '',
+                    city: companyAddress.city || '',
+                    postalCode: companyAddress.postalCode || '',
+                    country: companyAddress.country || ''
+                },
+                social: {
+                    facebook: social.facebook || '',
+                    twitter: social.twitter || '',
+                    linkedin: social.linkedin || ''
+                },
+                fiscalYearStartMonth: resolveFiscalYearStartMonth(organization)
             }
         });
     } catch (error) {
@@ -2447,6 +2466,7 @@ exports.updateOrganizationSettings = async (req, res) => {
         const { normalizeCurrenciesForResponse, validateAndNormalizeCurrenciesInput } = require('../utils/orgCurrencies');
 
         // Snapshot raw stored values (no display defaults) for accurate change detection.
+        const { resolveFiscalYearStartMonth, applyFiscalYearStartMonth, clampMonth } = require('../utils/fiscalYear');
         const snapshotOrganizationSettings = (org) => ({
             name: org.name ?? null,
             logoUrl: org.settings?.logoUrl ?? null,
@@ -2459,15 +2479,49 @@ exports.updateOrganizationSettings = async (req, res) => {
             ),
             locale: org.settings?.locale ?? null,
             language: org.settings?.language ?? null,
-            defaultPhoneCountry: org.settings?.defaultPhoneCountry ?? null
+            defaultPhoneCountry: org.settings?.defaultPhoneCountry ?? null,
+            phone: org.phone ?? null,
+            website: org.website ?? null,
+            taxId: org.taxId ?? null,
+            gstin: org.gstin ?? null,
+            companyAddress: {
+                line1: org.settings?.companyAddress?.line1 ?? '',
+                city: org.settings?.companyAddress?.city ?? '',
+                postalCode: org.settings?.companyAddress?.postalCode ?? '',
+                country: org.settings?.companyAddress?.country ?? ''
+            },
+            social: {
+                facebook: org.settings?.social?.facebook ?? '',
+                twitter: org.settings?.social?.twitter ?? '',
+                linkedin: org.settings?.social?.linkedin ?? ''
+            },
+            fiscalYearStartMonth: resolveFiscalYearStartMonth(org)
         });
 
         const beforeSnapshot = snapshotOrganizationSettings(organization);
         res.locals.settingsAuditBefore = beforeSnapshot;
 
-        const { name, logoUrl, primaryColor, timeZone, currency, currencies, locale, language, defaultPhoneCountry } = req.body;
+        const {
+            name,
+            logoUrl,
+            primaryColor,
+            timeZone,
+            currency,
+            currencies,
+            locale,
+            language,
+            defaultPhoneCountry,
+            phone,
+            website,
+            taxId,
+            gstin,
+            companyAddress,
+            social,
+            fiscalYearStartMonth
+        } = req.body;
         const { sanitizeBrandColor } = require('../services/quoteOrgSettingsService');
         const { isValidPhoneCountryIso2 } = require('../constants/phoneCountries');
+        const { validateGstin } = require('../utils/gstinValidator');
 
         // Validate and update only allowed fields
         if (name !== undefined) {
@@ -2546,6 +2600,84 @@ exports.updateOrganizationSettings = async (req, res) => {
             }
         }
 
+        if (phone !== undefined) {
+            organization.phone = phone != null ? String(phone).trim() : '';
+        }
+
+        if (website !== undefined) {
+            organization.website = website != null ? String(website).trim() : '';
+        }
+
+        if (taxId !== undefined) {
+            organization.taxId = taxId != null ? String(taxId).trim() : '';
+        }
+
+        if (gstin !== undefined) {
+            const raw = gstin != null ? String(gstin).trim() : '';
+            if (!raw) {
+                organization.gstin = '';
+            } else {
+                const gst = validateGstin(raw);
+                if (!gst.ok) {
+                    return res.status(400).json({
+                        success: false,
+                        message: gst.error || 'Invalid GSTIN'
+                    });
+                }
+                organization.gstin = gst.normalized;
+            }
+        }
+
+        if (companyAddress !== undefined && companyAddress && typeof companyAddress === 'object') {
+            if (!organization.settings.companyAddress) {
+                organization.settings.companyAddress = {};
+            }
+            if (Object.prototype.hasOwnProperty.call(companyAddress, 'line1')) {
+                organization.settings.companyAddress.line1 = String(companyAddress.line1 || '').trim();
+            }
+            if (Object.prototype.hasOwnProperty.call(companyAddress, 'city')) {
+                organization.settings.companyAddress.city = String(companyAddress.city || '').trim();
+            }
+            if (Object.prototype.hasOwnProperty.call(companyAddress, 'postalCode')) {
+                organization.settings.companyAddress.postalCode = String(companyAddress.postalCode || '').trim();
+            }
+            if (Object.prototype.hasOwnProperty.call(companyAddress, 'country')) {
+                const c = String(companyAddress.country || '').trim().toUpperCase();
+                if (c && !isValidPhoneCountryIso2(c)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Invalid country. Must be a supported ISO 3166-1 alpha-2 code'
+                    });
+                }
+                organization.settings.companyAddress.country = c;
+            }
+            organization.markModified('settings.companyAddress');
+        }
+
+        if (social !== undefined && social && typeof social === 'object') {
+            if (!organization.settings.social) {
+                organization.settings.social = {};
+            }
+            for (const key of ['facebook', 'twitter', 'linkedin']) {
+                if (Object.prototype.hasOwnProperty.call(social, key)) {
+                    organization.settings.social[key] = String(social[key] || '').trim();
+                }
+            }
+            organization.markModified('settings.social');
+        }
+
+        if (fiscalYearStartMonth !== undefined) {
+            const month = clampMonth(fiscalYearStartMonth, NaN);
+            if (!Number.isFinite(month)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Financial year start month must be between 1 and 12'
+                });
+            }
+            applyFiscalYearStartMonth(organization, month);
+            organization.markModified('settings');
+        }
+
         if (currencies !== undefined) {
             const baseForCurrencies = organization.settings.currency || 'USD';
             const validated = validateAndNormalizeCurrenciesInput(currencies, baseForCurrencies);
@@ -2571,7 +2703,14 @@ exports.updateOrganizationSettings = async (req, res) => {
             'currencies',
             'locale',
             'language',
-            'defaultPhoneCountry'
+            'defaultPhoneCountry',
+            'phone',
+            'website',
+            'taxId',
+            'gstin',
+            'companyAddress',
+            'social',
+            'fiscalYearStartMonth'
         ].filter((key) => Object.prototype.hasOwnProperty.call(req.body || {}, key));
 
         const pickKeys = (source, keys) => {
@@ -2584,6 +2723,8 @@ exports.updateOrganizationSettings = async (req, res) => {
         res.locals.settingsAuditAfter = pickKeys(afterSnapshot, sentKeys);
 
         const resolvedCurrency = organization.settings?.currency || 'USD';
+        const afterCompanyAddress = organization.settings?.companyAddress || {};
+        const afterSocial = organization.settings?.social || {};
         const afterPayload = {
             name: organization.name,
             logoUrl: organization.settings?.logoUrl || null,
@@ -2593,7 +2734,23 @@ exports.updateOrganizationSettings = async (req, res) => {
             currencies: normalizeCurrenciesForResponse(organization.settings?.currencies, resolvedCurrency),
             locale: organization.settings?.locale || 'en-US',
             language: organization.settings?.language || 'en',
-            defaultPhoneCountry: organization.settings?.defaultPhoneCountry || ''
+            defaultPhoneCountry: organization.settings?.defaultPhoneCountry || '',
+            phone: organization.phone || '',
+            website: organization.website || '',
+            taxId: organization.taxId || '',
+            gstin: organization.gstin || '',
+            companyAddress: {
+                line1: afterCompanyAddress.line1 || '',
+                city: afterCompanyAddress.city || '',
+                postalCode: afterCompanyAddress.postalCode || '',
+                country: afterCompanyAddress.country || ''
+            },
+            social: {
+                facebook: afterSocial.facebook || '',
+                twitter: afterSocial.twitter || '',
+                linkedin: afterSocial.linkedin || ''
+            },
+            fiscalYearStartMonth: resolveFiscalYearStartMonth(organization)
         };
 
         // Return updated settings

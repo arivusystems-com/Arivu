@@ -1444,9 +1444,42 @@
     "description": "Dashboard visibility private"
   },
   "visibilityTeam": {
-    "message": "Team",
-    "description": "Dashboard visibility team"
+    "message": "Groups",
+    "description": "Visibility: selected Groups & Teams"
   },
+  "shareReportTitle": {
+    "message": "Share report",
+    "description": "Report share dialog title"
+  },
+  "shareReportSaved": {
+    "message": "Sharing updated",
+    "description": "Toast after report share save"
+  },
+  "actionShare": {
+    "message": "Share",
+    "description": "Share report action"
+  },
+  "shareNoneSelected": {
+    "message": "Select…",
+    "description": "Empty multi-select placeholder in share picker"
+  },
+  "shareSelectedCount": {
+    "message": "{count} selected",
+    "description": "Multi-select summary when multiple share targets chosen"
+  },
+  "shareNoOptions": {
+    "message": "No options available",
+    "description": "Empty state inside share multi-select dropdown"
+  },
+  "shareGroupsRequired": {
+    "message": "Select at least one group to share with",
+    "description": "Validation when Groups visibility has no group targets"
+  },
+  "shareRolesRequired": {
+    "message": "Select at least one role to share with",
+    "description": "Validation when Roles visibility has no role targets"
+  },
+
   "visibilityOrganization": {
     "message": "Organization",
     "description": "Dashboard visibility organization"
@@ -1528,8 +1561,8 @@
     "description": "Dashboard share panel title"
   },
   "dashboardShareTeams": {
-    "message": "Share with teams",
-    "description": "Dashboard team share picker"
+    "message": "Share with groups",
+    "description": "Groups & Teams share picker"
   },
   "dashboardShareRoles": {
     "message": "Share with roles",

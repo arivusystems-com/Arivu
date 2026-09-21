@@ -2,41 +2,33 @@
  * ============================================================================
  * App Registry: Single Source of Truth for App Configuration
  * ============================================================================
- * 
- * This file defines:
- * - Which roles belong to which app
- * - Which userTypes can access which apps
- * - Default role per app
- * - Future app extensibility
- * 
- * ⚠️ IMPORTANT: No role validation should be hardcoded elsewhere.
- *    All role validation must read from this registry.
- * 
- * ============================================================================
+ *
+ * userTypesAllowed: STANDARD | ADMIN | EXTERNAL
+ * (INTERNAL kept as legacy synonym expanded in appAccessUtils)
  */
 
 module.exports = {
   SALES: {
     roles: ['ADMIN', 'MANAGER', 'USER'],
-    userTypesAllowed: ['INTERNAL'],
+    userTypesAllowed: ['STANDARD', 'ADMIN'],
     defaultRole: 'USER'
   },
 
   HELPDESK: {
     roles: ['ADMIN', 'MANAGER', 'USER', 'AGENT'],
-    userTypesAllowed: ['INTERNAL'],
+    userTypesAllowed: ['STANDARD', 'ADMIN'],
     defaultRole: 'AGENT'
   },
 
   PROJECTS: {
     roles: ['ADMIN', 'MANAGER', 'USER'],
-    userTypesAllowed: ['INTERNAL'],
+    userTypesAllowed: ['STANDARD', 'ADMIN'],
     defaultRole: 'USER'
   },
 
   AUDIT: {
     roles: ['AUDITOR'],
-    userTypesAllowed: ['INTERNAL', 'EXTERNAL'],
+    userTypesAllowed: ['STANDARD', 'ADMIN', 'EXTERNAL'],
     defaultRole: 'AUDITOR'
   },
 
@@ -48,14 +40,19 @@ module.exports = {
 
   INVENTORY: {
     roles: ['ADMIN', 'MANAGER', 'USER'],
-    userTypesAllowed: ['INTERNAL'],
+    userTypesAllowed: ['STANDARD', 'ADMIN'],
     defaultRole: 'USER'
   },
 
   MARKETING: {
     roles: ['ADMIN', 'MANAGER', 'USER'],
-    userTypesAllowed: ['INTERNAL'],
+    userTypesAllowed: ['STANDARD', 'ADMIN'],
     defaultRole: 'USER'
+  },
+
+  LMS: {
+    roles: ['ADMIN', 'AUTHOR', 'LEARNER'],
+    userTypesAllowed: ['STANDARD', 'ADMIN', 'EXTERNAL'],
+    defaultRole: 'LEARNER'
   }
 };
-

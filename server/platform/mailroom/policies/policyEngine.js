@@ -191,6 +191,7 @@ function evaluateIngest(ingestPolicy, message) {
   const policy = ingestPolicy || {};
   const rules = Array.isArray(policy.rules) ? policy.rules : [];
   const trace = [];
+  let disabledMatch = null;
 
   const participants = {
     ...(message?.participants || {}),
@@ -200,7 +201,6 @@ function evaluateIngest(ingestPolicy, message) {
 
   for (let i = 0; i < rules.length; i += 1) {
     const rule = rules[i];
-    if (rule?.enabled === false) continue;
     const mode = String(rule.match || 'all').toLowerCase() === 'any' ? 'any' : 'all';
     const conditions = Array.isArray(rule.conditions) ? rule.conditions : [];
     const checks = conditions.map((cond) => {
@@ -214,6 +214,24 @@ function evaluateIngest(ingestPolicy, message) {
     const matched = checks.length > 0 && (mode === 'any'
       ? checks.some((c) => c.matched)
       : checks.every((c) => c.matched));
+
+    if (rule?.enabled === false) {
+      trace.push({
+        index: i,
+        ruleId: rule.id || null,
+        matched,
+        checks,
+        skipped: true,
+        reason: 'disabled'
+      });
+      // Disabled rules still "claim" matching traffic so defaultAction cannot
+      // silently re-apply the same routing (e.g. route_to_case_flow).
+      if (matched && !disabledMatch) {
+        disabledMatch = rule;
+      }
+      continue;
+    }
+
     trace.push({ index: i, ruleId: rule.id || null, matched, checks });
     if (matched) {
       return {
@@ -224,6 +242,17 @@ function evaluateIngest(ingestPolicy, message) {
         trace
       };
     }
+  }
+
+  if (disabledMatch) {
+    return {
+      policyType: 'ingest',
+      matched: false,
+      ruleId: disabledMatch.id || null,
+      action: { type: 'ignore' },
+      suppressedDefault: true,
+      trace
+    };
   }
 
   return {

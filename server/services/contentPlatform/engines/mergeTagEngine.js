@@ -194,7 +194,26 @@ function hasMeaningfulOrganizationValue(scope, pathPart) {
 
 function normalizeLineItemPath(scope, pathPart) {
   const path = String(pathPart || '').trim();
-  if (!path.toLowerCase().startsWith('lines.')) return path;
+  const lower = path.toLowerCase();
+
+  // Builder sometimes emits Line.* / lines.*; row scope uses line.*
+  if (
+    (lower.startsWith('lines.') || lower.startsWith('line.'))
+    && (scope?.line || scope?.item)
+  ) {
+    const field = path.includes('.') ? path.slice(path.indexOf('.') + 1) : path;
+    if (scope?.line && Object.prototype.hasOwnProperty.call(scope.line, field)) {
+      return `line.${field}`;
+    }
+    if (scope?.item && Object.prototype.hasOwnProperty.call(scope.item, field)) {
+      return `line.${field}`;
+    }
+    if (lower.startsWith('line.') || lower.startsWith('lines.')) {
+      return `line.${field}`;
+    }
+  }
+
+  if (!lower.startsWith('lines.')) return path;
   if (!scope?.line && !scope?.item) return path;
   const field = path.slice('lines.'.length);
   if (scope?.line && Object.prototype.hasOwnProperty.call(scope.line, field)) {

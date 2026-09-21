@@ -529,7 +529,8 @@ const groupedResults = computed(() => {
     work: [
       ...(backendResults.deals || []),
       ...(backendResults.tasks || []),
-      ...(backendResults.events || [])
+      ...(backendResults.events || []),
+      ...(backendResults.learningCourses || [])
     ],
     configuration: [
       ...(backendResults.forms || []),

@@ -462,5 +462,29 @@
   "emptyStateFieldService": {
     "message": "सेवा साइटें जोड़ें और अपनी फ़ील्ड टीम के लिए विज़िट शेड्यूल करें।",
     "description": "Empty state copy for field service vertical"
+  },
+  "firstTimeLearningTitle": {
+    "message": "Welcome to Learning",
+    "description": "First visit empty state title for Learning home"
+  },
+  "firstTimeLearningDescription": {
+    "message": "Explore published courses, enroll, track progress, and earn certificates — all in one place.",
+    "description": "First visit empty state description for Learning home"
+  },
+  "firstTimeLearningAction": {
+    "message": "Explore courses",
+    "description": "First visit CTA for Learning home"
+  },
+  "firstTimeLearningCoursesTitle": {
+    "message": "Create your first course",
+    "description": "First visit empty state for Learning courses"
+  },
+  "firstTimeLearningCoursesDescription": {
+    "message": "Add modules and lessons, publish, then enroll learners to start the Learning loop.",
+    "description": "First visit empty state description for Learning courses"
+  },
+  "firstTimeLearningCoursesAction": {
+    "message": "Create course",
+    "description": "First visit CTA for Learning courses"
   }
 }

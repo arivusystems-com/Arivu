@@ -42,6 +42,29 @@ const QuoteSchema = new mongoose.Schema(
   { _id: false }
 );
 
+/** Structured activity notice for group/channel membership and pin events. */
+const SystemEventSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: [
+        'group_created',
+        'channel_created',
+        'member_added',
+        'member_removed',
+        'member_left',
+        'chat_pinned',
+      ],
+      required: true,
+    },
+    actorUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    actorName: { type: String, trim: true, maxlength: 120, default: '' },
+    targetUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    targetName: { type: String, trim: true, maxlength: 120, default: '' },
+  },
+  { _id: false }
+);
+
 const InternalChatMessageSchema = new mongoose.Schema(
   {
     organizationId: {
@@ -67,6 +90,17 @@ const InternalChatMessageSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
       index: true,
+    },
+    /** `user` = normal chat; `system` = membership/activity notice (non-interactive). */
+    kind: {
+      type: String,
+      enum: ['user', 'system'],
+      default: 'user',
+      index: true,
+    },
+    systemEvent: {
+      type: SystemEventSchema,
+      default: null,
     },
     body: {
       type: String,
@@ -103,6 +137,11 @@ const InternalChatMessageSchema = new mongoose.Schema(
       type: Date,
       default: null,
       index: true,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
     },
   },
   { timestamps: true }

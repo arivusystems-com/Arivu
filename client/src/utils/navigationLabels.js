@@ -65,6 +65,19 @@ export const MODULE_LABEL_KEYS = {
   stockrooms: 'navigation.inventoryStockrooms',
   stock_adjustments: 'navigation.inventoryAdjustments',
   stock_transfers: 'navigation.inventoryTransfers',
+  learning_my: 'learning.myLearning',
+  learning_explore: 'learning.explore',
+  learning_courses: 'learning.courses',
+  learning_paths: 'learning.paths',
+  learning_programs: 'learning.programs',
+  learning_live: 'learning.liveSessions',
+  learning_assessments: 'learning.assessments',
+  learning_certificates: 'learning.certificates',
+  learning_skills: 'learning.skillsBadges',
+  learning_content: 'learning.contentLibrary',
+  learning_analytics: 'learning.analytics',
+  learning_compliance: 'learning.compliance',
+  learning_settings: 'learning.settings',
 };
 
 /** Core drawer section order (subtle categorization in AppModuleDrawer / AppFlyout). */
@@ -170,6 +183,7 @@ export const APP_NAME_KEYS = {
   PORTAL: 'navigation.appPortal',
   INVENTORY: 'navigation.appInventory',
   MARKETING: 'navigation.appMarketing',
+  LMS: 'navigation.appLearning',
 };
 
 /** Exact path → titleKey (optional titleParams in resolver) */
@@ -229,6 +243,7 @@ export const ROUTE_TITLE_KEYS = {
   '/control': 'navigation.userControlPanel',
   '/control/demo-requests': 'navigation.tabDemoRequests',
   '/control/instances': 'navigation.tabInstances',
+  '/control/billing': 'platform.commercialAdminTitle',
   '/settings/automation/automation-rules': 'navigation.tabAutomationRules',
   '/settings/automation/processes': 'navigation.tabProcesses',
   '/settings/automation/flows': 'navigation.tabBusinessFlows',
@@ -251,6 +266,20 @@ export const ROUTE_TITLE_KEYS = {
   '/portal/responses': 'navigation.portalResponses',
   '/dashboard/marketing': 'navigation.appMarketing',
   '/marketing/campaigns': 'navigation.moduleCampaigns',
+  '/learning': 'navigation.appLearning',
+  '/learning/my': 'learning.myLearning',
+  '/learning/explore': 'learning.explore',
+  '/learning/courses': 'learning.courses',
+  '/learning/paths': 'learning.paths',
+  '/learning/programs': 'learning.programs',
+  '/learning/live': 'learning.liveSessions',
+  '/learning/assessments': 'learning.assessments',
+  '/learning/certificates': 'learning.certificates',
+  '/learning/skills': 'learning.skillsBadges',
+  '/learning/content': 'learning.contentLibrary',
+  '/learning/compliance': 'learning.compliance',
+  '/learning/analytics': 'learning.analytics',
+  '/learning/settings': 'learning.settings',
   '/marketing/blog': 'navigation.moduleBlog',
   '/marketing/audiences': 'navigation.moduleAudiences',
   '/marketing/segments': 'navigation.moduleSegments',
@@ -319,6 +348,26 @@ export function getTabTitleMetaForPath(path, params = {}) {
 
   if (ROUTE_TITLE_KEYS[pathOnly]) {
     return { titleKey: ROUTE_TITLE_KEYS[pathOnly] };
+  }
+
+  if (pathOnly.startsWith('/learning/')) {
+    const root = `/learning/${segments[1] || ''}`;
+    if (ROUTE_TITLE_KEYS[root] && segments.length > 2) {
+      if (params?.name) {
+        return {
+          titleKey: 'navigation.tabRecordNamed',
+          titleParams: { moduleRoute: segments[1], name: params.name },
+        };
+      }
+      return {
+        titleKey: 'navigation.tabRecordDetail',
+        titleParams: { moduleRoute: segments[1] },
+      };
+    }
+    if (ROUTE_TITLE_KEYS[root]) {
+      return { titleKey: ROUTE_TITLE_KEYS[root] };
+    }
+    return { titleKey: 'navigation.appLearning' };
   }
 
   if (pathOnly.startsWith('/sales/dashboard')) {
@@ -634,6 +683,10 @@ export function isRecordDetailTabPath(path) {
     return segments.length >= 4 && segments[3] === 'edit' && isRecordIdSegment(segments[2]);
   }
 
+  if (pathOnly.startsWith('/learning/')) {
+    return segments.length >= 3 && isRecordIdSegment(segments[2]);
+  }
+
   // Standard CRM modules: `/module/:recordId` (two segments — was incorrectly treated as list)
   if (segments.length === 2) {
     return isRecordIdSegment(segments[1]) && Boolean(getModuleLabelKey(segments[0]) || segments[0]);
@@ -660,6 +713,9 @@ export function getRecordModuleListPath(path) {
   if (pathOnly.startsWith('/helpdesk/cases/')) return '/helpdesk/cases';
   if (pathOnly.startsWith('/helpdesk/articles/')) return '/helpdesk/articles';
   if (pathOnly.startsWith('/marketing/blog/')) return '/marketing/blog';
+  if (pathOnly.startsWith('/learning/') && segments.length >= 3) {
+    return `/learning/${segments[1]}`;
+  }
   if (segments.length >= 2) return `/${segments[0]}`;
   return null;
 }

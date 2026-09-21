@@ -301,10 +301,26 @@ exports.completeDemoSetup = async (req, res) => {
             },
         });
 
+        // Prefer provisioned instance — resolveInstanceForLogin can lag on first setup.
+        const instance = userPayload.instance?.subdomain
+            ? userPayload.instance
+            : (provisioned.instance
+                ? {
+                    subdomain: provisioned.instance.subdomain || null,
+                    frontendUrl: provisioned.instance.urls?.frontend || null,
+                    apiUrl: provisioned.instance.urls?.api || null,
+                    status: provisioned.instance.status || null,
+                }
+                : null);
+        if (instance) {
+            userPayload.instance = instance;
+        }
+
         return res.status(201).json({
             success: true,
             message: 'Workspace ready',
             user: userPayload,
+            instance,
             verticalTemplate: {
                 key: provisioned.verticalTemplate.key,
                 primaryAppKey: provisioned.verticalTemplate.primaryAppKey,

@@ -594,6 +594,12 @@ let markReadTimer = null;
 let typingTimer = null;
 let typingAbortController = null;
 let typingClearTimer = null;
+let streamPollTimer = null;
+let streamReconnectTimer = null;
+let streamAttempt = 0;
+
+const STREAM_POLL_MS = 2500;
+const MAX_STREAM_RECONNECTS = 5;
 
 const sessionOpen = computed(() => String(sessionMeta.value?.status || 'open') !== 'closed');
 
@@ -757,13 +763,57 @@ async function scrollToBottom() {
   el.scrollTop = el.scrollHeight;
 }
 
-function closeStream() {
+function stopStreamPoll() {
+  if (streamPollTimer) {
+    clearInterval(streamPollTimer);
+    streamPollTimer = null;
+  }
+}
+
+function stopStreamReconnect() {
+  if (streamReconnectTimer) {
+    clearTimeout(streamReconnectTimer);
+    streamReconnectTimer = null;
+  }
+}
+
+function closeStream({ resetAttempts = true } = {}) {
   try {
     es?.close?.();
   } catch {
     // ignore
   }
   es = null;
+  stopStreamPoll();
+  stopStreamReconnect();
+  if (resetAttempts) streamAttempt = 0;
+}
+
+function streamAfterCursor() {
+  const last = messages.value[messages.value.length - 1];
+  const ts = last?.createdAt ? new Date(last.createdAt).getTime() : NaN;
+  return Number.isFinite(ts) && ts > 0 ? ts : Date.now();
+}
+
+function startStreamMessagePoll() {
+  stopStreamPoll();
+  streamPollTimer = setInterval(() => {
+    void loadMessages().catch(() => {});
+  }, STREAM_POLL_MS);
+}
+
+function scheduleStreamReconnect() {
+  if (streamReconnectTimer) return;
+  streamAttempt += 1;
+  if (streamAttempt > MAX_STREAM_RECONNECTS) {
+    startStreamMessagePoll();
+    return;
+  }
+  const delay = Math.min(1000 * 2 ** (streamAttempt - 1), 15000);
+  streamReconnectTimer = setTimeout(() => {
+    streamReconnectTimer = null;
+    openStream({ isReconnect: true });
+  }, delay);
 }
 
 function patchReceipts(patches) {
@@ -834,17 +884,29 @@ function scheduleMarkRead() {
   }, 400);
 }
 
-function openStream() {
-  closeStream();
+function openStream({ isReconnect = false } = {}) {
+  try {
+    es?.close?.();
+  } catch {
+    // ignore
+  }
+  es = null;
+  stopStreamReconnect();
+  stopStreamPoll();
+  if (!isReconnect) streamAttempt = 0;
+
   if (!props.sessionId) return;
   const token = authStore.user?.token;
   if (!token) return;
 
-  const after = Date.now();
+  const after = streamAfterCursor();
   const url = getApiUrlForEventSource(
     `/live-chat/sessions/${props.sessionId}/stream?after=${after}&token=${encodeURIComponent(token)}`,
   );
   es = new EventSource(url, { withCredentials: true });
+  es.addEventListener('open', () => {
+    streamAttempt = 0;
+  });
   es.addEventListener('messages', (evt) => {
     try {
       mergeMessages(JSON.parse(evt.data || '[]'));
@@ -876,19 +938,36 @@ function openStream() {
   es.addEventListener('session', (evt) => {
     try {
       const payload = JSON.parse(evt.data || '{}');
-      if (String(payload?.status || '') !== 'closed') return;
-      sessionMeta.value = {
-        ...(sessionMeta.value || {}),
-        status: 'closed',
-        lifecycleStatus: payload.lifecycleStatus || sessionMeta.value?.lifecycleStatus || 'ended',
-        outcome: payload.outcome ?? sessionMeta.value?.outcome ?? null,
-        endedAt: payload.endedAt || sessionMeta.value?.endedAt || new Date().toISOString(),
-      };
-      closeStream();
+      const prev = sessionMeta.value || {};
+      const next = { ...prev };
+
+      if (payload.status != null) next.status = payload.status;
+      if (payload.lifecycleStatus != null) next.lifecycleStatus = payload.lifecycleStatus;
+      if ('outcome' in payload) next.outcome = payload.outcome ?? null;
+      if (payload.endedAt != null) next.endedAt = payload.endedAt;
+      if ('assignedAgentId' in payload) next.assignedAgentId = payload.assignedAgentId || null;
+      if ('assignedAgent' in payload) next.assignedAgent = payload.assignedAgent || null;
+      if (payload.transferCount != null) next.transferCount = payload.transferCount;
+
+      sessionMeta.value = next;
+
+      if (String(payload?.status || '') === 'closed') {
+        closeStream();
+      }
     } catch {
       // ignore
     }
   });
+  es.onerror = () => {
+    if (es && es.readyState === EventSource.CONNECTING) return;
+    try {
+      es?.close?.();
+    } catch {
+      // ignore
+    }
+    es = null;
+    scheduleStreamReconnect();
+  };
 }
 
 async function loadSessionMeta() {

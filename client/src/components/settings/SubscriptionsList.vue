@@ -4,12 +4,19 @@
       <div>
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('settings.tabSubscriptions') }}</h2>
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          {{ t('settings.settingsSubsListSubtitle') }}
+          {{ pageSubtitle }}
         </p>
       </div>
     </template>
 
     <div class="space-y-6">
+    <CommercialBillingOverview
+      @commercial-active="onCommercialActive"
+      @billing-surface="onBillingSurface"
+    />
+
+    <!-- Legacy per-app cards: only when commercial/internal surface is not the source of truth -->
+    <template v-if="!commercialActive">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -178,14 +185,16 @@
         </div>
       </div>
     </div>
+    </template>
     </div>
   </SettingsScrollPanel>
 </template>
 
 <script setup>
 import SettingsScrollPanel from '@/components/settings/SettingsScrollPanel.vue';
+import CommercialBillingOverview from '@/components/settings/CommercialBillingOverview.vue';
 import { formatUserDate } from '@/utils/localeFormat';
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import apiClient from '@/utils/apiClient';
@@ -200,6 +209,30 @@ const router = useRouter();
 const subscriptions = ref([]);
 const loading = ref(true);
 const error = ref(null);
+const commercialActive = ref(false);
+const billingSurface = ref({ commercialActive: false, isInternal: false, isSandbox: false });
+
+const pageSubtitle = computed(() => {
+  if (billingSurface.value.isSandbox || billingSurface.value.isInternal) {
+    return t('settings.billingSandboxPageSubtitle');
+  }
+  if (commercialActive.value) {
+    return t('settings.billingPageSubtitle');
+  }
+  return t('settings.settingsSubsListSubtitle');
+});
+
+function onCommercialActive(active) {
+  commercialActive.value = Boolean(active);
+}
+
+function onBillingSurface(surface) {
+  billingSurface.value = {
+    commercialActive: Boolean(surface?.commercialActive),
+    isInternal: Boolean(surface?.isInternal),
+    isSandbox: Boolean(surface?.isSandbox),
+  };
+}
 
 const PLAN_LABEL_KEYS = {
   Trial: 'settings.settingsSubsPlanTrial',

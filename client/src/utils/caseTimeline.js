@@ -43,17 +43,23 @@ export function isCaseInboundMessage(activity) {
 }
 
 export function isCaseOutboundMessage(activity) {
-  if (activity?.internal) return false;
   const type = String(activity?.activityType || '').trim();
+  // email_sent is always logged with internal:true for audit; still customer-facing mail
+  if (type === 'email_sent' || type === 'message_sent') return true;
+  if (activity?.internal) return false;
   if (OUTBOUND_MESSAGE_TYPES.has(type)) return true;
   return type === 'message';
 }
+
+const INTERNAL_COMMENT_ACTIVITY_TYPES = new Set(['comment', 'note']);
 
 /** Team-only comment on a case (not visible to the customer). */
 export function isCaseInternalComment(activity) {
   if (!activity?.internal) return false;
   if (isCaseSystemActivity(activity)) return false;
-  return true;
+  const type = String(activity?.activityType || '').trim();
+  // email_sent / other activities also set internal:true — only comment|note are notes-tab items
+  return INTERNAL_COMMENT_ACTIVITY_TYPES.has(type);
 }
 
 function splitPersonName(full) {
@@ -210,12 +216,11 @@ export function getCaseActivityAvatarUser(activity, caseRecord) {
   if (isCaseInboundMessage(activity)) {
     return resolveCaseContactProfile(caseRecord);
   }
-  if (activity?.actorId && caseRecord?.assignedTo && typeof caseRecord.assignedTo === 'object') {
-    return enrichPersonForAvatar(caseRecord.assignedTo);
-  }
   const parts = splitPersonName(activity?.actorName);
   if (parts.firstName || parts.lastName) return enrichPersonForAvatar(parts);
-  return enrichPersonForAvatar({ email: caseRecord?.assignedTo?.email });
+  const owner = caseRecord?.assignedTo;
+  if (owner && typeof owner === 'object') return enrichPersonForAvatar(owner);
+  return enrichPersonForAvatar({ email: owner?.email || '' });
 }
 
 export function formatCaseChannelLabel(channel) {

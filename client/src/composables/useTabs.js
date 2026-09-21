@@ -86,6 +86,11 @@ import {
   isAnnouncementsRoute,
   normalizeAnnouncementsPath,
 } from '@/utils/announcementsTabPaths';
+import {
+  learningTabOwnsRoute,
+  isLearningRoute,
+  getLearningIconForPath,
+} from '@/utils/learningTabPaths';
 import { resolveLiveChatSessionsNavigationPath } from '@/utils/liveChatSessionSelection';
 import { useAuthStore } from '@/stores/authRegistry';
 
@@ -1047,6 +1052,7 @@ const getIconForPath = (path) => {
   if (pathOnly === '/dashboard/audit' || pathOnly.startsWith('/dashboard/audit')) return 'shield-check';
   if (pathOnly === '/dashboard/sales' || pathOnly.startsWith('/dashboard/sales')) return 'document-chart-bar';
   if (pathOnly === '/dashboard/marketing' || pathOnly.startsWith('/dashboard/marketing')) return 'chart-bar';
+  if (isLearningRoute(pathOnly)) return getLearningIconForPath(pathOnly);
   if (pathOnly.startsWith('/inventory/purchase-orders')) return 'document-text';
   if (pathOnly.startsWith('/marketing/campaigns')) return 'megaphone';
   if (pathOnly === '/marketing/blog' || pathOnly.startsWith('/marketing/blog/')) return 'document-text';
@@ -1229,6 +1235,16 @@ const getTitleForPath = (path, params = {}) => {
   // Announcements: single workspace tab; All / Analytics / editor are in-page nav.
   if (isAnnouncementsRoute(path)) {
     return i18n.global.t('navigation.announcements');
+  }
+
+  // Learning modules each get their own tab — use route title keys.
+  if (isLearningRoute(path)) {
+    const meta = getTabTitleMetaForPath(path, params);
+    if (meta.titleKey && i18n.global.te(meta.titleKey)) {
+      return i18n.global.t(meta.titleKey, meta.titleParams || {});
+    }
+    if (meta.title) return meta.title;
+    return i18n.global.t('navigation.appLearning');
   }
 
   // Special case: Helpdesk cases routes
@@ -1798,6 +1814,7 @@ export function useTabs() {
         && existingTab.path !== path
         && !liveChatMainTabOwnsRoute(pathWithoutQuery, existingTab)
         && !announcementsTabOwnsRoute(pathWithoutQuery, existingTab)
+        && !learningTabOwnsRoute(pathWithoutQuery, existingTab)
       ) {
         existingTab.path = path;
       }
@@ -2015,18 +2032,36 @@ export function useTabs() {
       }
       void ensureRouterAtPath(currentPath);
       tabWasRestored = true;
+    } else if (!shouldSkipTabRoute(currentPath) && isLearningRoute(currentPath)) {
+      // Prefer URL over last-active tab so /learning/* deep links do not bounce.
+      console.log('🔄 [setupRouteWatcher] Deep-link Learning route on load, syncing tab:', currentPath);
+      syncTabWithRoute(currentPath);
+      void ensureRouterAtPath(currentPath);
+      tabWasRestored = true;
+    } else if (!shouldSkipTabRoute(currentPath) && isRecordDetailTabPath(currentPath)) {
+      // Prefer URL over last-active tab so record deep links (e.g. from Chat) do not bounce back.
+      console.log('🔄 [setupRouteWatcher] Deep-link record route on load, syncing tab:', currentPath);
+      syncTabWithRoute(currentPath);
+      void ensureRouterAtPath(currentPath);
+      tabWasRestored = true;
     } else if (activeTabId.value && !shouldSkipTabRoute(currentPath)) {
       const activeTab = tabs.value.find(tab => tab.id === activeTabId.value);
       if (activeTab) {
           console.log('🔄 [setupRouteWatcher] Restoring active tab from storage:', activeTab.id, activeTab.path);
           tabWasRestored = true;
           
-          // Never override Live Chat deep links with a stale stored tab path.
+          // Never override Live Chat / Learning / record deep links with a stale stored tab path.
           const browserPath = getInitialRoutePath(routeToWatch);
           if (browserPath.startsWith('/live-chat/')) {
             if (!syncLiveChatRouteTab(browserPath)) {
               syncTabWithRoute(browserPath);
             }
+            void ensureRouterAtPath(browserPath);
+          } else if (isLearningRoute(browserPath)) {
+            syncTabWithRoute(browserPath);
+            void ensureRouterAtPath(browserPath);
+          } else if (isRecordDetailTabPath(browserPath)) {
+            syncTabWithRoute(browserPath);
             void ensureRouterAtPath(browserPath);
           } else if (currentPath !== activeTab.path) {
             const currentRouter = getRouter();
@@ -2224,6 +2259,7 @@ export function useTabs() {
               && String(currentActiveTab.path || '').split('?')[0].split('#')[0] === newPath
               && !liveChatMainTabOwnsRoute(newPath, currentActiveTab)
               && !announcementsTabOwnsRoute(newPath, currentActiveTab)
+              && !learningTabOwnsRoute(newPath, currentActiveTab)
             ) {
               currentActiveTab.path = newFullPath || newPath;
               console.log('🔄 Updated active tab path for same-path query/hash change:', currentActiveTab.path);
@@ -2361,6 +2397,7 @@ export function useTabs() {
           currentPathWithoutQuery === newPathWithoutQuery
           || liveChatMainTabOwnsRoute(newPathWithoutQuery, currentActiveTab)
           || announcementsTabOwnsRoute(newPathWithoutQuery, currentActiveTab)
+          || learningTabOwnsRoute(newPathWithoutQuery, currentActiveTab)
         ) {
           // Persist query/hash changes on the same path base (e.g. /settings?tab=…, nested views).
           // Without this, switching workspace/browser tabs reopens Settings Home (/settings).
@@ -2368,6 +2405,7 @@ export function useTabs() {
             currentPathWithoutQuery === newPathWithoutQuery
             && !liveChatMainTabOwnsRoute(newPathWithoutQuery, currentActiveTab)
             && !announcementsTabOwnsRoute(newPathWithoutQuery, currentActiveTab)
+            && !learningTabOwnsRoute(newPathWithoutQuery, currentActiveTab)
           ) {
             const nextFull = newFullPath || newPath;
             if (nextFull && currentActiveTab.path !== nextFull) {

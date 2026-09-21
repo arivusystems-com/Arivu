@@ -342,14 +342,12 @@ const UserSchema = new mongoose.Schema({
         index: true
     },
     
-    // Platform User Type
-    // INTERNAL: employees of the organization
-    // EXTERNAL: auditors, customers, vendors
-    // SYSTEM: future automation (no UI usage yet)
+    // Platform User Type — STANDARD | ADMIN | EXTERNAL
+    // Legacy INTERNAL/SYSTEM accepted via normalize on write paths.
     userType: {
         type: String,
-        enum: ['INTERNAL', 'EXTERNAL', 'SYSTEM'],
-        default: 'INTERNAL'
+        enum: ['STANDARD', 'ADMIN', 'EXTERNAL', 'INTERNAL', 'SYSTEM'],
+        default: 'STANDARD'
     },
     
     // App-Based Access (Core Change)

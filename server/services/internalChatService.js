@@ -125,6 +125,97 @@ async function publishToSpaceMembers(organizationId, spaceId, payload) {
   return internalChatSSEHub.publishToUsers(organizationId, userIds, payload);
 }
 
+const SYSTEM_EVENT_TYPES = new Set([
+  'group_created',
+  'channel_created',
+  'member_added',
+  'member_removed',
+  'member_left',
+  'chat_pinned',
+]);
+
+function systemBodyFallback(eventType, actorName, targetName = '') {
+  const actor = actorName || 'Someone';
+  const target = targetName || 'Someone';
+  switch (eventType) {
+    case 'group_created':
+      return `${actor} created the group`;
+    case 'channel_created':
+      return `${actor} created the channel`;
+    case 'member_added':
+      return `${actor} added ${target} to the group`;
+    case 'member_removed':
+      return `${actor} removed ${target} from the group`;
+    case 'member_left':
+      return `${actor} left the group`;
+    case 'chat_pinned':
+      return `${actor} pinned the chat`;
+    default:
+      return actor;
+  }
+}
+
+/**
+ * Persist a non-interactive activity notice in the space timeline and fan out via SSE.
+ * Does not emit push/mention notifications.
+ */
+async function postSystemMessage({
+  organizationId,
+  spaceId,
+  actorUser,
+  eventType,
+  targetUser = null,
+}) {
+  if (!SYSTEM_EVENT_TYPES.has(eventType) || !actorUser?._id) return null;
+
+  const actorName = formatUserDisplayName(actorUser).slice(0, 120);
+  const targetName = targetUser ? formatUserDisplayName(targetUser).slice(0, 120) : '';
+  const systemEvent = {
+    type: eventType,
+    actorUserId: actorUser._id,
+    actorName,
+  };
+  if (targetUser?._id) {
+    systemEvent.targetUserId = targetUser._id;
+    systemEvent.targetName = targetName;
+  }
+
+  const message = await InternalChatMessage.create({
+    organizationId,
+    spaceId,
+    threadRootId: null,
+    authorId: actorUser._id,
+    kind: 'system',
+    systemEvent,
+    body: systemBodyFallback(eventType, actorName, targetName),
+  });
+
+  await InternalChatSpace.updateOne(
+    { _id: spaceId, organizationId },
+    { $set: { lastMessageAt: message.createdAt } }
+  );
+
+  const author = {
+    _id: actorUser._id,
+    firstName: actorUser.firstName,
+    lastName: actorUser.lastName,
+    email: actorUser.email,
+    avatar: actorUser.avatar || '',
+  };
+
+  await publishToSpaceMembers(organizationId, spaceId, {
+    type: 'message.created',
+    spaceId: String(spaceId),
+    threadRootId: null,
+    message: {
+      ...message.toObject(),
+      author,
+    },
+  });
+
+  return message;
+}
+
 async function ensureMembership(organizationId, spaceId, userId, role = 'member') {
   const existing = await InternalChatMembership.findOne({ organizationId, spaceId, userId }).lean();
   if (existing) return existing;
@@ -261,6 +352,13 @@ async function createChannel({ organizationId, user, name, topic = '', isPrivate
       mid === String(user._id) ? 'admin' : 'member'
     );
   }
+
+  await postSystemMessage({
+    organizationId,
+    spaceId: space._id,
+    actorUser: user,
+    eventType: 'channel_created',
+  });
 
   const payload = { type: 'space.updated', spaceId: String(space._id), action: 'created' };
   await publishToSpaceMembers(organizationId, space._id, payload);
@@ -493,13 +591,38 @@ async function discussRecord({ organizationId, user, moduleKey, recordId }) {
   return { space, recordLabel: label, moduleKey: key };
 }
 
+function isMembershipMuted(membership) {
+  if (!membership?.muted) return false;
+  if (membership.mutedUntil && new Date(membership.mutedUntil).getTime() <= Date.now()) {
+    return false;
+  }
+  return true;
+}
+
 async function listSpacesForUser(organizationId, userId) {
   const memberships = await InternalChatMembership.find({ organizationId, userId })
-    .select('spaceId role muted lastReadAt lastReadMessageId joinedAt')
+    .select('spaceId role muted mutedUntil forceUnread pinnedAt lastReadAt lastReadMessageId joinedAt')
     .lean();
 
   const membershipBySpace = new Map(memberships.map((m) => [String(m.spaceId), m]));
   const memberSpaceIds = memberships.map((m) => m.spaceId);
+
+  const now = new Date();
+  await InternalChatMembership.updateMany(
+    {
+      organizationId,
+      userId,
+      muted: true,
+      mutedUntil: { $ne: null, $lte: now },
+    },
+    { $set: { muted: false, mutedUntil: null } }
+  );
+  for (const m of memberships) {
+    if (m.muted && m.mutedUntil && new Date(m.mutedUntil).getTime() <= now.getTime()) {
+      m.muted = false;
+      m.mutedUntil = null;
+    }
+  }
 
   const [memberSpaces, publicChannels] = await Promise.all([
     memberSpaceIds.length
@@ -538,6 +661,10 @@ async function listSpacesForUser(organizationId, userId) {
           authorId: { $ne: userId },
         });
       }
+      if (membership?.forceUnread) {
+        unreadCount = Math.max(1, unreadCount);
+      }
+      const mutedActive = isMembershipMuted(membership);
       return {
         ...space,
         unreadCount,
@@ -546,7 +673,10 @@ async function listSpacesForUser(organizationId, userId) {
         membership: membership
           ? {
               role: membership.role,
-              muted: membership.muted,
+              muted: mutedActive,
+              mutedUntil: mutedActive ? (membership.mutedUntil || null) : null,
+              forceUnread: membership.forceUnread === true,
+              pinnedAt: membership.pinnedAt || null,
               lastReadAt: membership.lastReadAt,
               lastReadMessageId: membership.lastReadMessageId,
               joinedAt: membership.joinedAt,
@@ -603,13 +733,224 @@ async function joinPublicChannel({ organizationId, user, spaceId }) {
   return enriched;
 }
 
+async function listSpaceMembers({ organizationId, user, spaceId }) {
+  if (!canViewInternalChat(user)) {
+    throw ServiceError('Permission denied', 403, 'INTERNAL_CHAT_FORBIDDEN');
+  }
+  const space = await getSpaceOrThrow(organizationId, spaceId);
+  await assertMembership(organizationId, user._id, spaceId);
+  await assertCanAccessSpace(user, space);
+
+  const memberships = await InternalChatMembership.find({ organizationId, spaceId })
+    .select('userId role')
+    .lean();
+  const userIds = memberships.map((m) => m.userId);
+  const users = await User.find({ _id: { $in: userIds } })
+    .select('_id firstName lastName email avatar')
+    .lean();
+  const byId = new Map(users.map((u) => [String(u._id), u]));
+
+  const meId = String(user._id);
+  const myMembership = memberships.find((m) => String(m.userId) === meId);
+  const myRole = myMembership?.role || 'member';
+  const supportsMemberMgmt = space.type === 'channel' || space.type === 'group_dm';
+  const minMembers = space.type === 'group_dm' ? 2 : 1;
+  const canShrink = memberships.length > minMembers;
+  const canRemoveOthers = supportsMemberMgmt && canShrink && (
+    space.type === 'group_dm' || myRole === 'admin'
+  );
+  const canLeave = supportsMemberMgmt && canShrink;
+
+  const members = memberships
+    .map((m) => {
+      const u = byId.get(String(m.userId)) || {};
+      const uid = String(m.userId);
+      const isSelf = uid === meId;
+      return {
+        userId: uid,
+        role: m.role || 'member',
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        email: u.email || '',
+        avatar: u.avatar || '',
+        canRemove: isSelf ? canLeave : canRemoveOthers,
+      };
+    })
+    .sort((a, b) => {
+      const an = formatUserDisplayName(a).toLowerCase();
+      const bn = formatUserDisplayName(b).toLowerCase();
+      return an.localeCompare(bn);
+    });
+
+  return {
+    spaceId: String(space._id),
+    spaceType: space.type,
+    canInvite: supportsMemberMgmt,
+    canRemoveOthers,
+    canLeave,
+    currentUserRole: myRole,
+    memberCount: members.length,
+    members,
+  };
+}
+
+/**
+ * Remove a member from a channel or group DM (or leave when target is self).
+ */
+async function removeSpaceMember({ organizationId, user, spaceId, targetUserId }) {
+  if (!canViewInternalChat(user)) {
+    throw ServiceError('Permission denied', 403, 'INTERNAL_CHAT_FORBIDDEN');
+  }
+  if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+    throw ServiceError('Invalid user', 400, 'INTERNAL_CHAT_INVALID_USER');
+  }
+
+  const space = await getSpaceOrThrow(organizationId, spaceId);
+  if (space.type !== 'channel' && space.type !== 'group_dm') {
+    throw ServiceError(
+      'Only channels and group chats support member removal',
+      400,
+      'INTERNAL_CHAT_REMOVE_UNSUPPORTED'
+    );
+  }
+
+  const callerMembership = await assertMembership(organizationId, user._id, spaceId);
+  const targetId = String(targetUserId);
+  const isSelf = targetId === String(user._id);
+
+  if (!isSelf) {
+    if (space.type === 'channel' && callerMembership.role !== 'admin') {
+      throw ServiceError(
+        'Only channel admins can remove members',
+        403,
+        'INTERNAL_CHAT_REMOVE_FORBIDDEN'
+      );
+    }
+  }
+
+  const memberships = await InternalChatMembership.find({ organizationId, spaceId })
+    .select('userId role joinedAt')
+    .sort({ joinedAt: 1 })
+    .lean();
+  const targetMembership = memberships.find((m) => String(m.userId) === targetId);
+  if (!targetMembership) {
+    throw ServiceError('User is not a member of this space', 404, 'INTERNAL_CHAT_NOT_MEMBER');
+  }
+
+  if (memberships.length <= 1) {
+    throw ServiceError(
+      'Cannot remove the last member of this space',
+      400,
+      'INTERNAL_CHAT_LAST_MEMBER'
+    );
+  }
+
+  if (space.type === 'group_dm' && memberships.length <= 2) {
+    throw ServiceError(
+      'Group chats need at least 2 members',
+      400,
+      'INTERNAL_CHAT_GROUP_TOO_SMALL'
+    );
+  }
+
+  const remaining = memberships.filter((m) => String(m.userId) !== targetId);
+
+  if (space.type === 'group_dm') {
+    const nextIds = remaining.map((m) => String(m.userId));
+    const nextDmKey = buildDmKey(nextIds);
+    if (nextDmKey !== space.dmKey) {
+      const conflict = await InternalChatSpace.findOne({
+        organizationId,
+        type: 'group_dm',
+        dmKey: nextDmKey,
+        archivedAt: null,
+        _id: { $ne: space._id },
+      })
+        .select('_id')
+        .lean();
+      if (conflict) {
+        throw ServiceError(
+          'A group chat with these members already exists',
+          409,
+          'INTERNAL_CHAT_GROUP_EXISTS'
+        );
+      }
+    }
+  }
+
+  const adminsRemaining = remaining.filter((m) => m.role === 'admin');
+  if (targetMembership.role === 'admin' && adminsRemaining.length === 0 && remaining.length) {
+    await InternalChatMembership.updateOne(
+      { organizationId, spaceId, userId: remaining[0].userId },
+      { $set: { role: 'admin' } }
+    );
+  }
+
+  const targetUserDoc = await User.findById(targetMembership.userId)
+    .select('_id firstName lastName email avatar')
+    .lean();
+  await postSystemMessage({
+    organizationId,
+    spaceId: space._id,
+    actorUser: user,
+    eventType: isSelf ? 'member_left' : 'member_removed',
+    targetUser: isSelf ? null : (targetUserDoc || { _id: targetMembership.userId }),
+  });
+
+  await InternalChatMembership.deleteOne({
+    organizationId,
+    spaceId,
+    userId: targetMembership.userId,
+  });
+
+  if (space.type === 'group_dm') {
+    const nextIds = remaining.map((m) => String(m.userId));
+    const nextDmKey = buildDmKey(nextIds);
+    const allUsers = await User.find({ _id: { $in: nextIds } })
+      .select('_id firstName lastName')
+      .lean();
+    const label = allUsers
+      .map((u) => formatUserDisplayName(u))
+      .filter(Boolean)
+      .slice(0, 4)
+      .join(', ');
+    await InternalChatSpace.updateOne(
+      { _id: space._id, organizationId, type: 'group_dm', archivedAt: null },
+      { $set: { dmKey: nextDmKey, name: label || space.name || '' } }
+    );
+  }
+
+  const fanoutIds = [
+    ...remaining.map((m) => m.userId),
+    targetMembership.userId,
+  ];
+  await internalChatSSEHub.publishToUsers(organizationId, fanoutIds, {
+    type: 'space.updated',
+    spaceId: String(space._id),
+    action: 'member_removed',
+    removedUserId: targetId,
+    removedByUserId: String(user._id),
+    left: isSelf,
+  });
+
+  return {
+    spaceId: String(space._id),
+    removedUserId: targetId,
+    left: isSelf,
+  };
+}
+
 async function inviteMembersToChannel({ organizationId, user, spaceId, memberIds = [] }) {
   if (!canViewInternalChat(user)) {
     throw ServiceError('Permission denied', 403, 'INTERNAL_CHAT_FORBIDDEN');
   }
   const space = await getSpaceOrThrow(organizationId, spaceId);
-  if (space.type !== 'channel') {
-    throw ServiceError('Only channels support invites', 400, 'INTERNAL_CHAT_NOT_CHANNEL');
+  if (space.type !== 'channel' && space.type !== 'group_dm') {
+    throw ServiceError(
+      'Only channels and group chats support invites',
+      400,
+      'INTERNAL_CHAT_INVITE_UNSUPPORTED'
+    );
   }
   await assertMembership(organizationId, user._id, spaceId);
 
@@ -623,27 +964,90 @@ async function inviteMembersToChannel({ organizationId, user, spaceId, memberIds
     _id: { $in: ids },
     ...internalTeammateFilter(organizationId),
   })
-    .select('_id')
+    .select('_id firstName lastName email avatar userType')
     .lean();
-  if (teammates.length !== ids.length) {
+  if (
+    teammates.length !== ids.length
+    || teammates.some((u) => !isInternalTeamUserDoc(u))
+  ) {
     throw ServiceError('One or more users not found', 404, 'INTERNAL_CHAT_USER_NOT_FOUND');
   }
 
-  for (const row of teammates) {
+  const existingIds = new Set(
+    (await listMemberUserIds(organizationId, space._id)).map(String)
+  );
+  const toAdd = teammates.filter((row) => !existingIds.has(String(row._id)));
+  if (!toAdd.length) {
+    throw ServiceError('All selected people are already members', 400, 'INTERNAL_CHAT_ALREADY_MEMBERS');
+  }
+
+  if (space.type === 'group_dm') {
+    const nextIds = [...existingIds, ...toAdd.map((row) => String(row._id))];
+    const nextDmKey = buildDmKey(nextIds);
+    if (nextDmKey !== space.dmKey) {
+      const conflict = await InternalChatSpace.findOne({
+        organizationId,
+        type: 'group_dm',
+        dmKey: nextDmKey,
+        archivedAt: null,
+        _id: { $ne: space._id },
+      })
+        .select('_id')
+        .lean();
+      if (conflict) {
+        throw ServiceError(
+          'A group chat with these members already exists',
+          409,
+          'INTERNAL_CHAT_GROUP_EXISTS'
+        );
+      }
+    }
+
+    for (const row of toAdd) {
+      // eslint-disable-next-line no-await-in-loop
+      await ensureMembership(organizationId, space._id, row._id, 'member');
+    }
+
+    const allUsers = await User.find({ _id: { $in: nextIds } })
+      .select('_id firstName lastName')
+      .lean();
+    const label = allUsers
+      .map((u) => formatUserDisplayName(u))
+      .filter(Boolean)
+      .slice(0, 4)
+      .join(', ');
+    await InternalChatSpace.updateOne(
+      { _id: space._id, organizationId, type: 'group_dm', archivedAt: null },
+      { $set: { dmKey: nextDmKey, name: label || space.name || '' } }
+    );
+  } else {
+    for (const row of toAdd) {
+      // eslint-disable-next-line no-await-in-loop
+      await ensureMembership(organizationId, space._id, row._id, 'member');
+    }
+  }
+
+  for (const row of toAdd) {
     // eslint-disable-next-line no-await-in-loop
-    await ensureMembership(organizationId, space._id, row._id, 'member');
+    await postSystemMessage({
+      organizationId,
+      spaceId: space._id,
+      actorUser: user,
+      eventType: 'member_added',
+      targetUser: row,
+    });
   }
 
   await publishToSpaceMembers(organizationId, space._id, {
     type: 'space.updated',
     spaceId: String(space._id),
     action: 'members_invited',
-    invitedUserIds: teammates.map((t) => String(t._id)),
+    invitedUserIds: toAdd.map((t) => String(t._id)),
   });
 
   return {
     spaceId: String(space._id),
-    invitedCount: teammates.length,
+    invitedCount: toAdd.length,
   };
 }
 
@@ -733,7 +1137,6 @@ async function listMessages({
       organizationId,
       spaceId,
       _id: aroundMessageId,
-      deletedAt: null,
     }).lean();
     if (target) {
       const rootId = target.threadRootId || target._id;
@@ -742,7 +1145,6 @@ async function listMessages({
           organizationId,
           spaceId,
           _id: target.threadRootId,
-          deletedAt: null,
           threadRootId: null,
         }).lean()
         : target;
@@ -752,7 +1154,6 @@ async function listMessages({
           organizationId,
           spaceId,
           threadRootId: null,
-          deletedAt: null,
           createdAt: { $lte: anchor.createdAt },
         })
           .sort({ createdAt: -1 })
@@ -762,7 +1163,6 @@ async function listMessages({
           organizationId,
           spaceId,
           threadRootId: null,
-          deletedAt: null,
           createdAt: { $gt: anchor.createdAt },
         })
           .sort({ createdAt: 1 })
@@ -781,7 +1181,6 @@ async function listMessages({
     const query = {
       organizationId,
       spaceId,
-      deletedAt: null,
     };
 
     if (threadRootId) {
@@ -842,7 +1241,41 @@ async function listMessages({
     /* membership already asserted above; ignore read-state failures */
   }
 
-  return { space: enrichedSpace, messages: enriched, readState, focus };
+  let pinnedMessages = [];
+  const pinIds = Array.isArray(space.pinnedMessageIds) ? space.pinnedMessageIds : [];
+  if (pinIds.length && !threadRootId) {
+    const pinnedRows = await InternalChatMessage.find({
+      organizationId,
+      spaceId,
+      _id: { $in: pinIds },
+      deletedAt: null,
+    })
+      .select('_id authorId body attachments createdAt kind systemEvent')
+      .lean();
+    const pinnedAuthorIds = [...new Set(pinnedRows.map((m) => String(m.authorId)))];
+    const pinnedAuthors = pinnedAuthorIds.length
+      ? await User.find({ _id: { $in: pinnedAuthorIds } })
+        .select('_id firstName lastName email avatar')
+        .lean()
+      : [];
+    const pinnedAuthorById = new Map(pinnedAuthors.map((a) => [String(a._id), a]));
+    const byId = new Map(pinnedRows.map((m) => [String(m._id), m]));
+    pinnedMessages = pinIds
+      .map((id) => byId.get(String(id)))
+      .filter(Boolean)
+      .map((m) => ({
+        ...m,
+        author: pinnedAuthorById.get(String(m.authorId)) || null,
+      }));
+  }
+
+  return {
+    space: enrichedSpace,
+    messages: enriched,
+    pinnedMessages,
+    readState,
+    focus,
+  };
 }
 
 async function postMessage({
@@ -1033,11 +1466,13 @@ async function postMessage({
     }
 
     // DMs/group DMs always notify; channels/records when tenant enables notifyChannelMessages.
-    // Skip members already covered by @mention / @all.
+    // Skip members already covered by @mention / @all. Skip muted members for non-mention posts.
     const mentionSet = new Set(mentionTargets.map(String));
-    const otherMembers = memberIds.filter(
+    let otherMembers = memberIds.filter(
       (id) => String(id) !== String(user._id) && !mentionSet.has(String(id))
     );
+    const mutedOtherIds = await listMutedUserIds(organizationId, spaceId, otherMembers);
+    otherMembers = otherMembers.filter((id) => !mutedOtherIds.has(String(id)));
     const addonSettings = await getAddonSettings(organizationId);
     const notifySpaceMembers = (
       space.type === 'dm'
@@ -1178,6 +1613,9 @@ async function toggleReaction({ organizationId, user, spaceId, messageId, emoji:
   });
   if (!message) {
     throw ServiceError('Message not found', 404, 'INTERNAL_CHAT_MESSAGE_NOT_FOUND');
+  }
+  if (message.kind === 'system') {
+    throw ServiceError('Cannot react to system messages', 400, 'INTERNAL_CHAT_REACT_SYSTEM');
   }
 
   if (!Array.isArray(message.reactions)) message.reactions = [];
@@ -1359,7 +1797,7 @@ async function markRead({ organizationId, user, spaceId, messageId = null }) {
 
   await InternalChatMembership.updateOne(
     { organizationId, spaceId, userId: user._id },
-    { $set: { lastReadAt, lastReadMessageId } }
+    { $set: { lastReadAt, lastReadMessageId, forceUnread: false } }
   );
 
   const readPayload = {
@@ -1422,6 +1860,12 @@ async function createOrGetGroupDm({ organizationId, user, memberIds = [] }) {
       );
     }
     space = created.toObject();
+    await postSystemMessage({
+      organizationId,
+      spaceId: space._id,
+      actorUser: user,
+      eventType: 'group_created',
+    });
     await publishToSpaceMembers(organizationId, space._id, {
       type: 'space.updated',
       spaceId: String(space._id),
@@ -1435,6 +1879,125 @@ async function createOrGetGroupDm({ organizationId, user, memberIds = [] }) {
   }
 
   return space;
+}
+
+/**
+ * Per-user pin of a space in the chat list (does not affect other members).
+ */
+async function setSpacePinned({ organizationId, user, spaceId, pin = true }) {
+  if (!canViewInternalChat(user)) {
+    throw ServiceError('Permission denied', 403, 'INTERNAL_CHAT_FORBIDDEN');
+  }
+  const space = await getSpaceOrThrow(organizationId, spaceId);
+  await assertMembership(organizationId, user._id, spaceId);
+  await assertCanAccessSpace(user, space);
+
+  const pinnedAt = pin ? new Date() : null;
+  await InternalChatMembership.updateOne(
+    { organizationId, spaceId, userId: user._id },
+    { $set: { pinnedAt } }
+  );
+
+  return { spaceId: String(spaceId), pinnedAt };
+}
+
+const MUTE_DURATION_MS = {
+  '1h': 60 * 60 * 1000,
+  '8h': 8 * 60 * 60 * 1000,
+  '24h': 24 * 60 * 60 * 1000,
+  forever: null,
+};
+
+/**
+ * Mute / unmute notifications for a space. durationKey: 1h | 8h | 24h | forever
+ */
+async function setSpaceMuted({ organizationId, user, spaceId, muted = true, durationKey = 'forever' }) {
+  if (!canViewInternalChat(user)) {
+    throw ServiceError('Permission denied', 403, 'INTERNAL_CHAT_FORBIDDEN');
+  }
+  const space = await getSpaceOrThrow(organizationId, spaceId);
+  await assertMembership(organizationId, user._id, spaceId);
+  await assertCanAccessSpace(user, space);
+
+  let mutedUntil = null;
+  if (muted) {
+    const key = String(durationKey || 'forever');
+    if (!(key in MUTE_DURATION_MS)) {
+      throw ServiceError('Invalid mute duration', 400, 'INTERNAL_CHAT_MUTE_DURATION');
+    }
+    const ms = MUTE_DURATION_MS[key];
+    mutedUntil = ms == null ? null : new Date(Date.now() + ms);
+  }
+
+  await InternalChatMembership.updateOne(
+    { organizationId, spaceId, userId: user._id },
+    { $set: { muted: Boolean(muted), mutedUntil: muted ? mutedUntil : null } }
+  );
+
+  return {
+    spaceId: String(spaceId),
+    muted: Boolean(muted),
+    mutedUntil: muted ? mutedUntil : null,
+  };
+}
+
+/** Mark a space unread from a message (rewinds lastReadAt to that message). */
+async function markSpaceUnread({ organizationId, user, spaceId, messageId = null }) {
+  if (!canViewInternalChat(user)) {
+    throw ServiceError('Permission denied', 403, 'INTERNAL_CHAT_FORBIDDEN');
+  }
+  const space = await getSpaceOrThrow(organizationId, spaceId);
+  await assertMembership(organizationId, user._id, spaceId);
+  await assertCanAccessSpace(user, space);
+
+  const update = { forceUnread: true };
+  if (messageId) {
+    if (!mongoose.Types.ObjectId.isValid(messageId)) {
+      throw ServiceError('Invalid message', 400, 'INTERNAL_CHAT_INVALID_MESSAGE');
+    }
+    const message = await InternalChatMessage.findOne({
+      organizationId,
+      spaceId,
+      _id: messageId,
+    })
+      .select('_id createdAt kind deletedAt')
+      .lean();
+    if (!message || message.deletedAt || message.kind === 'system') {
+      throw ServiceError('Message not found', 404, 'INTERNAL_CHAT_MESSAGE_NOT_FOUND');
+    }
+    // Unread from this message onward: lastRead sits just before it.
+    update.lastReadAt = new Date(new Date(message.createdAt).getTime() - 1);
+    update.lastReadMessageId = null;
+  }
+
+  await InternalChatMembership.updateOne(
+    { organizationId, spaceId, userId: user._id },
+    { $set: update }
+  );
+
+  return {
+    spaceId: String(spaceId),
+    forceUnread: true,
+    messageId: messageId ? String(messageId) : null,
+    lastReadAt: update.lastReadAt || null,
+  };
+}
+
+async function listMutedUserIds(organizationId, spaceId, userIds = []) {
+  const ids = [...new Set(userIds.map(String))]
+    .filter((id) => mongoose.Types.ObjectId.isValid(id));
+  if (!ids.length) return new Set();
+  const now = new Date();
+  const rows = await InternalChatMembership.find({
+    organizationId,
+    spaceId,
+    userId: { $in: ids },
+    muted: true,
+    $or: [{ mutedUntil: null }, { mutedUntil: { $gt: now } }],
+  })
+    .select('userId')
+    .lean();
+  return new Set(rows.map((r) => String(r.userId)));
 }
 
 async function pinMessage({ organizationId, user, spaceId, messageId, pin = true }) {
@@ -1451,10 +2014,13 @@ async function pinMessage({ organizationId, user, spaceId, messageId, pin = true
     _id: messageId,
     deletedAt: null,
   })
-    .select('_id')
+    .select('_id kind')
     .lean();
   if (!msg) {
     throw ServiceError('Message not found', 404, 'INTERNAL_CHAT_MESSAGE_NOT_FOUND');
+  }
+  if (msg.kind === 'system') {
+    throw ServiceError('Cannot pin system messages', 400, 'INTERNAL_CHAT_PIN_SYSTEM');
   }
 
   const pinned = Array.isArray(space.pinnedMessageIds)
@@ -1506,6 +2072,9 @@ async function editMessage({
   });
   if (!message) {
     throw ServiceError('Message not found', 404, 'INTERNAL_CHAT_MESSAGE_NOT_FOUND');
+  }
+  if (message.kind === 'system') {
+    throw ServiceError('Cannot edit system messages', 403, 'INTERNAL_CHAT_EDIT_SYSTEM');
   }
   if (String(message.authorId) !== String(user._id)) {
     throw ServiceError('Cannot edit this message', 403, 'INTERNAL_CHAT_EDIT_FORBIDDEN');
@@ -1585,6 +2154,9 @@ async function softDeleteMessage({ organizationId, user, spaceId, messageId }) {
   if (!message) {
     throw ServiceError('Message not found', 404, 'INTERNAL_CHAT_MESSAGE_NOT_FOUND');
   }
+  if (message.kind === 'system') {
+    throw ServiceError('Cannot delete system messages', 403, 'INTERNAL_CHAT_DELETE_SYSTEM');
+  }
 
   const isAuthor = String(message.authorId) === String(user._id);
   if (!isAuthor && !canManageInternalChat(user)) {
@@ -1592,18 +2164,54 @@ async function softDeleteMessage({ organizationId, user, spaceId, messageId }) {
   }
 
   message.deletedAt = new Date();
+  message.deletedBy = user._id;
   message.body = '';
   message.attachments = [];
+  message.quote = null;
+  message.reactions = [];
   await message.save();
 
-  await publishToSpaceMembers(organizationId, spaceId, {
-    type: 'message.deleted',
+  const pinned = Array.isArray(space.pinnedMessageIds)
+    ? space.pinnedMessageIds.map(String)
+    : [];
+  if (pinned.includes(String(messageId))) {
+    const nextPins = pinned.filter((id) => id !== String(messageId));
+    await InternalChatSpace.updateOne(
+      { _id: spaceId, organizationId },
+      { $set: { pinnedMessageIds: nextPins } }
+    );
+    await publishToSpaceMembers(organizationId, spaceId, {
+      type: 'space.updated',
+      spaceId: String(spaceId),
+      action: 'unpinned',
+      pinnedMessageIds: nextPins,
+    });
+  }
+
+  const payload = {
+    type: 'message.updated',
     spaceId: String(spaceId),
     messageId: String(messageId),
+    deletedAt: message.deletedAt,
+    deletedBy: String(user._id),
+    body: '',
+    attachments: [],
+    quote: null,
+    reactions: [],
     threadRootId: message.threadRootId ? String(message.threadRootId) : null,
-  });
+  };
+  await publishToSpaceMembers(organizationId, spaceId, payload);
 
-  return { ok: true };
+  return {
+    ok: true,
+    message: {
+      _id: message._id,
+      deletedAt: message.deletedAt,
+      deletedBy: user._id,
+      body: '',
+      attachments: [],
+    },
+  };
 }
 
 async function exportSpaceTranscript({ organizationId, user, spaceId }) {
@@ -1794,6 +2402,8 @@ module.exports = {
   listSpacesForUser,
   joinPublicChannel,
   inviteMembersToChannel,
+  listSpaceMembers,
+  removeSpaceMember,
   updateChannel,
   listMessages,
   postMessage,
@@ -1803,6 +2413,9 @@ module.exports = {
   searchMessages,
   publishTyping,
   setSpacePresence,
+  setSpacePinned,
+  setSpaceMuted,
+  markSpaceUnread,
   pinMessage,
   editMessage,
   softDeleteMessage,

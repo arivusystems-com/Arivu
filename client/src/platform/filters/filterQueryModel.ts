@@ -68,11 +68,15 @@ export function flatFiltersToRules(
 
 export function countActiveFilterRules(
   filters: Record<string, unknown>,
-  operators: Record<string, FilterOperatorId> = {}
+  operators: Record<string, FilterOperatorId> = {},
+  options?: { allowedKeys?: Iterable<string> }
 ): number {
+  const allowed = options?.allowedKeys ? new Set(options.allowedKeys) : null;
   const keys = new Set([...Object.keys(filters), ...Object.keys(operators)]);
   let count = 0;
   for (const key of keys) {
+    // Advanced AST payload is never a column filter key.
+    if (key !== 'filterQuery' && allowed && !allowed.has(key)) continue;
     const operator = operators[key] ?? 'is';
     if (isFilterRuleActive(filters[key], operator)) count += 1;
   }

@@ -500,6 +500,23 @@ async function provisionDemoTenant({
   }
 
   try {
+    const {
+      bootstrapCommercialBillingForOrganization,
+    } = require('./commercial/orgCommercialBootstrap');
+    await bootstrapCommercialBillingForOrganization({
+      organizationId: tenantOrganization._id,
+      ownerUserId: ownerUser._id,
+      appAccess: ownerUser.appAccess,
+      initiatedByUserId: actorUserId || ownerUser._id,
+      claimFounder: true,
+      billingCycle: 'monthly',
+      trialDays: tier === 'trial' ? require('../constants/commercialBilling').DEFAULT_TRIAL_DAYS : 0,
+    });
+  } catch (commercialErr) {
+    console.warn('[demoProvision] Commercial billing bootstrap failed:', commercialErr.message);
+  }
+
+  try {
     const tenantOrgDoc = await Organization.findById(tenantOrganization._id);
     const { seedSampleDataForOrganization } = require('./onboardingSampleDataService');
     await seedSampleDataForOrganization(tenantOrgDoc, ownerUser, { force: true });

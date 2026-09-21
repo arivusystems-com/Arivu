@@ -4,6 +4,7 @@
 const MODULE_MERGE_ALIASES = {
   quotes: 'Quote',
   invoices: 'Invoice',
+  billing_invoices: 'Invoice',
   sales_orders: 'SalesOrder',
   people: 'People',
   organizations: 'Organization',

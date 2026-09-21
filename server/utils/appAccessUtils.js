@@ -10,6 +10,7 @@
  */
 
 const appRegistry = require('../constants/appRegistry');
+const { userTypeAllowedForApp, normalizePlatformUserType } = require('../constants/platformUserTypes');
 
 /**
  * Get app configuration from registry
@@ -48,7 +49,7 @@ function validateAppRole(appKey, roleKey) {
 
 /**
  * Validate if a userType can access an app
- * @param {string} userType - The user type (INTERNAL, EXTERNAL, SYSTEM)
+ * @param {string} userType - STANDARD | ADMIN | EXTERNAL (legacy INTERNAL accepted)
  * @param {string} appKey - The app key
  * @returns {boolean} - True if userType is allowed for the app
  */
@@ -57,7 +58,7 @@ function validateUserTypeForApp(userType, appKey) {
   if (!config) {
     return false;
   }
-  return config.userTypesAllowed.includes(userType);
+  return userTypeAllowedForApp(userType, config.userTypesAllowed);
 }
 
 /**
@@ -94,7 +95,7 @@ function getRolesForApp(appKey) {
 function getAppsForUserType(userType) {
   const apps = [];
   for (const [appKey, config] of Object.entries(appRegistry)) {
-    if (config.userTypesAllowed.includes(userType)) {
+    if (userTypeAllowedForApp(userType, config.userTypesAllowed)) {
       apps.push(appKey);
     }
   }

@@ -18,7 +18,7 @@ const securityHeaders = (req, res, next) => {
     
     // Permissions Policy (formerly Feature Policy)
     res.setHeader('Permissions-Policy', 
-        'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
+        'geolocation=(), microphone=(self), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
     );
     
     const extraConnect = (process.env.CSP_EXTRA_CONNECT_SRC || '')

@@ -101,6 +101,19 @@ function buildInvoiceTemplateDefinition() {
   };
 }
 
+function buildBillingInvoiceTemplateDefinition() {
+  const { htmlToGrapesDefinition } = require('../services/contentPlatform/htmlToGrapesDefinition');
+  const {
+    buildCommercialTaxInvoiceHtml,
+    buildCommercialTaxInvoiceCss,
+  } = require('./commercialBillingInvoiceTemplateHtml');
+
+  return htmlToGrapesDefinition({
+    html: buildCommercialTaxInvoiceHtml(),
+    css: buildCommercialTaxInvoiceCss(),
+  });
+}
+
 function buildSalesReceiptTemplateDefinition() {
   return {
     id: 'receipt-root',
@@ -347,6 +360,16 @@ const SEED_TEMPLATES = [
     jsonDefinition: buildInvoiceTemplateDefinition()
   },
   {
+    key: 'billing-invoice-default',
+    name: 'Arivu SaaS Invoice — Default',
+    description: 'Platform commercial BillingInvoice PDF (Arivu ops).',
+    purpose: 'billing_invoice',
+    category: 'platform',
+    moduleScope: 'billing_invoices',
+    outputFormat: 'pdf',
+    jsonDefinition: buildBillingInvoiceTemplateDefinition()
+  },
+  {
     key: 'sales-receipt',
     name: 'Sales Receipt',
     description: 'Payment confirmation receipt for customers.',
@@ -392,6 +415,7 @@ module.exports = {
   SEED_TEMPLATES,
   buildQuoteTemplateDefinition,
   buildInvoiceTemplateDefinition,
+  buildBillingInvoiceTemplateDefinition,
   buildSalesReceiptTemplateDefinition,
   buildPurchaseOrderTemplateDefinition,
   buildPurchaseReturnTemplateDefinition,

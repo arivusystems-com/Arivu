@@ -395,6 +395,29 @@ async function allocateOrNull(params) {
 }
 
 /**
+ * Allocate a record ID; throws when auto-numbering is disabled.
+ * @param {object} params
+ * @param {import('mongoose').Types.ObjectId|string} params.organizationId
+ * @param {string} params.moduleKey
+ * @param {Date} [params.at]
+ * @returns {Promise<string>}
+ */
+async function allocateRequired(params) {
+  const result = await allocate(params);
+  if (!result?.recordId) {
+    const key = String(params.moduleKey || '').trim().toLowerCase() || 'module';
+    const entry = getRegistryEntry(key);
+    const label = entry?.label || key;
+    throw new ModuleNumberingError(
+      'NUMBERING_DISABLED',
+      `${label} numbering is disabled; enable Module Numbering for ${label}`,
+      400
+    );
+  }
+  return result.recordId;
+}
+
+/**
  * @param {object} params
  */
 function preview(params) {
@@ -682,6 +705,7 @@ module.exports = {
   getOrCreateConfig,
   allocate,
   allocateOrNull,
+  allocateRequired,
   allocateDocumentNumber,
   preview,
   updateConfig,

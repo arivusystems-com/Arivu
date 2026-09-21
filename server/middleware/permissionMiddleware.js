@@ -135,6 +135,29 @@ const checkPermission = (module, action) => {
                 });
             }
 
+            if (
+              normalizedModule === 'settings' &&
+              !user.isOwner
+            ) {
+              const {
+                normalizePlatformUserType,
+                PLATFORM_USER_TYPES,
+              } = require('../constants/platformUserTypes');
+              const ut = normalizePlatformUserType(user.userType, {
+                isOwner: user.isOwner,
+                roleName: user.role,
+              });
+              if (ut === PLATFORM_USER_TYPES.STANDARD) {
+                securityLogger.logPermissionDenial(req, normalizedModule, action);
+                return res.status(403).json({
+                  message: 'Standard users cannot access organization Settings',
+                  code: 'STANDARD_USER_SETTINGS_DENIED',
+                  module: normalizedModule,
+                  action,
+                });
+              }
+            }
+
             if (user.isOwner || isTenantPrivilegedUser(user)) {
                 return next();
             }
@@ -143,16 +166,6 @@ const checkPermission = (module, action) => {
                 appKey: req.appKey,
                 orgContext
             });
-
-            if (
-                normalizedModule === 'settings' &&
-                String(user.role || '').toLowerCase() === 'admin' &&
-                runtimeAllowed
-            ) {
-                if (!req.appKey || req.appKey === APP_KEYS.SALES) {
-                    return next();
-                }
-            }
 
             const hasPermission = runtimeAllowed;
 
@@ -299,7 +312,7 @@ const canManageUsers = () => {
         try {
             const user = req.user;
             if (!user) return res.status(401).json({ message: 'Authentication required' });
-            if (user.isOwner || String(user.role || '').toLowerCase() === 'admin') {
+            if (user.isOwner || isTenantPrivilegedUser(user)) {
                 return next();
             }
             const mw = checkPermission('settings', 'manageUsers');

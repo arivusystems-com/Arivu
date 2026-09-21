@@ -1332,6 +1332,86 @@ async function runAgentHandoff(input = {}, ctx = {}) {
   };
 }
 
+async function runLmsSearch(input = {}, ctx = {}) {
+  if (!ctx.organizationId) {
+    return { ok: false, error: 'ASTRA_ORG_REQUIRED', guidance: 'Organization context required for Learning search.' };
+  }
+  const learningService = require('../../../learning/learningService');
+  const data = await learningService.searchLearningContent({
+    organizationId: ctx.organizationId,
+    query: input.query || input.q || '',
+    limit: input.limit,
+  });
+  const hits = [
+    ...(data.courses || []).map((c) => ({
+      kind: 'course',
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      route: c.route,
+    })),
+    ...(data.paths || []).map((p) => ({
+      kind: 'path',
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      route: p.route,
+    })),
+  ];
+  return {
+    ok: true,
+    query: data.query,
+    hits,
+    counts: { courses: (data.courses || []).length, paths: (data.paths || []).length, total: hits.length },
+    guidance: hits.length
+      ? `Found ${hits.length} Learning result(s).`
+      : 'No published Learning matches. Try a shorter query or browse Explore.',
+  };
+}
+
+async function runLmsRecommend(input = {}, ctx = {}) {
+  if (!ctx.organizationId || !ctx.userId) {
+    return { ok: false, error: 'ASTRA_CONTEXT_REQUIRED', guidance: 'User and organization context required.' };
+  }
+  const learningService = require('../../../learning/learningService');
+  const data = await learningService.recommendLearning({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    limit: input.limit,
+  });
+  return {
+    ok: true,
+    ...data,
+    guidance: data.recommendations?.length
+      ? 'Prioritize overdue/in-progress first, then catalog suggestions.'
+      : 'No recommendations yet — publish courses or enroll learners.',
+  };
+}
+
+async function runLmsSummarizeCourse(input = {}, ctx = {}) {
+  if (!ctx.organizationId) {
+    return { ok: false, error: 'ASTRA_ORG_REQUIRED', guidance: 'Organization context required.' };
+  }
+  const courseId = input.courseId || input.id || input.recordId;
+  if (!courseId) {
+    return { ok: false, error: 'COURSE_ID_REQUIRED', guidance: 'Pass courseId to summarize a course.' };
+  }
+  try {
+    const learningService = require('../../../learning/learningService');
+    const data = await learningService.summarizeCourseForAi({
+      organizationId: ctx.organizationId,
+      courseId,
+    });
+    return { ok: true, ...data, guidance: 'Course outline ready for the learner or author.' };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err.code || 'SUMMARIZE_FAILED',
+      guidance: err.message || 'Could not summarize course.',
+    };
+  }
+}
+
 function thinModuleTool(toolName, moduleLabel) {
   return async function runThin(input = {}, ctx = {}) {
     const toolRegistry = ctx.toolRegistry || require('../toolRegistry');
@@ -1814,8 +1894,24 @@ function registerFamilies(registry) {
     name: 'lms.search',
     family: 'lms',
     risk: RISK.READ,
-    description: 'Search LMS content (thin OOTB).',
-    run: thinModuleTool('lms.search', 'lms'),
+    description: 'Search published Learning courses and paths.',
+    run: runLmsSearch,
+  });
+
+  registry.registerTool({
+    name: 'lms.recommend',
+    family: 'lms',
+    risk: RISK.READ,
+    description: 'Recommend Learning courses for the current user (continue + explore).',
+    run: runLmsRecommend,
+  });
+
+  registry.registerTool({
+    name: 'lms.summarizeCourse',
+    family: 'lms',
+    risk: RISK.READ,
+    description: 'Summarize a Learning course outline (modules and learning objects).',
+    run: runLmsSummarizeCourse,
   });
 
   registry.registerTool({

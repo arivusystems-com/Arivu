@@ -48,6 +48,7 @@
       :selection-column-variant="selectionColumnVariant"
       :statistics="statistics"
       :stats-config="localizedStatsConfig"
+      :selected-stat-key="selectedStatKey"
       :saved-views="displaySavedViews"
       :active-saved-view-id="activeSavedViewId"
       :default-view-id="defaultViewId"
@@ -673,6 +674,8 @@ const listDefinition = ref(null);
 const data = ref([]);
 const statistics = ref({});
 const statisticsLoading = ref(false);
+/** Quick-filter card selection; counts stay on saved-view scope. */
+const selectedStatKey = ref(null);
 const statsConfig = ref([]);
 const sortField = ref('');
 const sortOrder = ref('desc'); // Default to newest first so new records appear on page 1
@@ -1256,30 +1259,14 @@ function filtersPayloadSignature(payload) {
   return JSON.stringify(payload ?? {});
 }
 
-/** Refresh stat cards for current query when scope is `query`; otherwise only for saved-view scope. */
+/** Refresh KPIs from list response unless a selected stat-card overlay is in the query. */
 function shouldRefreshStatisticsFromListFetch(ctx) {
   if (ctx?.moduleConfig?.statistics?.scope === 'query') {
     return true;
   }
 
-  const params = ctx?.params ?? {};
-  if (params.search && String(params.search).trim()) return false;
-  if (params.filterQuery && String(params.filterQuery).trim()) return false;
-
-  const activeView = savedViews.value.find((v) => v.id === activeSavedViewId.value);
-  const viewFilters = activeView
-    ? resolveSavedViewFilters(activeView, authStore.user?._id)
-    : {};
-  const currentFilters = ctx.normalizedFilters ?? {};
-
-  // Dynamic date views regenerate ISO bounds each resolve — compare keys, not exact timestamps.
-  if (isEventsDynamicDateSystemView(activeView)) {
-    return filtersMatchView(currentFilters, viewFilters, authStore.user?._id, {
-      looseDateKeys: EVENTS_DYNAMIC_DATE_FILTER_KEYS,
-    });
-  }
-
-  return filtersPayloadSignature(currentFilters) === filtersPayloadSignature(viewFilters);
+  // Working-set scope: Filters/search/view update cards; stat overlays do not.
+  return !listQueryHasSelectedStatOverlay(ctx?.normalizedFilters);
 }
 
 function applyListStatisticsFromResponse(response, totalRecords, ctx, rowsForCompute = null) {
@@ -1296,6 +1283,8 @@ function applyListStatisticsFromResponse(response, totalRecords, ctx, rowsForCom
       raw.totalEvents
         ?? raw.totalTasks
         ?? raw.myTasks
+        ?? raw.totalCases
+        ?? raw.myCases
         ?? raw.myPeople
         ?? raw.myOrganizations
         ?? raw.myQuotes
@@ -1338,6 +1327,8 @@ function applyListStatisticsFromResponse(response, totalRecords, ctx, rowsForCom
       myEvents: raw.myEvents ?? raw.totalEvents ?? totalRecords,
       totalTasks: raw.totalTasks ?? totalRecords,
       myTasks: raw.myTasks ?? raw.totalTasks ?? totalRecords,
+      totalCases: raw.totalCases ?? totalRecords,
+      myCases: raw.myCases ?? raw.totalCases ?? totalRecords,
       totalDeals: raw.totalDeals ?? totalRecords,
       totalQuotes: raw.totalQuotes ?? totalRecords,
       myQuotes: raw.myQuotes ?? raw.totalQuotes ?? totalRecords,
@@ -1375,7 +1366,12 @@ function isEventsDynamicDateSystemView(view) {
   return raw?._special === 'past' || raw?._special === 'upcoming';
 }
 
-/** System views (My People, etc.) must always scope list GETs — search cannot drop assignedTo. */
+/**
+ * System views (My People, etc.) must scope list GETs when still matched —
+ * search keeps view filters intact, so this backfills missing scope keys.
+ * When the user clears a view filter (e.g. removes "Assigned to Me") the view
+ * is modified; do not re-impose cleared scope keys.
+ */
 function applyActiveSystemViewScope(normalizedFilters, moduleConfig) {
   const viewId = activeSavedViewId.value;
   if (!viewId || !savedViews.value.length) return normalizedFilters;
@@ -1388,13 +1384,130 @@ function applyActiveSystemViewScope(normalizedFilters, moduleConfig) {
   const viewFilters = resolveSavedViewFilters(activeView, authStore.user?._id);
   if (!viewFilters || typeof viewFilters !== 'object') return normalizedFilters;
 
+  const currentUserId = authStore.user?._id;
+  if (!viewMatchesFilters(activeView, normalizedFilters, currentUserId)) {
+    return normalizedFilters;
+  }
+
   const merged = { ...normalizedFilters };
   for (const [key, value] of Object.entries(viewFilters)) {
     if (key === 'filterQuery') continue;
     if (value === undefined || value === '') continue;
+    if (Object.prototype.hasOwnProperty.call(normalizedFilters, key)) continue;
     merged[key] = value;
   }
   return merged;
+}
+
+/** Filters used for KPI cards: current Filters/search working set minus selected-stat overlays. */
+function resolveStatisticsWorkingFilters() {
+  return stripFilterKeys(filters.value, resolveStatOverlayKeys(selectedStatKey.value));
+}
+
+function isFilterValuePresent(value) {
+  return value !== undefined && value !== '';
+}
+
+function listQueryHasSelectedStatOverlay(normalizedFilters) {
+  const keys = resolveStatOverlayKeys(selectedStatKey.value);
+  if (!keys.length) return false;
+  return keys.some((key) => isFilterValuePresent(normalizedFilters?.[key]));
+}
+
+/**
+ * Keys a selected list-stat card adds as a list overlay.
+ * Stripped from KPI fetches so sibling cards stay on the Filters/search working set.
+ */
+function resolveStatOverlayKeys(statKey) {
+  if (!statKey) return [];
+  switch (props.moduleKey) {
+    case 'tasks':
+      if (statKey === 'open') return ['open'];
+      if (statKey === 'dueToday') return ['dueToday'];
+      if (statKey === 'overdue') return ['overdue'];
+      if (statKey === 'myTasks') return ['assignedTo'];
+      return [];
+    case 'sales_orders':
+      if (statKey === 'open') return ['open'];
+      if (statKey === 'inFulfillment' || statKey === 'completed') return ['status', 'open'];
+      if (statKey === 'mySalesOrders') return ['assignedTo'];
+      return [];
+    case 'invoices':
+      if (statKey === 'draft' || statKey === 'pendingApproval' || statKey === 'posted') return ['status'];
+      if (statKey === 'myInvoices') return ['assignedTo'];
+      return [];
+    case 'items':
+      if (statKey === 'activeItems' || statKey === 'draftItems' || statKey === 'discontinuedItems') {
+        return ['lifecycle_state'];
+      }
+      if (statKey === 'products' || statKey === 'services') return ['item_type'];
+      return [];
+    case 'people':
+      if (statKey === 'myPeople' || statKey === 'unassigned') return ['assignedTo'];
+      if (statKey === 'withOrganization' || statKey === 'withoutOrganization') return ['organization'];
+      return [];
+    case 'organizations':
+      if (statKey === 'myOrganizations' || statKey === 'unassigned') return ['assignedTo'];
+      if (statKey === 'activeOrganizations') return ['isActive'];
+      if (statKey === 'trialOrganizations') return ['tier'];
+      return [];
+    case 'events':
+      if (statKey === 'myEvents') return ['assignedTo'];
+      if (statKey === 'upcoming' || statKey === 'today' || statKey === 'thisWeek') {
+        return ['startDateTime', 'endDateTime'];
+      }
+      return [];
+    case 'quotes':
+      if (statKey === 'myQuotes') return ['assignedTo'];
+      if (statKey === 'acceptedValue') return ['status'];
+      return [];
+    case 'cases':
+      if (statKey === 'open') return ['open'];
+      if (statKey === 'unassigned' || statKey === 'myCases') return ['assignedTo'];
+      if (statKey === 'slaBreached') return ['slaBreached'];
+      return [];
+    default:
+      return [];
+  }
+}
+
+/** Stat overlays that never appear as Filters-panel fields. */
+function apiOnlyStatOverlayKeys(moduleKey = props.moduleKey) {
+  switch (moduleKey) {
+    case 'tasks':
+      return ['open', 'dueToday', 'overdue'];
+    case 'sales_orders':
+      return ['open'];
+    case 'cases':
+      return ['open', 'slaBreached'];
+    default:
+      return [];
+  }
+}
+
+function stripFilterKeys(source, keys) {
+  const out = { ...(source || {}) };
+  for (const key of keys) {
+    delete out[key];
+  }
+  return out;
+}
+
+/** Merge a stat overlay onto current Filters without wiping unrelated conditions. */
+function buildFiltersWithStatOverlay(nextStatKey, overlayPatch = {}, previousStatKey = selectedStatKey.value) {
+  const keysToStrip = new Set([
+    ...resolveStatOverlayKeys(previousStatKey),
+    ...resolveStatOverlayKeys(nextStatKey),
+    ...Object.keys(overlayPatch || {}),
+  ]);
+  return {
+    ...stripFilterKeys(filters.value, keysToStrip),
+    ...(overlayPatch || {}),
+  };
+}
+
+function isTotalStatKey(statKey) {
+  return typeof statKey === 'string' && statKey.startsWith('total');
 }
 
 /** Shared GET params + endpoint for both replace and append (requestedPage differs). */
@@ -1417,7 +1530,9 @@ function buildListFetchContext(requestedPage, options = {}) {
   };
 
   const moduleConfig = resolveModuleListConfig(props.moduleKey);
-  let normalizedFilters = applyActiveSystemViewScope({ ...filters.value }, moduleConfig);
+  const filterSource =
+    options.filtersOverride !== undefined ? options.filtersOverride : filters.value;
+  let normalizedFilters = applyActiveSystemViewScope({ ...filterSource }, moduleConfig);
 
   if (moduleConfig?.normalizeFilters) {
     normalizedFilters = moduleConfig.normalizeFilters(normalizedFilters, authStore.user?._id);
@@ -1467,13 +1582,16 @@ function buildListFetchContext(requestedPage, options = {}) {
     params.appKey = props.appKey;
   }
 
-  const activeSearchTerm = options.searchOverride !== undefined
-    ? String(options.searchOverride ?? '').trim()
-    : String(searchQuery.value ?? '').trim();
+  const omitSearch = Boolean(options.omitSearch);
+  const activeSearchTerm = omitSearch
+    ? ''
+    : options.searchOverride !== undefined
+      ? String(options.searchOverride ?? '').trim()
+      : String(searchQuery.value ?? '').trim();
 
   if (activeSearchTerm) {
     params.search = activeSearchTerm;
-  } else {
+  } else if (!omitSearch) {
     const columnSearchTerm = resolveListSearchTerm(
       { filterQuery: params.filterQuery },
       props.moduleKey
@@ -1483,14 +1601,13 @@ function buildListFetchContext(requestedPage, options = {}) {
     }
   }
 
-  if (params.assignedTo === 'null' && filters.value.assignedTo === undefined) {
+  const filterSourceForNull =
+    options.filtersOverride !== undefined ? options.filtersOverride : filters.value;
+  if (params.assignedTo === 'null' && filterSourceForNull?.assignedTo === undefined) {
     delete params.assignedTo;
   }
-
-  if (params.organization === 'null' && filters.value.organization !== null && filters.value.organization !== undefined) {
-    if (filters.value.organization === undefined) {
-      delete params.organization;
-    }
+  if (params.organization === 'null' && filterSourceForNull?.organization === undefined) {
+    delete params.organization;
   }
 
   const isAuditFindingModule =
@@ -1671,6 +1788,7 @@ function totalRecordsFromListResponse(response, fallback = 0) {
       ?? response?.pagination?.totalOrganizations
       ?? response?.pagination?.totalDeals
       ?? response?.pagination?.totalItems
+      ?? response?.pagination?.totalCases
       ?? response?.pagination?.total
       ?? response?.meta?.totalRecords
       ?? response?.meta?.total
@@ -1688,7 +1806,13 @@ async function fetchListStatistics(opts = {}) {
 
   statisticsLoading.value = true;
   try {
-    const ctx = buildListFetchContext(1, { searchOverride: opts.searchOverride });
+    const useWorkingSet = moduleConfig?.statistics?.scope !== 'query';
+    const ctx = buildListFetchContext(1, useWorkingSet
+      ? {
+          filtersOverride: resolveStatisticsWorkingFilters(),
+          searchOverride: opts.searchOverride,
+        }
+      : { searchOverride: opts.searchOverride });
     const params = {
       ...ctx.params,
       page: 1,
@@ -1705,11 +1829,9 @@ async function fetchListStatistics(opts = {}) {
     if (!response?.success) return;
 
     const fetchedData = applyClientSideListTransforms(response.data || [], ctx);
-    // Stats-only: never clobber list rows or pageSize.
-    const totalRecords = totalRecordsFromListResponse(
-      response,
-      Number(pagination.value.totalRecords ?? 0) || 0
-    );
+    // Stats-only: never clobber list rows or pageSize. Do not fall back to list
+    // pagination — that may still include a selected-stat overlay.
+    const totalRecords = totalRecordsFromListResponse(response, 0);
     applyListStatisticsFromResponse(response, totalRecords, ctx, fetchedData);
   } catch (error) {
     console.error('[ModuleList] Error fetching statistics:', error);
@@ -1785,6 +1907,10 @@ async function fetchListReplace(opts = {}) {
           } else {
             applyListStatisticsFromResponse(response, totalRecords, ctx, fetchedData);
           }
+        } else if (listQueryHasSelectedStatOverlay(ctx.normalizedFilters)) {
+          // List is narrowed by a selected card; refresh KPIs from working set only.
+          await fetchListStatistics({ searchOverride: opts.searchOverride });
+          if (listDataEpoch.value !== epochForThisReplace || signal.aborted) return;
         }
         recordListFingerprintFromState();
       } else {
@@ -2099,6 +2225,14 @@ const handleFiltersUpdate = async (newFilters, options = {}) => {
     }
   }
 
+  if (!options.fromStatClick) {
+    selectedStatKey.value = null;
+    // API-only stat overlays are not Filters-panel fields — drop them when Filters drive the change.
+    for (const key of apiOnlyStatOverlayKeys(props.moduleKey)) {
+      delete newFilters[key];
+    }
+  }
+
   const prevSignature = filtersPayloadSignature(filters.value);
   const nextSignature = filtersPayloadSignature(newFilters);
   const filtersChanged = prevSignature !== nextSignature;
@@ -2178,223 +2312,295 @@ const handleFiltersUpdate = async (newFilters, options = {}) => {
   }
 };
 
-// Handle stat click - apply derived filters
+// Handle stat click - overlay on current Filters; KPIs stay on working set.
 const handleStatClick = (statItem) => {
   const moduleConfig = resolveModuleListConfig(props.moduleKey);
   if (!moduleConfig) return;
-  
-  const currentUserId = authStore.user?._id;
-  const newFilters = {};
-  
+
+  const nextKey = statItem?.key || null;
+  const previousKey = selectedStatKey.value;
+
+  // Toggle off a non-total card → clear overlay, keep Filters/search working set.
+  if (
+    nextKey
+    && nextKey === previousKey
+    && !isTotalStatKey(nextKey)
+  ) {
+    const totalKey =
+      (localizedStatsConfig.value || []).find((stat) => isTotalStatKey(stat.key))?.key
+      || null;
+    const cleared = buildFiltersWithStatOverlay(totalKey, {}, previousKey);
+    selectedStatKey.value = totalKey;
+    handleFiltersUpdate(cleared, {
+      fromStatClick: true,
+      preserveActiveView: true,
+    });
+    return;
+  }
+
+  const keepMyScope = (viewId) =>
+    activeSavedViewId.value === viewId || filters.value?.assignedTo === 'me';
+
+  let newFilters = {};
+
   if (props.moduleKey === 'people') {
-    const keepMyScope =
-      activeSavedViewId.value === 'assigned-to-me' || filters.value?.assignedTo === 'me';
-    switch (statItem.key) {
+    const myScope = keepMyScope('assigned-to-me');
+    switch (nextKey) {
       case 'totalPeople':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
       case 'myPeople':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
       case 'unassigned':
-        newFilters.assignedTo = 'unassigned';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'unassigned' }, previousKey);
         break;
       case 'withOrganization':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.organization = 'has';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          organization: 'has',
+        }, previousKey);
         break;
       case 'withoutOrganization':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.organization = null;
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          organization: null,
+        }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   } else if (props.moduleKey === 'organizations') {
-    const keepMyScope =
-      activeSavedViewId.value === 'assigned-to-me' || filters.value?.assignedTo === 'me';
-    switch (statItem.key) {
+    const myScope = keepMyScope('assigned-to-me');
+    switch (nextKey) {
       case 'totalOrganizations':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
       case 'myOrganizations':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
       case 'unassigned':
-        newFilters.assignedTo = 'unassigned';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'unassigned' }, previousKey);
         break;
       case 'activeOrganizations':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.isActive = true;
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          isActive: true,
+        }, previousKey);
         break;
       case 'trialOrganizations':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.tier = 'trial';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          tier: 'trial',
+        }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   } else if (props.moduleKey === 'tasks') {
-    const activeView = savedViews.value.find((v) => v.id === activeSavedViewId.value);
-    const viewBase = activeView
-      ? resolveSavedViewFilters(activeView, currentUserId)
-      : {};
-    const keepMyScope =
-      activeSavedViewId.value === 'assigned-to-me' || filters.value?.assignedTo === 'me';
-
-    switch (statItem.key) {
+    switch (nextKey) {
       case 'totalTasks':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
-
       case 'myTasks':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
-
       case 'open':
-        Object.assign(newFilters, viewBase);
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.open = true;
+        newFilters = buildFiltersWithStatOverlay(nextKey, { open: true }, previousKey);
         break;
-
       case 'dueToday':
-        Object.assign(newFilters, viewBase);
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.dueToday = true;
+        newFilters = buildFiltersWithStatOverlay(nextKey, { dueToday: true }, previousKey);
         break;
-
       case 'overdue':
-        Object.assign(newFilters, viewBase);
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.overdue = true;
+        newFilters = buildFiltersWithStatOverlay(nextKey, { overdue: true }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   } else if (props.moduleKey === 'items') {
-    // Map stat key to filter for Items module
-    switch (statItem.key) {
+    switch (nextKey) {
       case 'totalItems':
-        // Clear all filters - show all items
-        break; // newFilters stays empty
-        
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
+        break;
       case 'activeItems':
-        newFilters.lifecycle_state = 'Active';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { lifecycle_state: 'Active' }, previousKey);
         break;
-
       case 'draftItems':
-        newFilters.lifecycle_state = 'Draft';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { lifecycle_state: 'Draft' }, previousKey);
         break;
-
       case 'discontinuedItems':
-        newFilters.lifecycle_state = 'Discontinued';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { lifecycle_state: 'Discontinued' }, previousKey);
         break;
-        
       case 'products':
-        // Filter: item_type = 'Product'
-        newFilters.item_type = 'Product';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { item_type: 'Product' }, previousKey);
         break;
-        
       case 'services':
-        // Filter: item_type = 'Service'
-        newFilters.item_type = 'Service';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { item_type: 'Service' }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   } else if (props.moduleKey === 'events') {
-    const keepMyScope =
-      activeSavedViewId.value === 'my-events' || filters.value?.assignedTo === 'me';
-    switch (statItem.key) {
+    const myScope = keepMyScope('my-events');
+    switch (nextKey) {
       case 'totalEvents':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
       case 'myEvents':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
       case 'upcoming':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.startDateTime = new Date().toISOString();
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          startDateTime: new Date().toISOString(),
+        }, previousKey);
         break;
       case 'today': {
-        if (keepMyScope) newFilters.assignedTo = 'me';
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        newFilters.startDateTime = today.toISOString();
-        newFilters.endDateTime = tomorrow.toISOString();
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          startDateTime: today.toISOString(),
+          endDateTime: tomorrow.toISOString(),
+        }, previousKey);
         break;
       }
       case 'thisWeek': {
-        if (keepMyScope) newFilters.assignedTo = 'me';
         const nowWeek = new Date();
         const startOfWeek = new Date(nowWeek);
         startOfWeek.setDate(nowWeek.getDate() - nowWeek.getDay());
         startOfWeek.setHours(0, 0, 0, 0);
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 7);
-        newFilters.startDateTime = startOfWeek.toISOString();
-        newFilters.endDateTime = endOfWeek.toISOString();
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          startDateTime: startOfWeek.toISOString(),
+          endDateTime: endOfWeek.toISOString(),
+        }, previousKey);
         break;
       }
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
+        break;
     }
   } else if (props.moduleKey === 'quotes') {
-    const keepMyScope =
-      activeSavedViewId.value === 'my-quotes' || filters.value?.assignedTo === 'me';
-    switch (statItem.key) {
+    const myScope = keepMyScope('my-quotes');
+    switch (nextKey) {
       case 'totalQuotes':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
       case 'myQuotes':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
       case 'openValue':
       case 'openQuotes':
-        if (keepMyScope) newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+        }, previousKey);
         break;
       case 'acceptedValue':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.status = 'Accepted';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          status: 'Accepted',
+        }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   } else if (props.moduleKey === 'sales_orders') {
-    const keepMyScope =
-      activeSavedViewId.value === 'my-orders' || filters.value?.assignedTo === 'me';
-    switch (statItem.key) {
+    const myScope = keepMyScope('my-orders');
+    switch (nextKey) {
       case 'totalSalesOrders':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
       case 'mySalesOrders':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
       case 'open':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.open = true;
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          open: true,
+        }, previousKey);
         break;
       case 'inFulfillment':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.status = 'In Fulfillment';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          status: 'In Fulfillment',
+        }, previousKey);
         break;
       case 'completed':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.status = 'Fulfilled';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          status: 'Fulfilled',
+        }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   } else if (props.moduleKey === 'invoices') {
-    const keepMyScope =
-      activeSavedViewId.value === 'my-invoices' || filters.value?.assignedTo === 'me';
-    switch (statItem.key) {
+    const myScope = keepMyScope('my-invoices');
+    switch (nextKey) {
       case 'totalInvoices':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
       case 'myInvoices':
-        newFilters.assignedTo = 'me';
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
         break;
       case 'draft':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.status = 'Draft';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          status: 'Draft',
+        }, previousKey);
         break;
       case 'pendingApproval':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.status = 'Pending Approval';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          status: 'Pending Approval',
+        }, previousKey);
         break;
       case 'posted':
-        if (keepMyScope) newFilters.assignedTo = 'me';
-        newFilters.status = 'Posted';
+        newFilters = buildFiltersWithStatOverlay(nextKey, {
+          ...(myScope ? { assignedTo: 'me' } : {}),
+          status: 'Posted',
+        }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
+        break;
+    }
+  } else if (props.moduleKey === 'cases') {
+    switch (nextKey) {
+      case 'totalCases':
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
+        break;
+      case 'myCases':
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'me' }, previousKey);
+        break;
+      case 'open':
+        newFilters = buildFiltersWithStatOverlay(nextKey, { open: true }, previousKey);
+        break;
+      case 'unassigned':
+        newFilters = buildFiltersWithStatOverlay(nextKey, { assignedTo: 'unassigned' }, previousKey);
+        break;
+      case 'slaBreached':
+        newFilters = buildFiltersWithStatOverlay(nextKey, { slaBreached: true }, previousKey);
+        break;
+      default:
+        newFilters = buildFiltersWithStatOverlay(nextKey, {}, previousKey);
         break;
     }
   }
-  
-  // Use handleFiltersUpdate to properly sync filters with ListView
-  // This ensures ListView's internal filters reactive object is updated
-  // and hasFiltersApplied correctly detects the filters for the title
-  handleFiltersUpdate(newFilters);
+
+  selectedStatKey.value = nextKey;
+  handleFiltersUpdate(newFilters, { fromStatClick: true, preserveActiveView: true });
 };
 
 function formatSystemViewsForList(systemViews) {

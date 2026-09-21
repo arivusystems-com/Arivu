@@ -315,6 +315,498 @@
     "message": "Instance Management",
     "description": "Auto-migrated from instanceManagement"
   },
+  "commercialAdminTitle": {
+    "message": "Commercial billing",
+    "description": "Control plane commercial billing title"
+  },
+  "commercialAdminSubtitle": {
+    "message": "Review subscriptions and verify customer payment proofs.",
+    "description": "Control plane commercial billing subtitle"
+  },
+  "commercialAdminPdfSettingsTitle": {
+    "message": "Invoice PDF seller & payment",
+    "description": "Platform admin SaaS invoice PDF settings heading"
+  },
+  "commercialAdminPdfSettingsOpen": {
+    "message": "PDF settings",
+    "description": "Header button to open SaaS invoice PDF settings drawer"
+  },
+  "commercialAdminPdfSettingsEditLayout": {
+    "message": "Edit layout in Templates",
+    "description": "Open platform SaaS invoice template in the existing Templates builder"
+  },
+  "commercialAdminPdfSettingsBillingModuleScope": {
+    "message": "Arivu SaaS billing invoice",
+    "description": "Module scope label for platform BillingInvoice templates"
+  },
+  "commercialAdminPdfSettingsEditLayoutHint": {
+    "message": "Opens the Templates builder with a clean Arivu tax invoice layout. Use this to reset orphan merge tags. Publish after edits.",
+    "description": "Hint under edit layout action"
+  },
+  "commercialAdminPdfSettingsLayoutReset": {
+    "message": "Invoice layout reset to the Arivu tax invoice seed.",
+    "description": "Toast after force-resetting commercial invoice template"
+  },
+  "commercialAdminPdfSettingsEditLayoutFailed": {
+    "message": "Could not open invoice layout template.",
+    "description": "Error ensuring commercial invoice content template"
+  },
+  "commercialAdminPdfSettingsEditLayoutOrgSwitch": {
+    "message": "Switch to the platform organization to edit this template, then open Templates.",
+    "description": "Warning when current org is not the template owner"
+  },
+  "commercialAdminPdfSettingsHint": {
+    "message": "Seller identity on all Arivu SaaS invoices comes from these fields (saved values override env). Leave a field blank to fall back to env.",
+    "description": "Hint for invoice PDF seller settings"
+  },
+  "commercialAdminPdfSettingsLegalName": {
+    "message": "Legal name",
+    "description": "Seller legal name on SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsGstin": {
+    "message": "Seller GSTIN",
+    "description": "Seller GSTIN on SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsPan": {
+    "message": "Seller PAN",
+    "description": "Seller PAN on SaaS tax invoice"
+  },
+  "commercialAdminPdfSettingsTagline": {
+    "message": "Tagline",
+    "description": "Brand tagline under logo on tax invoice"
+  },
+  "commercialAdminPdfSettingsWebsite": {
+    "message": "Website",
+    "description": "Website in tax invoice footer"
+  },
+  "commercialAdminPdfSettingsPaymentTerms": {
+    "message": "Payment terms",
+    "description": "Payment terms on tax invoice header"
+  },
+  "commercialAdminPdfSettingsBankName": {
+    "message": "Bank name",
+    "description": "Bank name on tax invoice payment block"
+  },
+  "commercialAdminPdfSettingsAccountName": {
+    "message": "Account name",
+    "description": "Bank account name on tax invoice"
+  },
+  "commercialAdminPdfSettingsAccountNumber": {
+    "message": "Account number",
+    "description": "Bank account number on tax invoice"
+  },
+  "commercialAdminPdfSettingsIfsc": {
+    "message": "IFSC",
+    "description": "IFSC on tax invoice payment block"
+  },
+  "commercialAdminPdfSettingsUpi": {
+    "message": "UPI ID",
+    "description": "UPI ID on tax invoice payment block"
+  },
+  "commercialAdminPdfSettingsAddress": {
+    "message": "Address",
+    "description": "Seller address on SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsEmail": {
+    "message": "Billing email",
+    "description": "Seller email on SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsPhone": {
+    "message": "Phone",
+    "description": "Seller phone on SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsPayment": {
+    "message": "Payment instructions",
+    "description": "Payment copy on unpaid SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsBank": {
+    "message": "Bank / UPI details",
+    "description": "Optional bank or UPI lines on SaaS invoice PDF"
+  },
+  "commercialAdminPdfSettingsReason": {
+    "message": "Reason (audit)",
+    "description": "Optional reason when saving PDF settings"
+  },
+  "commercialAdminPdfSettingsSave": {
+    "message": "Save PDF settings",
+    "description": "Save SaaS invoice PDF seller settings"
+  },
+  "commercialAdminPdfSettingsSaved": {
+    "message": "Invoice PDF settings saved.",
+    "description": "Toast after saving PDF settings"
+  },
+  "commercialAdminPdfSettingsLoadFailed": {
+    "message": "Could not load invoice PDF settings.",
+    "description": "Error loading PDF settings"
+  },
+  "commercialAdminPdfSettingsSaveFailed": {
+    "message": "Could not save invoice PDF settings.",
+    "description": "Error saving PDF settings"
+  },
+  "commercialAdminPdfSettingsUpdated": {
+    "message": "Last updated {date}",
+    "description": "Last updated stamp for PDF settings"
+  },
+  "commercialAdminPendingPayments": {
+    "message": "Pending payment proofs",
+    "description": "Admin pending payments heading"
+  },
+  "commercialAdminSubscriptions": {
+    "message": "Subscriptions",
+    "description": "Admin subscriptions heading"
+  },
+  "commercialAdminShowSandbox": {
+    "message": "Show sandbox / internal",
+    "description": "Toggle to include not-billable internal orgs"
+  },
+  "commercialAdminSandboxChip": {
+    "message": "Sandbox",
+    "description": "Chip on sandbox org rows when toggle on"
+  },
+  "commercialAdminSandboxBannerTitle": {
+    "message": "Sandbox · not billable",
+    "description": "Sandbox org detail banner title"
+  },
+  "commercialAdminSandboxBannerBody": {
+    "message": "Internal/master org for pricing practice. Suspend, restore, and status overrides are disabled. Credits and discounts may still be used for testing.",
+    "description": "Sandbox org detail banner body"
+  },
+  "commercialAdminSandboxStatusLocked": {
+    "message": "Subscription status override is disabled for sandbox orgs.",
+    "description": "Status controls locked on sandbox"
+  },
+  "commercialAdminAdjustmentsSandboxHint": {
+    "message": "Sandbox practice tools — credits and discounts apply to this not-billable subscription only.",
+    "description": "Ops adjustments hint on sandbox detail"
+  },
+  "commercialAdminOpsToolsLabel": {
+    "message": "Adjustment tools",
+    "description": "Aria label for ops tool switcher"
+  },
+  "commercialAdminOpsToolCredit": {
+    "message": "Credit",
+    "description": "Ops tool tab: subscription credit"
+  },
+  "commercialAdminOpsToolOneshot": {
+    "message": "Next invoice",
+    "description": "Ops tool tab: one-shot discount"
+  },
+  "commercialAdminOpsToolRecurring": {
+    "message": "Repeating",
+    "description": "Ops tool tab: recurring discount"
+  },
+  "commercialAdminOpsCreditHint": {
+    "message": "Adds balance that reduces the next period invoice.",
+    "description": "Credit tool helper"
+  },
+  "commercialAdminNoSubscriptions": {
+    "message": "No subscriptions yet.",
+    "description": "Empty subscriptions when including sandbox"
+  },
+  "commercialAdminNoCustomerSubscriptions": {
+    "message": "No customer subscriptions yet. Enable “Show sandbox / internal” to inspect master sandboxes.",
+    "description": "Empty billable subscriptions list"
+  },
+  "commercialAdminOrg": {
+    "message": "Organization",
+    "description": "Admin table column"
+  },
+  "commercialAdminStatus": {
+    "message": "Status",
+    "description": "Admin table column"
+  },
+  "commercialAdminCycle": {
+    "message": "Cycle",
+    "description": "Admin table column"
+  },
+  "commercialAdminApprove": {
+    "message": "Approve",
+    "description": "Approve payment proof"
+  },
+  "commercialAdminReject": {
+    "message": "Reject",
+    "description": "Reject payment proof"
+  },
+  "commercialAdminNoPending": {
+    "message": "No payments awaiting verification.",
+    "description": "Empty pending payments"
+  },
+  "commercialAdminLoadFailed": {
+    "message": "Could not load commercial billing admin data.",
+    "description": "Admin load error"
+  },
+  "commercialAdminApproved": {
+    "message": "Payment approved.",
+    "description": "Admin approve success"
+  },
+  "commercialAdminRejected": {
+    "message": "Payment rejected.",
+    "description": "Admin reject success"
+  },
+  "commercialAdminActionFailed": {
+    "message": "Could not update payment.",
+    "description": "Admin action error"
+  },
+  "commercialAdminBack": {
+    "message": "All subscriptions",
+    "description": "Back to billing list"
+  },
+  "commercialAdminDetailSubtitle": {
+    "message": "Subscription, invoices, payments, users, and billing controls for this organization.",
+    "description": "Org billing detail subtitle"
+  },
+  "commercialAdminDetailFailed": {
+    "message": "Could not load organization billing.",
+    "description": "Org detail load error"
+  },
+  "commercialAdminInstance": {
+    "message": "Instance",
+    "description": "Instance status column"
+  },
+  "commercialAdminRecurring": {
+    "message": "Recurring",
+    "description": "MRR column"
+  },
+  "commercialAdminPeriodEnd": {
+    "message": "Period end",
+    "description": "Period end column"
+  },
+  "commercialAdminPeriod": {
+    "message": "Current period",
+    "description": "Period range label"
+  },
+  "commercialAdminProgram": {
+    "message": "Pricing program",
+    "description": "Founder/standard program"
+  },
+  "commercialAdminSubscriptionCard": {
+    "message": "Subscription",
+    "description": "Detail card title"
+  },
+  "commercialAdminPlanTotal": {
+    "message": "Plan total",
+    "description": "Admin subscription card plan total before tax"
+  },
+  "commercialAdminTaxRow": {
+    "message": "{name} ({rate}%)",
+    "description": "Admin subscription card tax row"
+  },
+  "commercialAdminTotalWithTax": {
+    "message": "Total with {name}",
+    "description": "Admin subscription card total including tax"
+  },
+  "commercialAdminProjectedExGst": {
+    "message": "ex-GST {amount}",
+    "description": "Subline under admin headline when tax applies"
+  },
+  "commercialAdminSetStatus": {
+    "message": "Set status",
+    "description": "Status select label"
+  },
+  "commercialAdminSaveStatus": {
+    "message": "Update status",
+    "description": "Save status button"
+  },
+  "commercialAdminStatusUpdated": {
+    "message": "Subscription status updated.",
+    "description": "Status update success"
+  },
+  "commercialAdminBillTo": {
+    "message": "Billing information",
+    "description": "Bill-to card title"
+  },
+  "commercialAdminBillToOwnerHint": {
+    "message": "Owned by the tenant in Settings → Subscriptions. Prefer asking them to update.",
+    "description": "Bill-to ownership hint"
+  },
+  "commercialAdminBillToEmpty": {
+    "message": "No billing details on file.",
+    "description": "Empty bill-to"
+  },
+  "commercialAdminBillToFutureOnly": {
+    "message": "Finalized invoices keep their snapshot; changes apply to future invoices only.",
+    "description": "Immutability note"
+  },
+  "commercialAdminBillToCorrect": {
+    "message": "Correct as support",
+    "description": "Break-glass edit CTA"
+  },
+  "commercialAdminBillToCorrectHint": {
+    "message": "Support correction — reason required. Does not rewrite past invoices.",
+    "description": "Edit mode banner"
+  },
+  "commercialAdminBillToReason": {
+    "message": "Reason (required)",
+    "description": "Correction reason placeholder"
+  },
+  "commercialAdminBillToSaveCorrection": {
+    "message": "Save correction",
+    "description": "Save audited bill-to"
+  },
+  "commercialAdminBillToCancel": {
+    "message": "Cancel",
+    "description": "Cancel bill-to edit"
+  },
+  "commercialAdminBillingCorrected": {
+    "message": "Billing details corrected (audited).",
+    "description": "Ops bill-to success"
+  },
+  "commercialAdminCompany": {
+    "message": "Company name",
+    "description": "Billing field"
+  },
+  "commercialAdminGstin": {
+    "message": "GSTIN",
+    "description": "Billing field"
+  },
+  "commercialAdminAddress": {
+    "message": "Address",
+    "description": "Billing field"
+  },
+  "commercialAdminCity": {
+    "message": "City",
+    "description": "Billing field"
+  },
+  "commercialAdminState": {
+    "message": "State",
+    "description": "Billing field"
+  },
+  "commercialAdminPincode": {
+    "message": "PIN code",
+    "description": "Billing field"
+  },
+  "commercialAdminSaveBilling": {
+    "message": "Save billing details",
+    "description": "Save bill-to"
+  },
+  "commercialAdminBillingSaved": {
+    "message": "Billing details saved.",
+    "description": "Bill-to save success"
+  },
+  "commercialAdminComponents": {
+    "message": "Billable components",
+    "description": "Subscription items section"
+  },
+  "commercialAdminAddons": {
+    "message": "Installed add-ons / boosters",
+    "description": "Addons section"
+  },
+  "commercialAdminNoAddons": {
+    "message": "No add-ons installed.",
+    "description": "Empty addons"
+  },
+  "commercialAdminUsers": {
+    "message": "Users & app assignments",
+    "description": "Users section"
+  },
+  "commercialAdminUser": {
+    "message": "User",
+    "description": "User column"
+  },
+  "commercialAdminUserType": {
+    "message": "Type",
+    "description": "User type column"
+  },
+  "commercialAdminUserStatus": {
+    "message": "Status",
+    "description": "User status column"
+  },
+  "commercialAdminApps": {
+    "message": "Apps",
+    "description": "Apps column"
+  },
+  "commercialAdminNoUsers": {
+    "message": "No users found in tenant database.",
+    "description": "Empty users"
+  },
+  "commercialAdminInvoices": {
+    "message": "Invoices",
+    "description": "Invoices section"
+  },
+  "commercialAdminPayments": {
+    "message": "Payments",
+    "description": "Payments section"
+  },
+  "commercialAdminMarkPaid": {
+    "message": "Mark paid",
+    "description": "Ops mark invoice paid"
+  },
+  "commercialAdminMarkedPaid": {
+    "message": "Invoice marked paid.",
+    "description": "Mark paid success"
+  },
+  "commercialAdminMarkPaidTitle": {
+    "message": "Mark invoice paid",
+    "description": "Mark paid drawer title"
+  },
+  "commercialAdminMarkPaidHint": {
+    "message": "Record an offline payment. Provide the bank/UTR reference and optionally attach a receipt.",
+    "description": "Mark paid drawer helper"
+  },
+  "commercialAdminMarkPaidReference": {
+    "message": "Payment reference / UTR",
+    "description": "Required payment reference field"
+  },
+  "commercialAdminMarkPaidReferencePh": {
+    "message": "e.g. UTR or transaction ID",
+    "description": "Payment reference placeholder"
+  },
+  "commercialAdminMarkPaidNotes": {
+    "message": "Notes (optional)",
+    "description": "Optional notes on mark paid"
+  },
+  "commercialAdminMarkPaidNotesPh": {
+    "message": "Any ops notes for this payment",
+    "description": "Notes placeholder"
+  },
+  "commercialAdminMarkPaidReceipt": {
+    "message": "Receipt (optional)",
+    "description": "Receipt upload section title"
+  },
+  "commercialAdminMarkPaidReceiptHint": {
+    "message": "PDF or image, up to 10 MB.",
+    "description": "Receipt upload hint"
+  },
+  "commercialAdminMarkPaidChooseFile": {
+    "message": "Choose file",
+    "description": "Receipt file picker button"
+  },
+  "commercialAdminMarkPaidFileType": {
+    "message": "Use a PDF or image file.",
+    "description": "Invalid receipt file type"
+  },
+  "commercialAdminMarkPaidFileTooLarge": {
+    "message": "File is larger than 10 MB.",
+    "description": "Receipt too large"
+  },
+  "commercialAdminMarkPaidConfirm": {
+    "message": "Mark paid",
+    "description": "Confirm mark paid in drawer"
+  },
+  "commercialAdminSuspend": {
+    "message": "Suspend instance",
+    "description": "Suspend CTA"
+  },
+  "commercialAdminRestore": {
+    "message": "Restore instance",
+    "description": "Restore CTA"
+  },
+  "commercialAdminSuspended": {
+    "message": "Instance suspended.",
+    "description": "Suspend success"
+  },
+  "commercialAdminRestored": {
+    "message": "Instance restored.",
+    "description": "Restore success"
+  },
+  "commercialAdminPdfFailed": {
+    "message": "Could not download PDF.",
+    "description": "Admin PDF error"
+  },
+  "commercialAdminProof": {
+    "message": "View proof",
+    "description": "Payment proof link"
+  },
   "instanceManagementInstanceStatus": {
     "message": "Instance Status",
     "description": "Manage instance modal section title"
@@ -519,7 +1011,6 @@
     "message": "Media gallery",
     "description": "Item catalog media section title"
   },
-
   "catalogMediaDesc": {
     "message": "Product images and documents for this catalog entry.",
     "description": "Item catalog media section description"
@@ -1423,5 +1914,545 @@
   "productConfigRuntimeBadgeIdle": {
     "message": "Incomplete",
     "description": "Product configuration badge incomplete"
+  },
+  "pricingNavAria": {
+    "message": "Pricing page",
+    "description": "Pricing page nav landmark"
+  },
+  "pricingBrand": {
+    "message": "Arivu",
+    "description": "Pricing page brand hero"
+  },
+  "pricingFounderBadge": {
+    "message": "Founder's Launch",
+    "description": "Founder pricing program badge"
+  },
+  "pricingLead": {
+    "message": "Admin, Standard, and Portal seats — plus apps you assign. Pay for what you need.",
+    "description": "Pricing page supporting lead"
+  },
+  "pricingFounderSpots": {
+    "message": "{remaining} of {capacity} Founder spots remaining · 24 months price protection",
+    "description": "Founder capacity remaining"
+  },
+  "pricingPeriodAria": {
+    "message": "Billing period",
+    "description": "Monthly annual toggle group"
+  },
+  "pricingPeriodMonthly": {
+    "message": "Monthly",
+    "description": "Monthly billing toggle"
+  },
+  "pricingPeriodAnnual": {
+    "message": "Annual",
+    "description": "Annual billing toggle"
+  },
+  "pricingSaveTwoMonths": {
+    "message": "Get 12 months for the price of 10 — 2 months free.",
+    "description": "Annual savings headline"
+  },
+  "pricingSaveAmount": {
+    "message": "Save {amount}",
+    "description": "Annual savings amount"
+  },
+  "pricingPerMonth": {
+    "message": "/month",
+    "description": "Per month suffix"
+  },
+  "pricingPerYear": {
+    "message": "/year",
+    "description": "Per year suffix"
+  },
+  "pricingPerUserPeriod": {
+    "message": "/user{period}",
+    "description": "Per user with period suffix"
+  },
+  "pricingFrom": {
+    "message": "From",
+    "description": "From price prefix"
+  },
+  "pricingStartWith": {
+    "message": "Start with Arivu",
+    "description": "Platform pricing section"
+  },
+  "pricingPlatformIncludes": {
+    "message": "Admin seats at ₹999. Applications licensed separately.",
+    "description": "Platform includes note"
+  },
+  "pricingAddTeam": {
+    "message": "Add your team",
+    "description": "Internal users pricing section"
+  },
+  "pricingTeamNote": {
+    "message": "Standard seats at ₹699 — no Settings access.",
+    "description": "Internal users note"
+  },
+  "pricingAddPortal": {
+    "message": "External / Portal",
+    "description": "Portal users pricing section"
+  },
+  "pricingPortalNote": {
+    "message": "Portal users do not consume Admin or Standard seats.",
+    "description": "Portal users note"
+  },
+  "pricingSeatAdminBadge": {
+    "message": "Admin",
+    "description": "Admin seat card badge"
+  },
+  "pricingSeatAdminTitle": {
+    "message": "Admin users",
+    "description": "Admin seat card title"
+  },
+  "pricingSeatAdminNote": {
+    "message": "Organization Settings and workspace administration. Every Admin is billed — no free included seat.",
+    "description": "Admin seat card note"
+  },
+  "pricingSeatStandardBadge": {
+    "message": "Standard",
+    "description": "Standard seat card badge"
+  },
+  "pricingSeatStandardTitle": {
+    "message": "Standard users",
+    "description": "Standard seat card title"
+  },
+  "pricingSeatStandardNote": {
+    "message": "Day-to-day work. Profile and personal notifications only — no organization Settings.",
+    "description": "Standard seat card note"
+  },
+  "pricingSeatPortalBadge": {
+    "message": "Portal",
+    "description": "Portal seat card badge"
+  },
+  "pricingAdminUsers": {
+    "message": "Admin users",
+    "description": "Calculator admin count label"
+  },
+  "pricingAdminUsersHint": {
+    "message": "₹999 each · Settings access",
+    "description": "Calculator admin hint"
+  },
+  "pricingStandardUsers": {
+    "message": "Standard users",
+    "description": "Calculator standard count label"
+  },
+  "pricingStandardUsersHint": {
+    "message": "₹699 each · no organization Settings",
+    "description": "Calculator standard hint"
+  },
+  "pricingPortalUsersHint": {
+    "message": "External / customer access",
+    "description": "Calculator portal hint"
+  },
+  "pricingApplicationsHint": {
+    "message": "Seats you assign to each app",
+    "description": "Calculator apps hint"
+  },
+  "pricingLineAdmin": {
+    "message": "Admin users",
+    "description": "Estimate line label admin"
+  },
+  "pricingLineStandard": {
+    "message": "Standard users",
+    "description": "Estimate line label standard"
+  },
+  "pricingLinePortal": {
+    "message": "Portal users",
+    "description": "Estimate line label portal"
+  },
+  "pricingAddApps": {
+    "message": "Add the applications you need",
+    "description": "Applications pricing section"
+  },
+  "pricingAppsNote": {
+    "message": "Licensed per assigned user (Admin or Standard).",
+    "description": "Applications pricing note"
+  },
+  "pricingColApp": {
+    "message": "Application",
+    "description": "Apps table column"
+  },
+  "pricingColPrice": {
+    "message": "Per user",
+    "description": "Apps table price column"
+  },
+  "pricingAppHelpdesk": {
+    "message": "Helpdesk",
+    "description": "Helpdesk app name on pricing"
+  },
+  "pricingAppSales": {
+    "message": "Sales",
+    "description": "Sales app name on pricing"
+  },
+  "pricingAppAudit": {
+    "message": "Audit Management",
+    "description": "Audit app name on pricing"
+  },
+  "pricingAppInventory": {
+    "message": "Inventory",
+    "description": "Inventory app name on pricing"
+  },
+  "pricingAppFieldSales": {
+    "message": "Field Sales",
+    "description": "Field Sales app name on pricing"
+  },
+  "pricingAppMarketing": {
+    "message": "Marketing",
+    "description": "Marketing app name on pricing"
+  },
+  "pricingAppLearning": {
+    "message": "Learning",
+    "description": "Learning app name on pricing"
+  },
+  "pricingLearningHint": {
+    "message": "Priced by learner seats — not every Arivu user. MAU is analytics only.",
+    "description": "Learning capacity pricing hint"
+  },
+  "pricingLearningEnable": {
+    "message": "Include Learning App",
+    "description": "Enable Learning on pricing calculator"
+  },
+  "pricingLearningSeats": {
+    "message": "{count} learner seats",
+    "description": "Learner seat capacity label"
+  },
+  "pricingLearningPrimary": {
+    "message": "Recommended — Growth · 200 learner seats",
+    "description": "Primary Learning plan callout"
+  },
+  "pricingNoPacks": {
+    "message": "No mandatory user packs. Pay for the users and applications you actually need.",
+    "description": "No packs positioning"
+  },
+  "pricingBuildYours": {
+    "message": "Build your Arivu",
+    "description": "Calculator section heading"
+  },
+  "pricingBuildLead": {
+    "message": "Choose Admin, Standard, and Portal seats, then assign apps. Total updates as you go.",
+    "description": "Calculator section lead"
+  },
+  "pricingInternalUsers": {
+    "message": "Standard users",
+    "description": "Legacy calculator internal users label"
+  },
+  "pricingPortalUsers": {
+    "message": "Portal users",
+    "description": "Calculator portal users"
+  },
+  "pricingApplications": {
+    "message": "Applications",
+    "description": "Calculator applications"
+  },
+  "pricingDecrease": {
+    "message": "Decrease",
+    "description": "Decrease quantity"
+  },
+  "pricingIncrease": {
+    "message": "Increase",
+    "description": "Increase quantity"
+  },
+  "pricingEstimate": {
+    "message": "Your estimated price",
+    "description": "Estimate panel heading"
+  },
+  "pricingEstimating": {
+    "message": "Calculating…",
+    "description": "Estimate loading"
+  },
+  "pricingEstimateFailed": {
+    "message": "Could not load estimate. Check your connection and try again.",
+    "description": "Estimate error"
+  },
+  "pricingTaxesNote": {
+    "message": "Estimates exclude applicable taxes.",
+    "description": "Tax disclaimer"
+  },
+  "pricingCtaTrial": {
+    "message": "Start trial",
+    "description": "Pricing CTA"
+  },
+  "pricingLogIn": {
+    "message": "Log in",
+    "description": "Pricing header login"
+  },
+  "pricingFooter": {
+    "message": "Founder's Launch · First 100 customers · 24-month price protection",
+    "description": "Pricing footer"
+  },
+  "commercialAdminCreditBalance": {
+    "message": "Credit balance",
+    "description": "Subscription credit balance"
+  },
+  "commercialAdminAdjustments": {
+    "message": "Adjustments (ops)",
+    "description": "Ops credit/void section"
+  },
+  "commercialAdminAdjustmentsHint": {
+    "message": "Credits and next-invoice discounts change future bills. To fix a specific invoice, use Void or Credit note on that invoice row.",
+    "description": "Ops adjustment policy hint"
+  },
+  "commercialAdminApplyCredit": {
+    "message": "Apply subscription credit",
+    "description": "Goodwill credit subsection"
+  },
+  "commercialAdminCreditAmount": {
+    "message": "Amount (₹)",
+    "description": "Credit amount placeholder"
+  },
+  "commercialAdminCreditReason": {
+    "message": "Reason (required)",
+    "description": "Credit reason placeholder"
+  },
+  "commercialAdminApplyCreditCta": {
+    "message": "Apply credit",
+    "description": "Apply credit CTA"
+  },
+  "commercialAdminSharedReason": {
+    "message": "Void / credit note inputs",
+    "description": "Shared reason for invoice actions"
+  },
+  "commercialAdminAdjustReason": {
+    "message": "Reason for void or credit note",
+    "description": "Shared reason field"
+  },
+  "commercialAdminCreditNoteAmount": {
+    "message": "Credit note amount (₹)",
+    "description": "CN amount"
+  },
+  "commercialAdminAdjustReasonHint": {
+    "message": "Fill reason (and amount for credit notes), then use actions on an invoice below.",
+    "description": "Hint for invoice actions"
+  },
+  "commercialAdminCreditNotes": {
+    "message": "Credit notes issued",
+    "description": "CN list heading"
+  },
+  "commercialAdminVoidRegenerate": {
+    "message": "Void & reissue",
+    "description": "Void unpaid invoice CTA"
+  },
+  "commercialAdminIssueCreditNote": {
+    "message": "Credit note",
+    "description": "Issue CN CTA"
+  },
+  "commercialAdminCreditApplied": {
+    "message": "Credit applied to subscription balance.",
+    "description": "Success"
+  },
+  "commercialAdminInvoiceVoided": {
+    "message": "Invoice voided.",
+    "description": "Success"
+  },
+  "commercialAdminCreditNoteIssued": {
+    "message": "Credit note issued; balance updated.",
+    "description": "Success"
+  },
+  "commercialAdminCreditAmountInvalid": {
+    "message": "Enter a valid amount in rupees.",
+    "description": "Validation"
+  },
+  "commercialAdminReasonRequired": {
+    "message": "Enter a reason (at least 3 characters).",
+    "description": "Validation"
+  },
+  "commercialAdminPendingDiscount": {
+    "message": "Next-invoice discount",
+    "description": "Pending one-shot discount on subscription card"
+  },
+  "commercialAdminPendingDiscountTitle": {
+    "message": "Discount on next invoice",
+    "description": "Sales deal discount subsection"
+  },
+  "commercialAdminPendingDiscountHint": {
+    "message": "One-shot ₹ off the next period invoice (not prorations). Cleared when that invoice is generated.",
+    "description": "Pending discount helper"
+  },
+  "commercialAdminPendingDiscountSave": {
+    "message": "Schedule discount",
+    "description": "Save pending discount CTA"
+  },
+  "commercialAdminPendingDiscountClear": {
+    "message": "Clear",
+    "description": "Clear pending discount CTA"
+  },
+  "commercialAdminPendingDiscountSet": {
+    "message": "Next-invoice discount scheduled.",
+    "description": "Success"
+  },
+  "commercialAdminPendingDiscountCleared": {
+    "message": "Next-invoice discount cleared.",
+    "description": "Success"
+  },
+  "commercialAdminRecurringDiscount": {
+    "message": "Repeating discount",
+    "description": "Recurring discount on subscription card"
+  },
+  "commercialAdminRecurringDiscountRemaining": {
+    "message": "{remaining} of {total} periods left",
+    "description": "Recurring discount remaining periods"
+  },
+  "commercialAdminRecurringDiscountTitle": {
+    "message": "Repeating discount",
+    "description": "Sales multi-period discount subsection"
+  },
+  "commercialAdminRecurringDiscountHint": {
+    "message": "₹ off each period invoice for N billing periods (monthly: 12 ≈ 1 year; annual: 1 ≈ 1 year). Stacks with next-invoice discount.",
+    "description": "Recurring discount helper"
+  },
+  "commercialAdminRecurringDiscountPeriods": {
+    "message": "Periods",
+    "description": "Recurring discount periods input"
+  },
+  "commercialAdminRecurringDiscountPeriodsUnit": {
+    "message": "periods",
+    "description": "Preset period unit label"
+  },
+  "commercialAdminRecurringDiscountSave": {
+    "message": "Schedule repeating discount",
+    "description": "Save recurring discount CTA"
+  },
+  "commercialAdminRecurringDiscountClear": {
+    "message": "Clear",
+    "description": "Clear recurring discount CTA"
+  },
+  "commercialAdminRecurringDiscountSet": {
+    "message": "Repeating discount scheduled.",
+    "description": "Success"
+  },
+  "commercialAdminRecurringDiscountCleared": {
+    "message": "Repeating discount cleared.",
+    "description": "Success"
+  },
+  "commercialAdminInvoiceDiscount": {
+    "message": "Discount",
+    "description": "Invoice discount line"
+  },
+  "commercialAdminInvoiceCredit": {
+    "message": "Credit applied",
+    "description": "Invoice credit line"
+  },
+  "commercialAdminInvoiceActionsHint": {
+    "message": "For a wrong or paid invoice, use Void & reissue or Credit note on the invoice itself — a dialog will ask for reason and amount.",
+    "description": "Hint under credit/discount cards"
+  },
+  "commercialAdminVoidModalTitle": {
+    "message": "Void & reissue invoice",
+    "description": "Void modal title"
+  },
+  "commercialAdminCreditNoteModalTitle": {
+    "message": "Issue credit note",
+    "description": "Credit note modal title"
+  },
+  "commercialAdminVoidModalHint": {
+    "message": "Only unpaid invoices. The invoice stays on record as void; a new period invoice can be generated.",
+    "description": "Void modal helper"
+  },
+  "commercialAdminCancel": {
+    "message": "Cancel",
+    "description": "Modal cancel"
+  },
+  "commercialAdminRevise": {
+    "message": "Revise",
+    "description": "Revise unpaid invoice button"
+  },
+  "commercialAdminReviseModalTitle": {
+    "message": "Revise unpaid invoice",
+    "description": "Revise modal title"
+  },
+  "commercialAdminReviseSameNumber": {
+    "message": "Same invoice number",
+    "description": "Revise keeps invoice number"
+  },
+  "commercialAdminReviseModalHint": {
+    "message": "Apply line-item and invoice-level discounts from negotiation. Quantity and unit prices stay fixed. You can revise again while unpaid.",
+    "description": "Revise modal helper"
+  },
+  "commercialAdminLineDiscount": {
+    "message": "Line discount",
+    "description": "Line discount input label"
+  },
+  "commercialAdminInvoiceLevelDiscount": {
+    "message": "Invoice discount",
+    "description": "Header discount input label"
+  },
+  "commercialAdminDiscountAmountPlaceholder": {
+    "message": "Amount in ₹",
+    "description": "Placeholder when discount mode is amount"
+  },
+  "commercialAdminDiscountPercentPlaceholder": {
+    "message": "Percent (0–100)",
+    "description": "Placeholder when discount mode is percent"
+  },
+  "commercialAdminDiscountEquals": {
+    "message": "= −{amount}",
+    "description": "Converted rupee amount under percent invoice discount"
+  },
+  "commercialAdminPreviewSubtotal": {
+    "message": "Subtotal",
+    "description": "Revise preview subtotal"
+  },
+  "commercialAdminPreviewTax": {
+    "message": "Tax",
+    "description": "Revise preview tax"
+  },
+  "commercialAdminPreviewTotal": {
+    "message": "Total",
+    "description": "Revise preview total"
+  },
+  "commercialAdminReviseSave": {
+    "message": "Save revision",
+    "description": "Confirm revise"
+  },
+  "commercialAdminInvoiceRevised": {
+    "message": "Invoice revised.",
+    "description": "Success toast"
+  },
+  "commercialAdminInvoiceRestored": {
+    "message": "Invoice restored to v{version}. Customer will see the updated amount.",
+    "description": "Success toast after restore"
+  },
+  "commercialAdminRevisionCount": {
+    "message": "{count} revision(s) on record",
+    "description": "Revision history count under invoice"
+  },
+  "commercialAdminRevisedBadge": {
+    "message": "Revised · v{version}",
+    "description": "Badge on ops invoice list when revised"
+  },
+  "commercialAdminVersionSelect": {
+    "message": "Version",
+    "description": "Label for invoice version picker"
+  },
+  "commercialAdminVersionCurrent": {
+    "message": "v{version} (current)",
+    "description": "Current version option label"
+  },
+  "commercialAdminVersionLabel": {
+    "message": "v{version}",
+    "description": "Historical version option label"
+  },
+  "commercialAdminRestoreVersion": {
+    "message": "Restore this version",
+    "description": "CTA to restore selected historical version"
+  },
+  "commercialAdminRestoreModalTitle": {
+    "message": "Restore invoice version",
+    "description": "Restore confirmation modal title"
+  },
+  "commercialAdminRestoreModalHint": {
+    "message": "Apply v{version} discounts as a new revision on this invoice.",
+    "description": "Restore modal subtitle"
+  },
+  "commercialAdminRestoreCustomerHint": {
+    "message": "The customer will see the restored total on Subscriptions and must check out again if they had an open payment.",
+    "description": "Restore modal customer impact note"
+  },
+  "commercialAdminRestoreConfirm": {
+    "message": "Restore & update customer",
+    "description": "Confirm restore button"
+  },
+  "commercialAdminHistoricalVersionHint": {
+    "message": "Viewing a past version (read-only). Restore to make it current for the customer.",
+    "description": "Hint when browsing historical invoice version"
   }
 }

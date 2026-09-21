@@ -143,6 +143,7 @@
       :moduleKey="createDrawerModuleKey"
       :prefillText="recordSearchQuery"
       :prefillFieldKey="createDrawerPrefillFieldKey"
+      :open-record-on-save="false"
       @close="closeCreateDrawer"
       @saved="handleRelatedRecordCreated"
     />

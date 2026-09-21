@@ -53,15 +53,24 @@
       @connected="onSmtpWizardConnected"
     />
 
+    <!--
+      Gate Whats New / center with v-if (async + always-mounted prop churn → emitsOptions).
+      Announcement hosts are static imports so v-if is safe (vuejs/core#3560).
+    -->
     <WhatsNewModal
+      v-if="whatsNewModalOpen"
       v-model="whatsNewModalOpen"
       :releases="unseenReleases"
     />
     <WhatsNewDrawer
+      v-if="whatsNewDrawerOpen"
       v-model="whatsNewDrawerOpen"
       :releases="unseenReleases"
     />
-    <ReleaseNotesCenter v-model="centerOpen" />
+    <ReleaseNotesCenter
+      v-if="centerOpen"
+      v-model="centerOpen"
+    />
     <AstraCommandPalette v-if="aiSuiteEntitled" />
     <AstraSidePanel v-if="aiSuiteEntitled" />
 
@@ -76,7 +85,10 @@
     >
       <AnnouncementBannerHost :announcement="announcementBanner" />
     </Teleport>
-    <AnnouncementPopoverHost :announcement="announcementPopover" />
+    <AnnouncementPopoverHost
+      v-if="announcementPopover"
+      :announcement="announcementPopover"
+    />
   </template>
 </template>
 
@@ -110,7 +122,9 @@ import {
   isStandalonePublicRoute,
   isTrialExpiredShelllessRoute,
   isAuthLifecyclePublicRoute,
-  isOnboardingShelllessRoute
+  isOnboardingShelllessRoute,
+  isPortalAuthLifecycleRoute,
+  isAcademySurfaceRoute,
 } from '@/utils/standaloneRoutes';
 import { useConnectMailboxPrompt } from '@/composables/useConnectMailboxPrompt';
 import { useSmtpSetupWizard } from '@/composables/useSmtpSetupWizard';
@@ -124,6 +138,9 @@ import {
 } from '@/composables/useInternalChatStream';
 import ConnectMailboxModal from '@/components/inbox/ConnectMailboxModal.vue';
 import SmtpSetupWizard from '@/components/communications/SmtpSetupWizard.vue';
+// Static: defineAsyncComponent + v-if races cause emitsOptions null (vuejs/core#3560).
+import AnnouncementBannerHost from '@/components/announcements/AnnouncementBannerHost.vue';
+import AnnouncementPopoverHost from '@/components/announcements/AnnouncementPopoverHost.vue';
 
 const WhatsNewModal = defineAsyncComponent(() =>
   import('@/components/release-notes/WhatsNewModal.vue')
@@ -148,12 +165,6 @@ const IncomingCallPopup = defineAsyncComponent(() =>
 );
 const PostCallNotesModal = defineAsyncComponent(() =>
   import('@/components/telephony/PostCallNotesModal.vue')
-);
-const AnnouncementBannerHost = defineAsyncComponent(() =>
-  import('@/components/announcements/AnnouncementBannerHost.vue')
-);
-const AnnouncementPopoverHost = defineAsyncComponent(() =>
-  import('@/components/announcements/AnnouncementPopoverHost.vue')
 );
 
 // Async so GlobalSearch (+ drawers, field engines, command registry, API client) is NOT in the
@@ -185,6 +196,9 @@ const surfacesEnabled = computed(() =>
   // Founder wizard must not boot release notes / UI-metadata / mailboxes —
   // those 401s would wipe a brand-new post-accept session (demo activation).
   && !isOnboardingShelllessRoute(route.path)
+  // Portal select / Academy: no CRM global surfaces (announcements race → emitsOptions).
+  && !isPortalAuthLifecycleRoute(route.path)
+  && !isAcademySurfaceRoute(route.path)
 );
 const aiSuiteEntitled = computed(() => isAiSuiteEntitled(authStore.user));
 const telephonyEntitled = computed(() => isTelephonyEntitled(authStore.user));
@@ -337,16 +351,26 @@ const handleVisibilityChange = () => {
 watch(
   () => authStore.isAuthenticated,
   (isAuthenticated) => {
-    if (!surfacesEnabled.value) return;
-    if (isAuthenticated) {
-      void initializeIfReady();
-      void initializeAnnouncementsIfReady();
+    if (!isAuthenticated) {
+      resetReleaseNotesState();
+      resetAnnouncementsState();
       return;
     }
-    resetReleaseNotesState();
-    resetAnnouncementsState();
+    if (!surfacesEnabled.value) return;
+    void initializeIfReady();
+    void initializeAnnouncementsIfReady();
   },
   { immediate: true }
+);
+
+watch(
+  surfacesEnabled,
+  (enabled, wasEnabled) => {
+    if (!enabled || wasEnabled) return;
+    if (!authStore.isAuthenticated) return;
+    void initializeIfReady();
+    void initializeAnnouncementsIfReady();
+  }
 );
 
 watch(

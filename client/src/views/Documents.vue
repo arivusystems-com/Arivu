@@ -104,6 +104,7 @@ const searchMode = ref('keyword');
 const fileInputRef = ref(null);
 const selectedFolderId = ref(null);
 const statusFilter = ref('');
+const selectedDashboardStatKey = ref(null);
 const documentTypeFilter = ref('');
 const fileTypeFilter = ref('');
 const ownerFilter = ref('');
@@ -754,6 +755,7 @@ function handleStatClick(statKey) {
   clearQuickFilters();
   statusFilter.value = '';
   documentTypeFilter.value = '';
+  selectedDashboardStatKey.value = statKey || null;
   if (statKey === 'published') {
     statusFilter.value = 'published';
   } else if (statKey === 'drafts') {
@@ -762,6 +764,8 @@ function handleStatClick(statKey) {
     statusFilter.value = 'pending_review';
   } else if (statKey === 'expiringSoon') {
     expiringOnlyFilter.value = true;
+  } else if (statKey === 'total') {
+    selectedDashboardStatKey.value = 'total';
   }
   switchView('list');
   applyFilters();
@@ -1707,7 +1711,11 @@ onMounted(async () => {
           v-for="stat in statsConfig"
           :key="stat.key"
           type="button"
-          class="rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/20"
+          class="rounded-xl border p-4 text-left shadow-sm transition"
+          :class="selectedDashboardStatKey === stat.key
+            ? 'border-indigo-400 bg-indigo-50/70 dark:border-indigo-500 dark:bg-indigo-950/30'
+            : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/20'"
+          :aria-pressed="selectedDashboardStatKey === stat.key ? 'true' : 'false'"
           @click="handleStatClick(stat.key)"
         >
           <div class="flex items-center justify-between">

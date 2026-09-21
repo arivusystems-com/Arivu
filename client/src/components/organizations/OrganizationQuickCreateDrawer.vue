@@ -62,7 +62,7 @@
                         <button 
                           type="button" 
                           class="relative rounded-lg p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 cursor-pointer" 
-                          @click="closeDrawer"
+                          @click="requestClose"
                         >
                           <span class="absolute -inset-2.5"></span>
                           <span class="sr-only">{{ t('forms.previewClosePanelSr') }}</span>
@@ -186,7 +186,7 @@
                       <button 
                         type="button" 
                         class="rounded-lg px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors" 
-                        @click="closeDrawer"
+                        @click="requestClose"
                       >{{ t('performance.cancelWizard') }}</button>
                       <button 
                         type="submit" 
@@ -214,6 +214,7 @@ import apiClient from '@/utils/apiClient';
 import { fetchModuleDefinitionCached } from '@/utils/tenantSchemaApiCache';
 import { ensureModuleCreateLayout } from '@/platform/fields/createSurface';
 import { useTabs } from '@/composables/useTabs';
+import { confirmAction } from '@/composables/useConfirmAction';
 import {
   isTenantPlatformOrganizationFieldKey,
   ORGANIZATION_TENANT_PLATFORM_FIELD_KEYS,
@@ -239,6 +240,14 @@ const props = defineProps({
   autoLinkContext: {
     type: Object,
     default: null
+  },
+  /**
+   * When false, create succeeds and emits `saved` without opening OrganizationSurface.
+   * Used for nested lookup create flows that link the org back into the parent form.
+   */
+  openRecordOnSave: {
+    type: Boolean,
+    default: true
   },
   /**
    * Edit mode: organizationId (required when editing)
@@ -323,6 +332,7 @@ const moduleDefinition = ref(null);
 /** Draft Vendor Catalog lines (persisted via inventory vendor-catalog API). */
 const vendorCatalogLines = ref([]);
 const vendorCatalogSectionRef = ref(null);
+const initialSnapshot = ref('');
 
 const showVendorCatalog = computed(() => {
   const parts = formData.value?.participations;
@@ -339,6 +349,19 @@ function resolveVendorCatalogEntries() {
   if (Array.isArray(fromChild)) return fromChild;
   return Array.isArray(vendorCatalogLines.value) ? vendorCatalogLines.value : [];
 }
+
+function snapshotForm() {
+  return JSON.stringify({
+    form: formData.value,
+    vendorCatalog: resolveVendorCatalogEntries(),
+  });
+}
+
+function markClean() {
+  initialSnapshot.value = snapshotForm();
+}
+
+const isDirty = computed(() => snapshotForm() !== initialSnapshot.value);
 
 async function persistVendorCatalog(orgId) {
   if (!showVendorCatalog.value || !orgId) return;
@@ -653,11 +676,26 @@ const closeDrawer = () => {
   emit('close');
 };
 
+const requestClose = async () => {
+  if (saving.value) return;
+  if (
+    isDirty.value &&
+    !(await confirmAction({
+      message: t('common.drawerCloseConfirm'),
+      confirmLabel: t('common.drawerDiscardClose'),
+      tone: 'warning',
+    }))
+  ) {
+    return;
+  }
+  closeDrawer();
+};
+
 /**
  * Handle dialog close (from overlay click)
  */
 const handleDialogClose = () => {
-  closeDrawer();
+  requestClose();
 };
 
 /**
@@ -820,7 +858,7 @@ const handleSubmit = async () => {
           const personId = props.autoLinkContext.personId || props.autoLinkContext.contactId;
           try {
             // Link the created organization to the person
-            await apiClient.put(`/api/people/${personId}`, {
+            await apiClient.put(`/people/${personId}`, {
               organization: createdOrg._id || createdOrg.id
             });
             console.log('[OrganizationQuickCreate] Auto-linked organization to person:', personId);
@@ -839,8 +877,8 @@ const handleSubmit = async () => {
             // Don't fail the creation if linking fails
           }
         }
-      } else {
-        // If invoked from Command Palette: Open OrganizationSurface in new tab
+      } else if (props.openRecordOnSave) {
+        // Standalone create (command palette / list): open OrganizationSurface in a new tab
         const orgId = createdOrg._id || createdOrg.id;
         if (orgId) {
           openTab(`/organizations/${orgId}`, { insertAdjacent: true });
@@ -933,6 +971,7 @@ const fetchOrganizationData = async () => {
       }
       
       setOrgDrawerMode('quick', { animate: false });
+      markClean();
     } else {
       errors.value._general = response.message || 'Failed to load organization data';
     }
@@ -969,6 +1008,7 @@ watch(() => props.isOpen, (isOpen) => {
       vendorCatalogLines.value = [];
       errors.value = {};
       setOrgDrawerMode('quick', { animate: false });
+      markClean();
     }
   }
 });

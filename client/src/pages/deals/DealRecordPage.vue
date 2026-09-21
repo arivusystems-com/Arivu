@@ -1062,6 +1062,12 @@
             </div>
           </template>
 
+          <template v-if="showLearningTab" #tab-learning>
+            <div class="flex h-full flex-col">
+              <RelatedLearningPanel app-key="SALES" />
+            </div>
+          </template>
+
           <template v-if="showRecordDocumentsTab" #tab-documents>
             <div class="flex h-full flex-col">
               <div class="record-context-panel__header flex flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
@@ -1305,6 +1311,7 @@ import EditableTitle from '@/components/record-page/EditableTitle.vue';
 import RecordPresenceAvatars from '@/components/record-page/RecordPresenceAvatars.vue';
 import RecordAiPanel from '@/astra/surfaces/RecordAiPanel.vue';
 import { useRecordPresence } from '@/composables/useRecordPresence';
+import { useArivuDataChangeRefresh } from '@/composables/useArivuDataChangeRefresh';
 import { createActivityTimelineRefSetter } from '@/components/activity/useRecordActivityAdapter';
 import { createDealActivityUi } from '@/components/activity/adapters/dealActivityUiAdapter';
 import { createDealRecordAdapter } from '@/components/record-page/adapters/dealRecordAdapter';
@@ -1350,7 +1357,8 @@ import {
   PuzzlePieceIcon,
   TagIcon,
   DocumentDuplicateIcon,
-  Bars3BottomLeftIcon
+  Bars3BottomLeftIcon,
+  AcademicCapIcon
 } from '@heroicons/vue/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid';
 import Avatar from '@/components/common/Avatar.vue';
@@ -1361,6 +1369,7 @@ import { isAiSuiteEntitled } from '@/utils/aiSuiteEntitlement';
 import apiClient from '@/utils/apiClient';
 import { isAddonEntitled } from '@/utils/addonEntitlement';
 import { openRecordDiscussChat } from '@/utils/internalChatApi';
+import RelatedLearningPanel from '@/components/learning/RelatedLearningPanel.vue';
 import { buildDuplicateInitialData } from '@/utils/duplicateRecord';
 import { fetchModuleDefinitionCached } from '@/utils/tenantSchemaApiCache';
 import {
@@ -1609,12 +1618,16 @@ const canEditDocuments = computed(() => authStore.can?.('documents', 'edit') ?? 
 const showRecordDocumentsTab = computed(
   () => supportsDocumentAttachments('deals') && canViewDocuments.value && !!deal.value?._id
 );
+const showLearningTab = computed(() => authStore.hasAppAccess?.('LMS') ?? false);
 
 const rightPaneTabs = computed(() => {
   const tabs = [
     { id: 'activity', name: t('records.genericTabActivity'), icon: ClockIcon },
     { id: 'related', name: t('records.dealRelatedRecordsTab'), icon: LinkIcon }
   ];
+  if (showLearningTab.value) {
+    tabs.push({ id: 'learning', name: t('learning.relatedLearning'), icon: AcademicCapIcon });
+  }
   if (showRecordDocumentsTab.value) {
     tabs.push({ id: 'documents', name: t('records.genericTabDocuments'), icon: DocumentDuplicateIcon });
   }
@@ -1717,6 +1730,17 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleHeaderKeydown);
   window.removeEventListener('arivu:open-email-compose', onOpenEmailComposeEvent);
+});
+
+useArivuDataChangeRefresh({
+  getModuleKey: () => 'deals',
+  getRecordId: () => String(effectiveDealId.value || deal.value?._id || ''),
+  onChange: (detail) => {
+    if (detail?.patch && typeof detail.patch === 'object' && deal.value) {
+      Object.assign(deal.value, detail.patch);
+    }
+    void fetchDeal();
+  },
 });
 
 watch(showEditModal, (open) => {

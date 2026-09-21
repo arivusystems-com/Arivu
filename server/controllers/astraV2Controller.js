@@ -528,13 +528,17 @@ async function confirmAction(req, res) {
     const { recordPathFor } = require('../services/astra/tools/moduleCatalog');
     const moduleKey = String(
       req.body?.moduleKey
+      || payload?.moduleKey
+      || result?.moduleKey
       || (toolName === 'calendar.createEvent' ? 'events'
         : toolName === 'crm.tasks.create' ? 'tasks'
           : toolName === 'crm.deals.create' ? 'deals'
             : toolName === 'crm.cases.create' ? 'cases'
               : toolName === 'crm.people.create' ? 'people'
                 : toolName === 'crm.organizations.create' ? 'organizations'
-                  : '')
+                  : toolName === 'module.update' || toolName === 'module.create'
+                    ? (payload?.moduleKey || '')
+                    : '')
       || '',
     ).trim() || undefined;
     const recordId = String(

@@ -509,6 +509,58 @@ module.exports = {
     priority: 'HIGH',
     defaultChannels: ['IN_APP', 'EMAIL'],
     channels: { inApp: true, email: true, push: true, whatsapp: false, sms: false }
-  }
+  },
+  [domainEvents.LEARNING_ENROLLED]: {
+    appKey: 'LMS',
+    recipients: ['LEARNING_LEARNER'],
+    priority: 'NORMAL',
+    defaultChannels: ['IN_APP', 'EMAIL'],
+    channels: {
+      inApp: true,
+      email: true,
+      push: false,
+      whatsapp: false,
+      sms: false,
+    },
+  },
+  [domainEvents.LEARNING_COURSE_PUBLISHED]: {
+    appKey: 'LMS',
+    recipients: ['LEARNING_ADMINS'],
+    priority: 'NORMAL',
+    defaultChannels: ['IN_APP'],
+    channels: {
+      inApp: true,
+      email: false,
+      push: false,
+      whatsapp: false,
+      sms: false,
+    },
+  },
+  [domainEvents.LEARNING_COURSE_COMPLETED]: {
+    appKey: 'LMS',
+    recipients: ['LEARNING_LEARNER', 'LEARNING_ADMINS'],
+    priority: 'NORMAL',
+    defaultChannels: ['IN_APP'],
+    channels: {
+      inApp: true,
+      email: false,
+      push: false,
+      whatsapp: false,
+      sms: false,
+    },
+  },
+  [domainEvents.LEARNING_ASSIGNMENT_OVERDUE]: {
+    appKey: 'LMS',
+    recipients: ['LEARNING_LEARNER'],
+    priority: 'HIGH',
+    defaultChannels: ['IN_APP', 'EMAIL'],
+    channels: {
+      inApp: true,
+      email: true,
+      push: false,
+      whatsapp: false,
+      sms: false,
+    },
+  },
 };
 

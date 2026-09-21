@@ -511,6 +511,92 @@ describe('astra v2 — workforce seats + writes', () => {
     assert.match(result.proposals[0].payload.title, /call the sponsor/i);
   });
 
+  it('record_update proposes module.update when focus has recordId', async () => {
+    const result = await runOrchestrator(
+      {
+        organizationId: ORG,
+        query: 'make this event as completed',
+        conversationId: 'c-upd-1',
+        focus: {
+          kind: 'events',
+          moduleKey: 'events',
+          id: 'evt-1',
+          recordId: 'evt-1',
+          name: 'July 19th deal Followup',
+        },
+      },
+      { audit: false, llmIntent: false, llm: async () => ({ text: '', usage: {} }) },
+    );
+    assert.equal(result.intent, 'record_update');
+    assert.equal(result.tool, 'module.update');
+    assert.ok(result.proposals?.length === 1);
+    assert.equal(result.proposals[0].toolName, 'module.update');
+    assert.equal(result.proposals[0].payload.moduleKey, 'events');
+    assert.equal(result.proposals[0].payload.recordId, 'evt-1');
+    assert.equal(result.proposals[0].payload.fields.status, 'Completed');
+  });
+
+  it('record_update resolves recordId from title via module.search', async () => {
+    const Event = mockModel([
+      { _id: 'evt-19', eventName: 'July 19th deal Followup', status: 'Planned' },
+    ]);
+    const result = await runOrchestrator(
+      {
+        organizationId: ORG,
+        query: 'The title of the event is : July 19th deal Followup make this event as completed',
+        conversationId: 'c-upd-2',
+      },
+      {
+        audit: false,
+        llmIntent: false,
+        llm: async () => ({ text: '', usage: {} }),
+        models: { Event },
+      },
+    );
+    assert.equal(result.intent, 'record_update');
+    assert.equal(result.tool, 'module.update');
+    assert.ok(result.proposals?.length === 1);
+    assert.equal(result.proposals[0].payload.recordId, 'evt-19');
+    assert.equal(result.proposals[0].payload.fields.status, 'Completed');
+  });
+
+  it('module.update applies fields only after confirmed:true', async () => {
+    bootstrap.resetForTests();
+    bootstrap.ensureBootstrapped();
+    let updated = null;
+    const Event = {
+      schema: { paths: { deletedAt: true, organizationId: true } },
+      findOneAndUpdate(filter, update) {
+        updated = { filter, update };
+        const doc = {
+          _id: filter._id,
+          eventName: 'July 19th deal Followup',
+          status: update.$set.status,
+        };
+        return { lean: async () => doc };
+      },
+    };
+    const tool = toolRegistry.getTool('module.update');
+    const pending = await tool.run(
+      { moduleKey: 'events', recordId: 'evt-19', fields: { status: 'Completed' } },
+      { organizationId: ORG, deps: { models: { Event } } },
+    );
+    assert.equal(pending.type, 'confirm_action');
+    assert.equal(updated, null);
+
+    const applied = await tool.run(
+      {
+        moduleKey: 'events',
+        recordId: 'evt-19',
+        fields: { status: 'Completed' },
+        confirmed: true,
+      },
+      { organizationId: ORG, deps: { models: { Event } } },
+    );
+    assert.equal(applied.ok, true);
+    assert.equal(updated.update.$set.status, 'Completed');
+  });
+
   it('returns calendar create proposal for book a meeting', async () => {
     const result = await runOrchestrator(
       { organizationId: ORG, query: 'book a meeting with Ada', conversationId: 'c-cal-1' },

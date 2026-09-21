@@ -57,6 +57,36 @@ function messageTimestamp(msg) {
   return msg?.sentAt || msg?.receivedAt || new Date().toISOString();
 }
 
+function personFromFromAddress(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const angle = text.match(/^(.+?)\s*<([^>]+)>$/);
+  if (angle) {
+    const email = angle[2].trim();
+    const nameParts = angle[1].replace(/^["']|["']$/g, '').trim().split(/\s+/).filter(Boolean);
+    return enrichPersonForAvatar({
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' '),
+      email
+    });
+  }
+  if (text.includes('@')) {
+    return enrichPersonForAvatar({ email: extractEmailFromActorName(text) || text });
+  }
+  return enrichPersonForAvatar({ name: text });
+}
+
+function actorToSentByUser(activity) {
+  const name = String(activity?.actorName || '').trim();
+  if (!name && !activity?.actorId) return null;
+  const parts = name.split(/\s+/).filter(Boolean);
+  return enrichPersonForAvatar({
+    _id: activity?.actorId || undefined,
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' ') || ''
+  });
+}
+
 function threadMessageToEmailMessage(msg, thread, caseRecord) {
   const inbound = String(msg?.direction || '').toLowerCase() === 'inbound';
   const attachments = (msg?.attachments || []).map((a, idx) => normalizeCaseEmailAttachment(a, idx));
@@ -70,6 +100,8 @@ function threadMessageToEmailMessage(msg, thread, caseRecord) {
     toAddresses: Array.isArray(msg?.toAddresses) ? msg.toAddresses : [],
     sentAt: msg?.sentAt || null,
     receivedAt: msg?.receivedAt || null,
+    sentByUserId: msg?.sentByUserId || null,
+    sentByUser: msg?.sentByUser && typeof msg.sentByUser === 'object' ? msg.sentByUser : null,
     attachments
   };
 }
@@ -82,6 +114,7 @@ export function caseActivityToEmailMessage(activity, caseRecord) {
   const meta = activity?.metadata || {};
   const fromMeta = String(meta.fromAddress || '').trim();
   const fromActor = extractEmailFromActorName(activity?.actorName);
+  const sentByUser = inbound ? null : actorToSentByUser(activity);
 
   return {
     _id: meta.communicationId || activity._id || activity.id,
@@ -92,6 +125,8 @@ export function caseActivityToEmailMessage(activity, caseRecord) {
     toAddresses: Array.isArray(meta.toAddresses) ? meta.toAddresses : [],
     sentAt: inbound ? null : activityTimestamp(activity),
     receivedAt: inbound ? activityTimestamp(activity) : null,
+    sentByUserId: inbound ? null : (activity?.actorId || null),
+    sentByUser,
     deliveryStatus: meta.deliveryStatus || meta.status || null,
     deliveryError: meta.deliveryError || null,
     bounceDiagnostic: meta.bounceDiagnostic || null,
@@ -129,13 +164,17 @@ export function getCaseEmailMessageAvatarUser(message, caseRecord = null) {
   if (inbound) {
     return resolveCaseContactProfile(caseRecord, message);
   }
-  const owner = caseRecord?.assignedTo;
-  if (owner && typeof owner === 'object') {
-    return enrichPersonForAvatar(owner);
+  // Historical outbound: use sender snapshot only — never live case assignedTo.
+  const sender = message?.sentByUser;
+  if (sender && typeof sender === 'object') {
+    const enriched = enrichPersonForAvatar(sender);
+    if (enriched.firstName || enriched.lastName || enriched.email || enriched.name) {
+      return enriched;
+    }
   }
-  const fromParsed = String(message?.fromAddress || '').trim();
-  if (fromParsed) {
-    return enrichPersonForAvatar({ email: fromParsed.includes('@') ? fromParsed : '', name: fromParsed });
+  const fromPerson = personFromFromAddress(message?.fromAddress);
+  if (fromPerson && (fromPerson.firstName || fromPerson.lastName || fromPerson.email || fromPerson.name)) {
+    return fromPerson;
   }
   return enrichPersonForAvatar({});
 }

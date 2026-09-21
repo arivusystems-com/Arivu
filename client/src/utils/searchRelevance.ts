@@ -79,6 +79,7 @@ const MODULE_PRIMARY_SEARCH_FILTER_FIELDS: Record<string, string[]> = {
   people: ['name'],
   deals: ['name'],
   tasks: ['title'],
+  cases: ['title'],
   documents: ['title'],
   events: ['eventName'],
   forms: ['name'],

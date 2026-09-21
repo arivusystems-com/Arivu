@@ -51,7 +51,9 @@ import {
   isAuthLifecyclePublicRoute,
   isStandalonePublicRoute,
   shouldSkipTabRoute,
-  isStandaloneShelllessPath
+  isStandaloneShelllessPath,
+  isPortalAuthLifecycleRoute,
+  isAcademySurfaceRoute
 } from '@/utils/standaloneRoutes';
 import { identifyProductUser } from '@/config/posthogUser';
 
@@ -191,6 +193,10 @@ const hideShell = computed(() => {
   if (route.meta.hideShell) return true;
   // Hide for auth routes only
   if (route.path.startsWith('/login') || route.path.startsWith('/auth/')) return true;
+  // Portal select / set-password must never mount PlatformShell (CRM home 401s).
+  if (isPortalAuthLifecycleRoute(route.path)) return true;
+  // Academy has its own Learning-only chrome.
+  if (isAcademySurfaceRoute(route.path)) return true;
   // Portal and audit routes use standard PlatformShell layout
   // Platform routes show the shell
   return false;
@@ -200,9 +206,13 @@ const isStandaloneShelllessRoute = computed(() => {
   if (route.meta.requiresAuth === false) return true;
   const routePath = String(route.path || '').split('?')[0];
   if (isAuthLifecyclePublicRoute(routePath)) return true;
+  if (isPortalAuthLifecycleRoute(routePath)) return true;
+  if (isAcademySurfaceRoute(routePath)) return true;
   if (isStandaloneShelllessPath(routePath)) return true;
   if (typeof window !== 'undefined') {
-    return isStandaloneShelllessPath(window.location.pathname);
+    return isStandaloneShelllessPath(window.location.pathname)
+      || isPortalAuthLifecycleRoute(window.location.pathname)
+      || isAcademySurfaceRoute(window.location.pathname);
   }
   return false;
 });

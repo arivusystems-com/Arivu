@@ -530,5 +530,193 @@
   "attachLimitSkipped": {
     "message": "Added {kept} file(s). {skipped} left out — max {max} per message.",
     "description": "Toast when OS picker selected more than remaining slots; first N kept"
+  },
+  "inviteModalSubtitleGroup": {
+    "message": "Add teammates to this group chat.",
+    "description": "Subtitle under Add members modal for group DMs"
+  },
+  "viewMembers": {
+    "message": "View members",
+    "description": "Menu action to open the space member roster"
+  },
+  "membersTitle": {
+    "message": "Members",
+    "description": "Title of the view members modal"
+  },
+  "membersCount": {
+    "message": "{count} members",
+    "description": "Member count subtitle in the view members modal"
+  },
+  "membersYou": {
+    "message": "You",
+    "description": "Badge next to the current user in the members list"
+  },
+  "membersLoadFailed": {
+    "message": "Could not load members.",
+    "description": "Error when listing space members fails"
+  },
+  "noMembers": {
+    "message": "No members yet",
+    "description": "Empty state in the view members modal"
+  },
+  "removeMember": {
+    "message": "Remove",
+    "description": "Action to remove another member from a channel or group chat"
+  },
+  "leaveSpace": {
+    "message": "Leave",
+    "description": "Action for the current user to leave a channel or group chat"
+  },
+  "removeMemberFailed": {
+    "message": "Could not remove member.",
+    "description": "Error when removing a space member fails"
+  },
+  "leaveFailed": {
+    "message": "Could not leave.",
+    "description": "Error when leaving a channel or group chat fails"
+  },
+  "systemGroupCreated": {
+    "message": "{name} created the group",
+    "description": "System message when a group DM is created"
+  },
+  "systemChannelCreated": {
+    "message": "{name} created the channel",
+    "description": "System message when a channel is created"
+  },
+  "systemMemberAdded": {
+    "message": "{actor} added {target} to the group",
+    "description": "System message when a member is invited to a group or channel"
+  },
+  "systemMemberRemoved": {
+    "message": "{actor} removed {target} from the group",
+    "description": "System message when a member is removed from a group or channel"
+  },
+  "systemMemberLeft": {
+    "message": "{name} left the group",
+    "description": "System message when a member leaves a group or channel"
+  },
+  "systemChatPinned": {
+    "message": "{name} pinned the chat",
+    "description": "System message when a message is pinned in a group or channel"
+  },
+  "someone": {
+    "message": "Someone",
+    "description": "Fallback display name in system activity messages"
+  },
+  "addToGroup": {
+    "message": "Add to group",
+    "description": "Action to add a mentioned non-member to the current group or channel"
+  },
+  "addToGroupTitle": {
+    "message": "Add to group?",
+    "description": "Confirm dialog title when adding a mentioned non-member"
+  },
+  "addToGroupConfirm": {
+    "message": "Add {name} to this group?",
+    "description": "Confirm dialog body when adding one mentioned non-member"
+  },
+  "addToGroupConfirmSend": {
+    "message": "Add {names} to this group and send your message?",
+    "description": "Confirm dialog when sending a message that mentions non-members"
+  },
+  "addToGroupAndSend": {
+    "message": "Add and send",
+    "description": "Confirm button when adding mentioned non-members and sending"
+  },
+  "addToGroupSuccess": {
+    "message": "{name} was added to the group.",
+    "description": "Toast after successfully adding a mentioned user"
+  },
+  "mentionNotInGroup": {
+    "message": "{name} is not in this group.",
+    "description": "Composer banner when a mentioned user is not a member"
+  },
+  "mentionNotInGroupShort": {
+    "message": "Not in this group",
+    "description": "Short subtitle under a non-member in the mention picker"
+  },
+  "memberMenu": {
+    "message": "Member options",
+    "description": "Aria/tooltip for member row three-dot menu in Members modal"
+  },
+  "pinChat": {
+    "message": "Pin chat",
+    "description": "Pin a chat to the top of the sidebar list"
+  },
+  "unpinChat": {
+    "message": "Unpin chat",
+    "description": "Remove a chat from the pinned section of the sidebar"
+  },
+  "pinChatFailed": {
+    "message": "Could not update chat pin.",
+    "description": "Error when pinning or unpinning a chat in the sidebar fails"
+  },
+  "pinnedLabel": {
+    "message": "Pinned",
+    "description": "Inline label on a pinned message in the chat timeline"
+  },
+  "pinnedStripMore": {
+    "message": "+{count} more",
+    "description": "Expand control on the pinned messages strip when multiple pins exist"
+  },
+  "pinnedStripCollapse": {
+    "message": "Show less",
+    "description": "Collapse control on the pinned messages strip"
+  },
+  "pinnedStripTitle": {
+    "message": "Pinned",
+    "description": "Small heading above the pinned messages strip"
+  },
+  "deleteMessageTitle": {
+    "message": "Delete message?",
+    "description": "Confirm dialog title when deleting a chat message"
+  },
+  "deleteMessageConfirm": {
+    "message": "This message will be removed for everyone. Others will see that it was deleted by the author.",
+    "description": "Confirm dialog body when deleting a chat message"
+  },
+  "messageDeletedByAuthor": {
+    "message": "Message deleted by author",
+    "description": "Tombstone text shown in place of a soft-deleted chat message"
+  },
+  "markAsUnread": {
+    "message": "Mark as unread",
+    "description": "Action to force a conversation to show as unread until opened again"
+  },
+  "markUnreadFailed": {
+    "message": "Could not mark as unread.",
+    "description": "Error when mark-as-unread fails"
+  },
+  "muted": {
+    "message": "Muted",
+    "description": "Tooltip/label when a conversation has notifications muted"
+  },
+  "muteFor1Hour": {
+    "message": "Mute for 1 hour",
+    "description": "Mute notifications for this conversation for one hour"
+  },
+  "muteFor8Hours": {
+    "message": "Mute for 8 hours",
+    "description": "Mute notifications for this conversation for eight hours"
+  },
+  "muteFor24Hours": {
+    "message": "Mute for 24 hours",
+    "description": "Mute notifications for this conversation for twenty-four hours"
+  },
+  "muteForever": {
+    "message": "Mute until I turn it back on",
+    "description": "Mute notifications for this conversation indefinitely"
+  },
+  "unmuteNotifications": {
+    "message": "Unmute notifications",
+    "description": "Turn notifications back on for a muted conversation"
+  },
+  "muteFailed": {
+    "message": "Could not update mute settings.",
+    "description": "Error when mute or unmute fails"
+  },
+  "muteNotifications": {
+    "message": "Mute notifications",
+    "description": "Menu action that opens mute duration options for a conversation"
   }
 }

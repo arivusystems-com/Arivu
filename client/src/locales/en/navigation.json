@@ -51,6 +51,18 @@
     "message": "Sign out",
     "description": "Sign out of the application"
   },
+  "goToAcademy": {
+    "message": "Academy",
+    "description": "Cross-link from Customer Portal to Learning Academy (dual-entitled EXTERNAL)"
+  },
+  "goToPortal": {
+    "message": "Back to Portal",
+    "description": "Cross-link from Learning Academy back to Customer Portal (dual-entitled EXTERNAL)"
+  },
+  "goToAudit": {
+    "message": "Audit",
+    "description": "Cross-link from Learning Academy to Audit app (dual-entitled EXTERNAL)"
+  },
   "noNav": {
     "message": "No navigation available",
     "description": "Empty sidebar when no modules are configured"
@@ -130,6 +142,14 @@
   "collapseSidebar": {
     "message": "Collapse sidebar",
     "description": "Collapse app sidebar tooltip"
+  },
+  "expandSidebar": {
+    "message": "Expand sidebar",
+    "description": "Expand app sidebar tooltip"
+  },
+  "portalNav": {
+    "message": "Portal navigation",
+    "description": "Aria label for Customer Portal sidebar and mobile tab bar"
   },
   "coreModules": {
     "message": "Core Modules",
@@ -622,6 +642,14 @@
   "appMarketing": {
     "message": "Marketing",
     "description": "Marketing app name in app switcher"
+  },
+  "appLearning": {
+    "message": "Learning",
+    "description": "Learning app name in app switcher"
+  },
+  "learningDashboardBlurb": {
+    "message": "An intelligent learning platform for your people, customers, and partners.",
+    "description": "Short description on Learning app"
   },
   "inventoryDashboardBlurb": {
     "message": "Manage stock locations, ledger movements, reservations, and fulfillment from this workspace.",

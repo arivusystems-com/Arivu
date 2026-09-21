@@ -199,12 +199,15 @@ async function seedDefaultRoles(orgConnection, organization) {
     const TenantRole = getTenantModel(orgConnection, 'Role', MasterRoleModel);
     const orgId = organization._id;
 
-    const existingCount = await TenantRole.countDocuments({ organizationId: orgId });
-    if (existingCount > 0) {
-        return { created: 0, skipped: existingCount, total: existingCount };
+    const hasStaffHierarchy = await TenantRole.exists({
+        organizationId: orgId,
+        name: { $in: ['Owner', 'Administrator', 'Admin'] },
+    });
+    if (hasStaffHierarchy) {
+        return { created: 0, skipped: 1, total: 1 };
     }
 
-    const { shouldSeedRbacV2ForNewOrganization } = require('../utils/rbacFeatureFlags');
+        const { shouldSeedRbacV2ForNewOrganization } = require('../../utils/rbacFeatureFlags');
     if (shouldSeedRbacV2ForNewOrganization()) {
         const MasterProfileModel = require('../../models/Profile');
         const TenantProfile = getTenantModel(orgConnection, 'Profile', MasterProfileModel);

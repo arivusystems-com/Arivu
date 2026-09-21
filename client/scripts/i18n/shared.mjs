@@ -39,6 +39,7 @@ export const SHARED_NAMESPACES = [
   'contentStudio',
   'templates',
   'marketing',
+  'learning',
   'analytics',
   'audit',
   'platform',
@@ -46,6 +47,7 @@ export const SHARED_NAMESPACES = [
   'releaseNotes',
   'announcements',
   'astra',
+  'astraStudio',
   'internalChat',
 ];
 

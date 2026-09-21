@@ -89,6 +89,7 @@
 import { computed, h } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
+  AcademicCapIcon,
   ChevronLeftIcon,
   CubeIcon,
   LifebuoyIcon,
@@ -161,6 +162,7 @@ function resolveAppIcon(app: AppFlyoutDefinition) {
   if (appId === 'core') return Squares2X2Icon;
   if (appId.includes('helpdesk')) return LifebuoyIcon;
   if (appId.includes('audit')) return ShieldCheckIcon;
+  if (appId === 'lms' || appId.includes('learning')) return AcademicCapIcon;
   if (app.icon) return getIconComponent(app.icon);
   return CubeIcon;
 }

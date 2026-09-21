@@ -184,6 +184,157 @@ async function syncPrivilegedRoleEntitlementsForApp(organizationId, appKey, opti
 }
 
 /**
+ * Persist ACTIVE appAccess for Owner / Administrator users when an INTERNAL app is enabled.
+ * Runtime privileged envelope already allows access; seats + commercial billing use appAccess.
+ *
+ * @param {import('mongoose').Types.ObjectId|string} organizationId
+ * @param {string} appKey
+ * @param {{ organization?: object, UserModel?: object, RoleModel?: object, initiatedByUserId?: string|null }} [options]
+ */
+async function syncPrivilegedUsersAppAccessForApp(organizationId, appKey, options = {}) {
+  const normalizedAppKey = String(appKey || '').trim().toUpperCase();
+  if (!organizationId || !normalizedAppKey) return { updated: 0, userIds: [] };
+
+  const { getAppConfig } = require('../utils/appAccessUtils');
+  const appConfig = getAppConfig(normalizedAppKey);
+  if (!appConfig) return { updated: 0, userIds: [], reason: 'unknown_app' };
+  if (!Array.isArray(appConfig.userTypesAllowed) || !appConfig.userTypesAllowed.some((t) => {
+    const u = String(t || '').toUpperCase();
+    return u === 'INTERNAL' || u === 'STANDARD' || u === 'ADMIN';
+  })) {
+    return { updated: 0, userIds: [], reason: 'not_internal_app' };
+  }
+
+  const Organization = require('../models/Organization');
+  const organization =
+    options.organization
+    || (await Organization.findById(organizationId).lean())
+    || null;
+  if (!organization || !isAppEnabledForOrg(organization, normalizedAppKey)) {
+    return { updated: 0, userIds: [], reason: 'app_not_enabled' };
+  }
+
+  let UserModel = options.UserModel;
+  if (!UserModel) {
+    try {
+      const { getScopedUserModel } = require('./userInviteService');
+      UserModel = await getScopedUserModel(organization);
+    } catch {
+      UserModel = require('../models/User');
+    }
+  }
+  const RoleModel = options.RoleModel || Role;
+
+  const privilegedRoles = await RoleModel.find({
+    organizationId,
+    isSystemRole: true,
+    name: { $in: ['Owner', 'Administrator'] },
+  })
+    .select('_id')
+    .lean();
+  const privilegedRoleIds = privilegedRoles.map((r) => r._id);
+
+  const users = await UserModel.find({
+    organizationId,
+    status: { $in: ['active', 'invited'] },
+    $or: [
+      { isOwner: true },
+      ...(privilegedRoleIds.length ? [{ roleId: { $in: privilegedRoleIds } }] : []),
+    ],
+  });
+
+  const roleKey = resolveAppRoleKeyForEntitlement(normalizedAppKey, 'ADMIN');
+  const { incrementSeat } = require('../utils/subscriptionUtils');
+  const {
+    syncCommercialBillingAfterAppAccessChange,
+  } = require('./commercial/userLifecycleBillingSync');
+
+  const userIds = [];
+  let updated = 0;
+
+  for (const user of users) {
+    const userType = String(user.userType || 'INTERNAL').toUpperCase();
+    if (userType === 'EXTERNAL' || userType === 'PORTAL') continue;
+
+    // Plain-clone mongoose subdocs — object spread drops appKey/status and corrupts seats.
+    const access = (Array.isArray(user.appAccess) ? user.appAccess : []).map((entry) => {
+      const plain = entry && typeof entry.toObject === 'function'
+        ? entry.toObject()
+        : { ...(entry || {}) };
+      return {
+        appKey: String(plain.appKey || '').toUpperCase(),
+        roleKey: plain.roleKey || undefined,
+        status: String(plain.status || 'ACTIVE').toUpperCase(),
+        addedAt: plain.addedAt || undefined,
+      };
+    });
+    const previousActiveAppKeys = access
+      .filter((entry) => entry.status === 'ACTIVE' && entry.appKey)
+      .map((entry) => entry.appKey);
+
+    const idx = access.findIndex((entry) => entry.appKey === normalizedAppKey);
+    let changed = false;
+    if (idx >= 0) {
+      const entry = { ...access[idx], appKey: normalizedAppKey };
+      if (entry.status !== 'ACTIVE') {
+        entry.status = 'ACTIVE';
+        changed = true;
+      }
+      if (!entry.roleKey) {
+        entry.roleKey = roleKey;
+        changed = true;
+      }
+      access[idx] = entry;
+    } else {
+      access.push({
+        appKey: normalizedAppKey,
+        roleKey,
+        status: 'ACTIVE',
+        addedAt: new Date(),
+      });
+      changed = true;
+    }
+
+    if (!changed) continue;
+
+    user.appAccess = access;
+    const allowed = new Set(
+      (Array.isArray(user.allowedApps) ? user.allowedApps : []).map((k) => String(k).toUpperCase())
+    );
+    allowed.add(normalizedAppKey);
+    user.allowedApps = [...allowed];
+    await user.save();
+
+    try {
+      await incrementSeat(organizationId, normalizedAppKey);
+    } catch (seatErr) {
+      console.warn('[syncPrivilegedUsersAppAccessForApp] seat increment failed:', seatErr.message);
+    }
+
+    const nextActiveAppKeys = access
+      .filter((entry) => entry.status === 'ACTIVE' && entry.appKey)
+      .map((entry) => entry.appKey);
+
+    try {
+      await syncCommercialBillingAfterAppAccessChange({
+        organizationId,
+        userId: user._id,
+        previousActiveAppKeys,
+        nextActiveAppKeys,
+        initiatedByUserId: options.initiatedByUserId || null,
+      });
+    } catch (billingErr) {
+      console.warn('[syncPrivilegedUsersAppAccessForApp] commercial sync failed:', billingErr.message);
+    }
+
+    updated += 1;
+    userIds.push(String(user._id));
+  }
+
+  return { updated, userIds };
+}
+
+/**
  * Seed Owner, Administrator, Sales Manager, Sales Executive for organization.
  * @param {import('mongoose').Types.ObjectId|string} organizationId
  * @param {object} organization — full or partial org with enabledApps
@@ -192,9 +343,12 @@ async function seedRolesAndProfilesForOrganization(organizationId, organization,
   const RoleModel = options.RoleModel || Role;
   const ProfileModel = options.ProfileModel || Profile;
   const orgId = organizationId;
-  const roleCount = await RoleModel.countDocuments({ organizationId: orgId });
-  if (roleCount > 0) {
-    return { profiles: { created: [], skipped: 0 }, roles: { created: [], skipped: roleCount } };
+  const hasStaffHierarchy = await RoleModel.exists({
+    organizationId: orgId,
+    name: { $in: ['Owner', 'Administrator'] },
+  });
+  if (hasStaffHierarchy) {
+    return { profiles: { created: [], skipped: 0 }, roles: { created: [], skipped: 1 } };
   }
 
   const profileResult = await seedSystemProfiles(orgId, ProfileModel);
@@ -211,7 +365,7 @@ async function seedRolesAndProfilesForOrganization(organizationId, organization,
       isTemplateSeed: false,
       level: 0,
       parentRole: null,
-      userType: 'INTERNAL',
+      userType: 'ADMIN',
       privilegeMode: 'profile',
       profileId: platformProfileId,
       appEntitlements: buildEntitlementsAllApps(organization, 'ADMIN', false),
@@ -227,7 +381,7 @@ async function seedRolesAndProfilesForOrganization(organizationId, organization,
       isTemplateSeed: false,
       level: 1,
       parentRole: null,
-      userType: 'INTERNAL',
+      userType: 'ADMIN',
       privilegeMode: 'profile',
       profileId: platformProfileId,
       appEntitlements: buildEntitlementsAllApps(organization, 'ADMIN', true),
@@ -243,7 +397,7 @@ async function seedRolesAndProfilesForOrganization(organizationId, organization,
       isTemplateSeed: true,
       level: 2,
       parentRole: null,
-      userType: 'INTERNAL',
+      userType: 'STANDARD',
       privilegeMode: 'profile',
       profileId: managerProfileId,
       appEntitlements: buildAppEntitlementsForOrg(organization, { salesRoleKey: 'MANAGER' }),
@@ -261,7 +415,7 @@ async function seedRolesAndProfilesForOrganization(organizationId, organization,
       isTemplateSeed: true,
       level: 3,
       parentRole: null,
-      userType: 'INTERNAL',
+      userType: 'STANDARD',
       privilegeMode: 'profile',
       profileId: standardProfileId,
       appEntitlements: buildAppEntitlementsForOrg(organization, { salesRoleKey: 'USER' }),
@@ -324,5 +478,6 @@ module.exports = {
   getProfileIdByKey,
   buildEntitlementsAllApps,
   resolveAppRoleKeyForEntitlement,
-  syncPrivilegedRoleEntitlementsForApp
+  syncPrivilegedRoleEntitlementsForApp,
+  syncPrivilegedUsersAppAccessForApp,
 };

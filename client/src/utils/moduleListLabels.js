@@ -168,6 +168,13 @@ const MODULE_STAT_KEYS = {
     inFulfillment: 'quotes.listStatInFulfillment',
     completed: 'common.listStatCompleted',
   },
+  cases: {
+    totalCases: 'cases.listStatTotal',
+    myCases: 'cases.listStatMy',
+    open: 'cases.listStatOpen',
+    unassigned: 'common.listStatUnassigned',
+    slaBreached: 'cases.listStatSlaBreached',
+  },
   invoices: {
     totalInvoices: 'quotes.listStatTotalInvoices',
     myInvoices: 'quotes.listViewMyInvoices',

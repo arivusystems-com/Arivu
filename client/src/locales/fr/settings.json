@@ -21969,5 +21969,1421 @@
   "modFieldsAddFieldToSection": {
     "message": "Add field to this section",
     "description": "Per-section add field button title"
+  },
+  "billingPageSubtitle": {
+    "message": "Manage your plan, company details for invoices, and payment history.",
+    "description": "Subscriptions tab subtitle when commercial plan is active"
+  },
+  "billingSandboxPageSubtitle": {
+    "message": "Internal commercial sandbox — Founder price book for testing, never billable.",
+    "description": "Subscriptions tab subtitle for internal/sandbox orgs"
+  },
+  "billingSandboxTitle": {
+    "message": "Commercial sandbox",
+    "description": "Sandbox plan title"
+  },
+  "billingSandboxEyebrow": {
+    "message": "Internal organization",
+    "description": "Sandbox empty-state eyebrow"
+  },
+  "billingSandboxEmptyLead": {
+    "message": "Exercise Platform → Users → Apps pricing against this master org without consuming a Founder slot or creating real invoices.",
+    "description": "Sandbox empty lead copy"
+  },
+  "billingSandboxPillarPrices": {
+    "message": "Founder prices",
+    "description": "Sandbox pillar"
+  },
+  "billingSandboxPillarPricesHint": {
+    "message": "Same catalog a Founder customer sees",
+    "description": "Sandbox pillar hint"
+  },
+  "billingSandboxPillarSeats": {
+    "message": "Live seats",
+    "description": "Sandbox pillar"
+  },
+  "billingSandboxPillarSeatsHint": {
+    "message": "Reconcile from team & app access",
+    "description": "Sandbox pillar hint"
+  },
+  "billingSandboxPillarSafe": {
+    "message": "Not billable",
+    "description": "Sandbox pillar"
+  },
+  "billingSandboxPillarSafeHint": {
+    "message": "No Founder capacity, no charges",
+    "description": "Sandbox pillar hint"
+  },
+  "billingSandboxInternalNote": {
+    "message": "This is an Arivu internal/master organization. For a real Founder path, register a new trial org.",
+    "description": "Sandbox internal note under pillars"
+  },
+  "billingSandboxActivateCta": {
+    "message": "Activate sandbox",
+    "description": "Primary sandbox activate CTA"
+  },
+  "billingSandboxActiveLead": {
+    "message": "Simulated Founder Launch pricing for this internal org. Totals update with your team — nothing is charged.",
+    "description": "Active sandbox lead under title"
+  },
+  "billingStatusSandbox": {
+    "message": "Sandbox",
+    "description": "Sandbox status chip"
+  },
+  "billingNotBillableChip": {
+    "message": "Not billable",
+    "description": "Not billable chip on sandbox plan"
+  },
+  "billingSandboxSimulated": {
+    "message": "Simulated total",
+    "description": "Label above sandbox plan total"
+  },
+  "billingSandboxNoInvoice": {
+    "message": "No invoices or payments in sandbox mode.",
+    "description": "Sandbox no-invoice explainer"
+  },
+  "billingSandboxCycleHint": {
+    "message": "Toggle monthly/annual to preview catalog prices. Changes are for testing only.",
+    "description": "Sandbox billing cycle hint"
+  },
+  "billingSandboxOpenCalculator": {
+    "message": "Open pricing calculator",
+    "description": "Sandbox secondary CTA"
+  },
+  "billingSandboxBreakdownNote": {
+    "message": "Amounts mirror the Founder catalog for QA — tax and invoices are skipped in sandbox.",
+    "description": "Sandbox breakdown footnote"
+  },
+  "billingSandboxFooterHeading": {
+    "message": "Billing is simulated",
+    "description": "Sandbox footer heading replacing invoices"
+  },
+  "billingSandboxFooterBody": {
+    "message": "Use Manage team & apps or Refresh from team to exercise seat math. Customer trials and Founder capacity live on non-internal organizations.",
+    "description": "Sandbox footer body"
+  },
+  "billingPlanTitle": {
+    "message": "Your plan",
+    "description": "Commercial plan hero title"
+  },
+  "billingPlanEmptyLead": {
+    "message": "Activate your plan to see Platform, teammates, apps, and portal pricing in one place.",
+    "description": "Empty commercial plan lead copy"
+  },
+  "billingActivateCta": {
+    "message": "Activate Founder's Launch",
+    "description": "Primary activate CTA on billing empty state"
+  },
+  "billingPlanPerMonth": {
+    "message": "/month",
+    "description": "Recurring amount monthly suffix"
+  },
+  "billingPlanPerYear": {
+    "message": "/year",
+    "description": "Recurring amount annual suffix"
+  },
+  "billingRecurring": {
+    "message": "Recurring",
+    "description": "Label above recurring total"
+  },
+  "billingProjected": {
+    "message": "Projected after trial",
+    "description": "Label above plan total while trialing"
+  },
+  "billingFirstInvoiceLine": {
+    "message": "First invoice on {date} · {amount}",
+    "description": "First bill preview during trial"
+  },
+  "billingTrialNoChargeHint": {
+    "message": "No charge during trial. Usage is tracked so your first invoice matches what you use.",
+    "description": "Trial no-charge explainer"
+  },
+  "billingStartPaidPlan": {
+    "message": "Start paid plan",
+    "description": "Early trial conversion CTA"
+  },
+  "billingTrialEndedOk": {
+    "message": "Paid plan started. First invoice generated.",
+    "description": "Early trial end success toast"
+  },
+  "billingTrialEndFailed": {
+    "message": "Could not start paid plan.",
+    "description": "Early trial end failure toast"
+  },
+  "billingTrialNoInvoice": {
+    "message": "Invoices start after trial. Start paid plan to bill now.",
+    "description": "Blocked invoice during trial"
+  },
+  "billingNoInvoicesTrial": {
+    "message": "No invoices during trial. Your first invoice is created when the trial ends (or when you start a paid plan).",
+    "description": "Empty invoices during trial"
+  },
+  "billingStatusTrial": {
+    "message": "Trial",
+    "description": "Subscription status chip"
+  },
+  "billingStatusActive": {
+    "message": "Active",
+    "description": "Subscription status chip"
+  },
+  "billingStatusPastDue": {
+    "message": "Past due",
+    "description": "Subscription status chip"
+  },
+  "billingStatusPaused": {
+    "message": "Paused",
+    "description": "Subscription status chip"
+  },
+  "billingStatusCanceling": {
+    "message": "Canceling",
+    "description": "Subscription status chip"
+  },
+  "billingStatusCanceled": {
+    "message": "Canceled",
+    "description": "Subscription status chip"
+  },
+  "billingStatusExpired": {
+    "message": "Expired",
+    "description": "Subscription status chip"
+  },
+  "billingFounderChip": {
+    "message": "Founder's Launch",
+    "description": "Founder pricing program chip"
+  },
+  "billingFounderUntil": {
+    "message": "Founder pricing locked until {date}",
+    "description": "Founder price protection end date"
+  },
+  "billingRefreshPlan": {
+    "message": "Sync seats & apps",
+    "description": "Reconcile plan quantities from live users"
+  },
+  "billingRefreshOk": {
+    "message": "Plan updated from your current team and app access.",
+    "description": "Refresh/reconcile success toast"
+  },
+  "billingNextInvoiceLine": {
+    "message": "Next invoice ~{date} · {amount}",
+    "description": "Next invoice preview under recurring total"
+  },
+  "billingNextInvoiceSoon": {
+    "message": "period end",
+    "description": "Fallback when period end unknown"
+  },
+  "billingInclTax": {
+    "message": "(incl. {name} {rate}%)",
+    "description": "Tax included hint on next invoice"
+  },
+  "billingCreditApplied": {
+    "message": "Credit on account: {amount}",
+    "description": "Credit balance under plan total"
+  },
+  "billingCycle": {
+    "message": "Billing period",
+    "description": "Billing cycle section label"
+  },
+  "billingCycleHint": {
+    "message": "Switching period applies at your next renewal unless you apply it now.",
+    "description": "Billing cycle change explanation"
+  },
+  "billingCycleScheduledOk": {
+    "message": "Billing period will change at your next renewal.",
+    "description": "Scheduled cycle change toast"
+  },
+  "billingSwitchMonthlyNow": {
+    "message": "Switch to monthly now",
+    "description": "Immediate monthly cycle CTA"
+  },
+  "billingSwitchAnnualNow": {
+    "message": "Switch to annual now",
+    "description": "Immediate annual cycle CTA"
+  },
+  "billingManageTeam": {
+    "message": "Manage seats & apps",
+    "description": "Primary CTA to users settings"
+  },
+  "billingGenerateInvoice": {
+    "message": "Generate invoice",
+    "description": "Create finalized invoice CTA"
+  },
+  "billingInvoiceGenerated": {
+    "message": "Invoice generated from your current plan.",
+    "description": "Finalized invoice success toast"
+  },
+  "billingBreakdown": {
+    "message": "What's included",
+    "description": "Plan line-item breakdown heading"
+  },
+  "billingBreakdownTotal": {
+    "message": "Plan total",
+    "description": "Breakdown total row"
+  },
+  "billingLinePlatform": {
+    "message": "Platform",
+    "description": "Platform product line"
+  },
+  "billingLinePlatformDetail": {
+    "message": "Organization workspace",
+    "description": "Platform line detail"
+  },
+  "billingLineUsers": {
+    "message": "Teammates",
+    "description": "Internal users product line"
+  },
+  "billingLineUsersDetail": {
+    "message": "{count} billable seats",
+    "description": "Internal users line detail"
+  },
+  "billingLineAdminUsers": {
+    "message": "Admin users",
+    "description": "Admin seat product line"
+  },
+  "billingLineAdminUsersDetail": {
+    "message": "{count} × ₹999",
+    "description": "Admin seats line detail"
+  },
+  "billingLineStandardUsers": {
+    "message": "Standard users",
+    "description": "Standard seat product line"
+  },
+  "billingLineStandardUsersDetail": {
+    "message": "{count} × ₹699",
+    "description": "Standard seats line detail"
+  },
+  "billingLinePortal": {
+    "message": "Portal users",
+    "description": "Portal users product line"
+  },
+  "billingLinePortalDetail": {
+    "message": "{count} external licenses",
+    "description": "Portal users line detail"
+  },
+  "billingLineAppDetail": {
+    "message": "{count} seats",
+    "description": "Application license line detail"
+  },
+  "billingTaxFootnote": {
+    "message": "Estimated next charge with {name} ({rate}%): {amount}",
+    "description": "Tax footnote under breakdown"
+  },
+  "billingSeatActive": {
+    "message": "{count} active",
+    "description": "Active seat count in billing composition"
+  },
+  "billingSeatInvited": {
+    "message": "{count} invited",
+    "description": "Invited seat count in billing composition"
+  },
+  "billingSeatTotal": {
+    "message": "{count} seats",
+    "description": "Fallback seat total without active/invited split"
+  },
+  "billingAppQtyPrice": {
+    "message": "{amount} × {count}",
+    "description": "App line meta unit × qty"
+  },
+  "billingSeatUnitTimesQty": {
+    "message": "{amount} × {count}",
+    "description": "Seat unit price times quantity"
+  },
+  "billingBreakdownSeatsHeading": {
+    "message": "Seats",
+    "description": "Breakdown section for user seats"
+  },
+  "billingBreakdownAppsHeading": {
+    "message": "Applications",
+    "description": "Breakdown section for app licenses"
+  },
+  "billingSeatCountAdmin": {
+    "message": "{count} Admin",
+    "description": "Admin seat quantity badge"
+  },
+  "billingSeatCountStandard": {
+    "message": "{count} Standard",
+    "description": "Standard seat quantity badge"
+  },
+  "billingSeatCountPortal": {
+    "message": "{count} Portal",
+    "description": "Portal seat quantity badge"
+  },
+  "billingSeatCountApp": {
+    "message": "{count} seats",
+    "description": "App license quantity badge"
+  },
+  "billingUnitPriceEach": {
+    "message": "{amount} each",
+    "description": "Per-unit price under seat line"
+  },
+  "billingMetricAdmins": {
+    "message": "Admins",
+    "description": "Admin seat snapshot metric"
+  },
+  "billingMetricAdminsHint": {
+    "message": "₹999 / user",
+    "description": "Admin metric hint"
+  },
+  "billingMetricStandards": {
+    "message": "Standard",
+    "description": "Standard seat snapshot metric"
+  },
+  "billingMetricStandardsHint": {
+    "message": "₹699 / user",
+    "description": "Standard metric hint"
+  },
+  "billingMetricTeammates": {
+    "message": "Teammates",
+    "description": "Snapshot metric label"
+  },
+  "billingMetricTeammatesHint": {
+    "message": "Admin + Standard seats",
+    "description": "Teammates metric hint"
+  },
+  "billingMetricApps": {
+    "message": "Applications",
+    "description": "Apps snapshot metric"
+  },
+  "billingMetricAppsHint": {
+    "message": "With licensed seats",
+    "description": "Apps metric hint"
+  },
+  "billingMetricPortal": {
+    "message": "Portal",
+    "description": "Portal snapshot metric"
+  },
+  "billingMetricPortalHint": {
+    "message": "External user licenses",
+    "description": "Portal metric hint"
+  },
+  "billingInvoicesHeading": {
+    "message": "Invoices",
+    "description": "Invoices section on plan page"
+  },
+  "billingNoInvoicesHint": {
+    "message": "No invoices yet. Generate one when you're ready for a snapshot of this period.",
+    "description": "Empty invoices soft copy"
+  },
+  "billingShowTools": {
+    "message": "Invoice tools",
+    "description": "Reveal draft/finalize tools"
+  },
+  "billingHideTools": {
+    "message": "Hide tools",
+    "description": "Hide invoice tools"
+  },
+  "billingViewPricing": {
+    "message": "Public pricing & calculator",
+    "description": "Link to public pricing"
+  },
+  "commercialBillingHeading": {
+    "message": "Arivu commercial plan",
+    "description": "Commercial billing overview heading"
+  },
+  "commercialBillingSubtitle": {
+    "message": "Platform → Users → Applications → Portal. Snapshot of your Founder's Launch subscription.",
+    "description": "Commercial billing overview subtitle"
+  },
+  "commercialBillingViewPublic": {
+    "message": "Public pricing",
+    "description": "Link to public pricing page"
+  },
+  "commercialBillingReconcile": {
+    "message": "Sync from users",
+    "description": "Reconcile commercial licenses from live users"
+  },
+  "commercialBillingReconciling": {
+    "message": "Syncing…",
+    "description": "Reconcile in progress"
+  },
+  "commercialBillingReconcileOk": {
+    "message": "Commercial licenses synced from current users and app access.",
+    "description": "Reconcile success toast"
+  },
+  "commercialBillingReconcileFailed": {
+    "message": "Could not sync commercial licenses.",
+    "description": "Reconcile failure toast"
+  },
+  "commercialBillingLoadFailed": {
+    "message": "Could not load commercial billing.",
+    "description": "Commercial billing load error"
+  },
+  "commercialBillingEmpty": {
+    "message": "Commercial billing is not active for this organization yet. Activate Founder's Launch to start tracking Platform, users, and application licenses.",
+    "description": "Empty commercial subscription state"
+  },
+  "commercialBillingActivate": {
+    "message": "Activate Founder's Launch",
+    "description": "Bootstrap commercial subscription CTA"
+  },
+  "commercialBillingBootstrapping": {
+    "message": "Activating…",
+    "description": "Bootstrap in progress"
+  },
+  "commercialBillingBootstrapOk": {
+    "message": "Founder's Launch subscription activated.",
+    "description": "Bootstrap success toast"
+  },
+  "commercialBillingBootstrapFailed": {
+    "message": "Could not activate commercial billing.",
+    "description": "Bootstrap failure toast"
+  },
+  "commercialBillingBootstrapMissing": {
+    "message": "Activation did not create a subscription. Refresh and try Activate again.",
+    "description": "Bootstrap succeeded HTTP but subscription missing"
+  },
+  "commercialBillingCurrentPlan": {
+    "message": "Current plan",
+    "description": "Current plan label"
+  },
+  "commercialBillingPerMonth": {
+    "message": "/month",
+    "description": "Monthly period suffix"
+  },
+  "commercialBillingPerYear": {
+    "message": "/year",
+    "description": "Annual period suffix"
+  },
+  "commercialBillingFounderActive": {
+    "message": "Founder's Launch · price protection applied",
+    "description": "Founder program active note"
+  },
+  "commercialBillingStatus": {
+    "message": "Status",
+    "description": "Subscription status label"
+  },
+  "commercialBillingCredit": {
+    "message": "Credit balance",
+    "description": "Credit balance label"
+  },
+  "commercialBillingUsers": {
+    "message": "Billable users",
+    "description": "Internal users metric"
+  },
+  "commercialBillingUsersHint": {
+    "message": "Beyond included Admin",
+    "description": "Internal users hint"
+  },
+  "commercialBillingApps": {
+    "message": "Applications",
+    "description": "Apps metric"
+  },
+  "commercialBillingAppsHint": {
+    "message": "With licensed seats",
+    "description": "Apps hint"
+  },
+  "commercialBillingPortal": {
+    "message": "Portal users",
+    "description": "Portal metric"
+  },
+  "commercialBillingPortalHint": {
+    "message": "External licenses",
+    "description": "Portal hint"
+  },
+  "commercialBillingColApp": {
+    "message": "Application",
+    "description": "Apps table column"
+  },
+  "commercialBillingColLicenses": {
+    "message": "Licenses",
+    "description": "Licenses column"
+  },
+  "commercialBillingColAmount": {
+    "message": "Amount",
+    "description": "Amount column"
+  },
+  "commercialBillingAppHelpdesk": {
+    "message": "Helpdesk",
+    "description": "Helpdesk product label"
+  },
+  "commercialBillingAppSales": {
+    "message": "Sales",
+    "description": "Sales product label"
+  },
+  "commercialBillingAppAudit": {
+    "message": "Audit Management",
+    "description": "Audit product label"
+  },
+  "commercialBillingAppInventory": {
+    "message": "Inventory",
+    "description": "Inventory product label"
+  },
+  "commercialBillingAppFieldSales": {
+    "message": "Field Sales",
+    "description": "Field Sales product label"
+  },
+  "commercialBillingAppMarketing": {
+    "message": "Marketing",
+    "description": "Marketing product label"
+  },
+  "commercialBillingTaxesNote": {
+    "message": "Totals exclude applicable taxes unless shown on invoices. Historical invoices use snapshotted prices.",
+    "description": "Commercial billing tax note"
+  },
+  "commercialBillingTaxRate": {
+    "message": "Draft invoices apply {name} at {rate}%.",
+    "description": "Active commercial tax rate note"
+  },
+  "commercialBillingMarkPaid": {
+    "message": "Mark paid",
+    "description": "Mark commercial invoice paid"
+  },
+  "commercialBillingPayNow": {
+    "message": "Pay now",
+    "description": "Open Razorpay checkout for commercial invoice"
+  },
+  "commercialBillingPaidOk": {
+    "message": "Payment received. Invoice marked paid.",
+    "description": "Razorpay payment success toast"
+  },
+  "commercialBillingCheckoutFailed": {
+    "message": "Could not start checkout.",
+    "description": "Checkout session failure"
+  },
+  "commercialBillingRazorpayNotConfigured": {
+    "message": "Online payments are not configured yet (Razorpay keys missing).",
+    "description": "Razorpay env missing"
+  },
+  "commercialBillingRazorpayLoadFailed": {
+    "message": "Could not load Razorpay Checkout.",
+    "description": "Checkout.js failed to load"
+  },
+  "commercialBillingPaying": {
+    "message": "Recording…",
+    "description": "Recording payment in progress"
+  },
+  "commercialBillingMarkedPaid": {
+    "message": "Payment recorded. Invoice marked paid.",
+    "description": "Invoice marked paid toast"
+  },
+  "commercialBillingPayFailed": {
+    "message": "Could not record payment.",
+    "description": "Payment failure toast"
+  },
+  "commercialBillingInvoices": {
+    "message": "Invoices",
+    "description": "Invoices section heading"
+  },
+  "commercialBillingCreateDraft": {
+    "message": "Create draft",
+    "description": "Create draft invoice button"
+  },
+  "commercialBillingCreateFinal": {
+    "message": "Create & finalize",
+    "description": "Create and finalize invoice button"
+  },
+  "commercialBillingNoInvoices": {
+    "message": "No invoices yet.",
+    "description": "Empty invoices list"
+  },
+  "commercialBillingInvoiceDrafted": {
+    "message": "Draft invoice created from subscription snapshot.",
+    "description": "Draft invoice toast"
+  },
+  "commercialBillingInvoiceFinalized": {
+    "message": "Invoice finalized (immutable snapshot).",
+    "description": "Finalized invoice toast"
+  },
+  "commercialBillingInvoiceFailed": {
+    "message": "Could not create invoice.",
+    "description": "Invoice create failure toast"
+  },
+  "commercialBillingInternalNotice": {
+    "message": "This is an Arivu internal/master organization. It is not a paying Founder customer.",
+    "description": "Internal org billing notice"
+  },
+  "commercialBillingInternalEmpty": {
+    "message": "You can activate a commercial sandbox to test Platform → Users → Apps pricing without consuming a Founder slot. For a real Founder path, register a new trial org.",
+    "description": "Internal org empty commercial state"
+  },
+  "commercialBillingActivateSandbox": {
+    "message": "Activate commercial sandbox",
+    "description": "Internal org sandbox activate CTA"
+  },
+  "commercialBillingSandboxActive": {
+    "message": "Commercial sandbox (internal org) — Founder Launch prices for testing; does not consume Founder capacity and is not billable.",
+    "description": "Sandbox active banner"
+  },
+  "commercialBillingCycle": {
+    "message": "Billing cycle",
+    "description": "Billing cycle label"
+  },
+  "commercialBillingPeriodMonthly": {
+    "message": "Monthly",
+    "description": "Monthly cycle button"
+  },
+  "commercialBillingPeriodAnnual": {
+    "message": "Annual",
+    "description": "Annual cycle button"
+  },
+  "commercialBillingApplyNow": {
+    "message": "Apply now",
+    "description": "Apply cycle change immediately"
+  },
+  "commercialBillingPendingCycle": {
+    "message": "Switches to {cycle} at the next renewal.",
+    "description": "Pending cycle change notice"
+  },
+  "commercialBillingCycleImmediateOk": {
+    "message": "Billing cycle updated and line items re-priced.",
+    "description": "Immediate cycle change toast"
+  },
+  "commercialBillingCycleScheduledOk": {
+    "message": "Billing cycle change scheduled for the next renewal.",
+    "description": "Scheduled cycle change toast"
+  },
+  "commercialBillingCycleFailed": {
+    "message": "Could not change billing cycle.",
+    "description": "Cycle change failure toast"
+  },
+  "billingTabsLabel": {
+    "message": "Billing sections",
+    "description": "Aria label for Plan / Company / Invoices tabs"
+  },
+  "billingTabPlan": {
+    "message": "Plan",
+    "description": "Billing tab: plan composition"
+  },
+  "billingTabCompany": {
+    "message": "Company & tax",
+    "description": "Billing tab: bill-to editor"
+  },
+  "billingTabInvoices": {
+    "message": "Invoices",
+    "description": "Billing tab: invoice list"
+  },
+  "billingBreakdownHint": {
+    "message": "Seats and apps that make up your recurring total.",
+    "description": "Plan composition helper"
+  },
+  "billingCanceledBreakdownHint": {
+    "message": "What this plan included before it was canceled.",
+    "description": "Canceled plan composition helper"
+  },
+  "billingDetailsHeading": {
+    "message": "Company & tax details",
+    "description": "Tenant billing party section title"
+  },
+  "billingDetailsHint": {
+    "message": "Shown on new invoices. Past invoices keep the bill-to that was printed when they were issued.",
+    "description": "Tenant billing party helper"
+  },
+  "billingDetailsSave": {
+    "message": "Save billing details",
+    "description": "Tenant billing party save CTA"
+  },
+  "billingDetailsSaved": {
+    "message": "Billing details saved.",
+    "description": "Tenant billing party save success"
+  },
+  "billingDetailsFailed": {
+    "message": "Could not save billing details.",
+    "description": "Tenant billing party save failure"
+  },
+  "billingCancelAmountPaid": {
+    "message": "Amount paid",
+    "description": "Cancel preview label"
+  },
+  "billingCancelAtPeriodEnd": {
+    "message": "Cancel at period end",
+    "description": "Cancel option"
+  },
+  "billingCancelEstimatedRefund": {
+    "message": "Estimated refund",
+    "description": "Cancel preview label"
+  },
+  "billingCancelFailed": {
+    "message": "Could not cancel subscription.",
+    "description": "Cancel failure"
+  },
+  "billingCancelImmediate": {
+    "message": "Cancel now",
+    "description": "Cancel immediate option"
+  },
+  "billingCancelNo": {
+    "message": "No",
+    "description": "Refund eligible no"
+  },
+  "billingCancelOk": {
+    "message": "Subscription cancellation recorded.",
+    "description": "Cancel success"
+  },
+  "billingCancelPreviewFailed": {
+    "message": "Could not load cancellation details.",
+    "description": "Cancel preview error"
+  },
+  "billingCancelRefundEligible": {
+    "message": "Refund eligible",
+    "description": "Cancel preview label"
+  },
+  "billingCancelSubscription": {
+    "message": "Cancel subscription",
+    "description": "Cancel CTA"
+  },
+  "billingCancelYes": {
+    "message": "Yes",
+    "description": "Refund eligible yes"
+  },
+  "billingCanceledBreakdown": {
+    "message": "What was included",
+    "description": "Breakdown heading when canceled"
+  },
+  "billingCanceledNoRenewal": {
+    "message": "No further invoices will be generated. Resubscribe to restart billing.",
+    "description": "Canceled subscription explainer"
+  },
+  "billingCanceledOn": {
+    "message": "Canceled on {date}",
+    "description": "Canceled date line"
+  },
+  "billingCanceledPlanLabel": {
+    "message": "Last plan (canceled)",
+    "description": "Label above amount when subscription is canceled"
+  },
+  "billingCancelingUntil": {
+    "message": "Cancels at period end on {date}. You keep access until then.",
+    "description": "Cancel-at-period-end notice"
+  },
+  "billingDownloadPdf": {
+    "message": "PDF",
+    "description": "Download commercial invoice PDF"
+  },
+  "billingFieldAddress": {
+    "message": "Billing address",
+    "description": "Billing field"
+  },
+  "billingFieldCity": {
+    "message": "City",
+    "description": "Billing field"
+  },
+  "billingFieldCompany": {
+    "message": "Company name",
+    "description": "Billing field"
+  },
+  "billingFieldGstin": {
+    "message": "GSTIN",
+    "description": "Billing field"
+  },
+  "billingFieldNotes": {
+    "message": "Notes",
+    "description": "Manual payment notes"
+  },
+  "billingFieldPincode": {
+    "message": "Code postal",
+    "description": "Billing field"
+  },
+  "billingFieldState": {
+    "message": "État / Province",
+    "description": "Billing field"
+  },
+  "billingFieldUtr": {
+    "message": "UTR / transaction reference",
+    "description": "Manual payment field"
+  },
+  "billingManualPaymentFailed": {
+    "message": "Could not submit payment.",
+    "description": "Manual payment failure"
+  },
+  "billingManualPaymentSubmitted": {
+    "message": "Payment submitted for verification.",
+    "description": "Manual payment success"
+  },
+  "billingPdfFailed": {
+    "message": "Could not download invoice PDF.",
+    "description": "PDF download error"
+  },
+  "billingResubscribe": {
+    "message": "Resubscribe",
+    "description": "CTA to restart after cancel"
+  },
+  "billingStatusPaymentPending": {
+    "message": "Payment pending",
+    "description": "Subscription status"
+  },
+  "billingStatusTrialExpired": {
+    "message": "Trial ended",
+    "description": "Subscription status"
+  },
+  "billingSubmitPayment": {
+    "message": "Submit payment",
+    "description": "Manual payment CTA"
+  },
+  "billingSubmitPaymentConfirm": {
+    "message": "Submit for verification",
+    "description": "Manual payment confirm"
+  },
+  "billingSubscribeBillTo": {
+    "message": "Billing information",
+    "description": "Subscribe wizard bill-to section"
+  },
+  "billingSubscribeConfirm": {
+    "message": "Generate invoice & pay",
+    "description": "Subscribe wizard confirm"
+  },
+  "billingSubscribeCycle": {
+    "message": "Billing cycle",
+    "description": "Subscribe wizard cycle section"
+  },
+  "billingSubscribeFailed": {
+    "message": "Could not start subscription.",
+    "description": "Subscribe failure"
+  },
+  "billingSubscribeNow": {
+    "message": "Subscribe now",
+    "description": "CTA when trial expired"
+  },
+  "billingSubscribeOk": {
+    "message": "Invoice ready. Complete payment to activate.",
+    "description": "Subscribe success"
+  },
+  "billingSubscribeReview": {
+    "message": "Current configuration",
+    "description": "Subscribe wizard review section"
+  },
+  "billingSubscribeSubtitle": {
+    "message": "Review your seats and apps, add billing details, then pay.",
+    "description": "Subscribe wizard subtitle"
+  },
+  "billingSubscribeTitle": {
+    "message": "Subscribe to Arivu",
+    "description": "Subscribe wizard title"
+  },
+  "billingTrialExpiredHint": {
+    "message": "Your free trial has ended. Subscribe to continue using Arivu.",
+    "description": "Empty invoices when trial expired"
+  },
+  "billingSubscribeAnnualSavings": {
+    "message": "Save {amount} vs paying monthly for a year.",
+    "description": "Subscribe wizard annual savings hint"
+  },
+  "billingStatusNextBill": {
+    "message": "Next bill {date}",
+    "description": "Status strip next bill date"
+  },
+  "billingChangePeriod": {
+    "message": "Change billing period",
+    "description": "Open period change panel"
+  },
+  "billingPeriodCurrent": {
+    "message": "You’re on {cycle}",
+    "description": "Current billing period in change panel"
+  },
+  "billingCycleHintSimple": {
+    "message": "Choose when the new period starts — at renewal (no mid-cycle charge) or immediately.",
+    "description": "Simplified cycle change hint"
+  },
+  "billingSwitchAnnualRenewal": {
+    "message": "Switch to annual at renewal",
+    "description": "Schedule annual at period end"
+  },
+  "billingSwitchMonthlyRenewal": {
+    "message": "Switch to monthly at renewal",
+    "description": "Schedule monthly at period end"
+  },
+  "billingCycleCancel": {
+    "message": "Not now",
+    "description": "Dismiss cycle panel"
+  },
+  "billingSecondaryCompany": {
+    "message": "Company for invoices",
+    "description": "Jump to company tab"
+  },
+  "billingSecondaryInvoices": {
+    "message": "View invoices",
+    "description": "Jump to invoices tab"
+  },
+  "billingSecondarySeats": {
+    "message": "Manage seats & apps",
+    "description": "Go to users settings"
+  },
+  "billingManagePlan": {
+    "message": "Manage plan",
+    "description": "Plan overflow menu"
+  },
+  "billingCompanyMissingBanner": {
+    "message": "Add company details so invoices show the right legal name and address.",
+    "description": "Incomplete bill-to banner on plan tab"
+  },
+  "billingCompanyMissingCta": {
+    "message": "Add details",
+    "description": "Banner CTA to company tab"
+  },
+  "billingStatusNextBillLabel": {
+    "message": "Next bill",
+    "description": "Plan column next bill label"
+  },
+  "billingStatusAmountLabel": {
+    "message": "Amount due",
+    "description": "Plan column unpaid amount label"
+  },
+  "billingStatusNextChargeLabel": {
+    "message": "Next charge",
+    "description": "Plan column estimated next charge when nothing unpaid"
+  },
+  "billingUnpaidCountHint": {
+    "message": "{count} unpaid invoices",
+    "description": "Hint under unpaid total when multiple"
+  },
+  "billingPayUnpaidCta": {
+    "message": "Pay {amount}",
+    "description": "Left column pay unpaid CTA"
+  },
+  "billingViewUnpaidInvoices": {
+    "message": "View invoices",
+    "description": "Jump to invoices from unpaid CTA"
+  },
+  "billingUnpaidBanner": {
+    "message": "{count} unpaid · {amount}",
+    "description": "Invoices tab unpaid banner"
+  },
+  "billingUnpaidTabBadgeAria": {
+    "message": "{count} unpaid invoices",
+    "description": "Aria for invoices tab badge"
+  },
+  "billingInvoiceStatusUnpaid": {
+    "message": "Unpaid",
+    "description": "Invoice status chip finalized"
+  },
+  "billingInvoiceStatusOverdue": {
+    "message": "Overdue",
+    "description": "Invoice status chip past_due"
+  },
+  "billingInvoiceStatusPaid": {
+    "message": "Paid",
+    "description": "Invoice status chip paid"
+  },
+  "billingInvoiceStatusVoid": {
+    "message": "Void",
+    "description": "Invoice status chip void"
+  },
+  "billingInvoiceStatusDraft": {
+    "message": "Draft",
+    "description": "Invoice status chip draft"
+  },
+  "billingLineStockroom": {
+    "message": "Stockroom",
+    "description": "Stockroom addon line"
+  },
+  "billingLineLiveAgent": {
+    "message": "Live Agent",
+    "description": "Live agent booster line"
+  },
+  "billingLineCustomFields": {
+    "message": "Custom Fields",
+    "description": "Custom fields booster line"
+  },
+  "billingLineCustomBuilder": {
+    "message": "Custom Builder",
+    "description": "Custom builder booster line"
+  },
+  "billingLineStorageGuard": {
+    "message": "Storage Guard",
+    "description": "Storage guard booster line"
+  },
+  "userTypeStandard": {
+    "message": "Standard",
+    "description": "Standard staff — no organization Settings"
+  },
+  "userTypeAdmin": {
+    "message": "Admin",
+    "description": "Admin staff — may access organization Settings"
+  },
+  "inviteCostPreviewHeading": {
+    "message": "Estimated monthly addition",
+    "description": "Invite drawer commercial cost preview heading"
+  },
+  "inviteCostPreviewTotal": {
+    "message": "Monthly total",
+    "description": "Invite cost preview total label"
+  },
+  "inviteCostPreviewPerMonth": {
+    "message": "/month",
+    "description": "Invite cost preview per-month suffix"
+  },
+  "billingSeatsMissingFromPlan": {
+    "message": "{count} people on your team aren’t on this plan yet. Sync seats to include Admin / Standard / Portal lines.",
+    "description": "Empty seats when live users exist but plan qty is 0"
+  },
+  "billingFieldPincodeRequired": {
+    "message": "Code postal *",
+    "description": "Billing field"
+  },
+  "billingFieldCountryRequired": {
+    "message": "Pays *",
+    "description": "Billing field"
+  },
+  "billingFieldStateRequired": {
+    "message": "État / Province *",
+    "description": "Billing field"
+  },
+  "billingPostalInvalid": {
+    "message": "Saisissez un code postal valide pour le pays sélectionné.",
+    "description": "Postal code validation error for billing address"
+  },
+  "billingSubscribeBillToHint": {
+    "message": "Required for invoices. GSTIN is required only if you are GST-registered.",
+    "description": "Subscribe wizard bill-to hint"
+  },
+  "billingSubscribeBillToRequired": {
+    "message": "Complete business name, address, country, and billing email. Add GSTIN if GST-registered.",
+    "description": "Subscribe blocked until bill-to complete"
+  },
+  "billingOptional": {
+    "message": "optional",
+    "description": "Optional field marker"
+  },
+  "billingFieldBusinessName": {
+    "message": "Business name",
+    "description": "Legal / invoice business name label"
+  },
+  "billingFieldBusinessNameRequired": {
+    "message": "Business name *",
+    "description": "Required business name placeholder"
+  },
+  "billingFieldGstRegistered": {
+    "message": "This business is GST-registered",
+    "description": "GST registered checkbox"
+  },
+  "billingFieldGstinRequired": {
+    "message": "GSTIN *",
+    "description": "Required GSTIN when registered"
+  },
+  "billingFieldCompanyRequired": {
+    "message": "Company / legal name *",
+    "description": "Required company name placeholder"
+  },
+  "billingFieldAddressRequired": {
+    "message": "Billing address *",
+    "description": "Required address placeholder"
+  },
+  "billingFieldCityRequired": {
+    "message": "City *",
+    "description": "Required city placeholder"
+  },
+  "billingFieldCountry": {
+    "message": "Country",
+    "description": "Country label"
+  },
+  "billingFieldEmail": {
+    "message": "Billing email",
+    "description": "Billing email label"
+  },
+  "billingFieldEmailRequired": {
+    "message": "Billing email *",
+    "description": "Required billing email placeholder"
+  },
+  "billingFieldPhone": {
+    "message": "Billing phone",
+    "description": "Billing phone label"
+  },
+  "billingFieldPhoneOptional": {
+    "message": "Billing phone (optional)",
+    "description": "Optional billing phone placeholder"
+  },
+  "billingFieldGstinOptional": {
+    "message": "GSTIN (optional)",
+    "description": "Optional GSTIN placeholder"
+  },
+  "billingFieldGstCertificate": {
+    "message": "GST certificate",
+    "description": "Optional GST certificate upload label"
+  },
+  "billingFieldGstCertificateHint": {
+    "message": "Optional. PDF or image (PNG, JPG, WEBP), max 10 MB.",
+    "description": "GST certificate upload hint"
+  },
+  "billingFieldGstCertificateChoose": {
+    "message": "Upload certificate",
+    "description": "GST certificate file picker button"
+  },
+  "billingFieldGstCertificateReplace": {
+    "message": "Replace",
+    "description": "Replace existing GST certificate"
+  },
+  "billingFieldGstCertificateRemove": {
+    "message": "Remove",
+    "description": "Remove GST certificate"
+  },
+  "billingFieldGstCertificateView": {
+    "message": "View",
+    "description": "Open uploaded GST certificate"
+  },
+  "billingFieldGstCertificateUploaded": {
+    "message": "GST certificate uploaded",
+    "description": "Toast after GST certificate upload"
+  },
+  "billingFieldGstCertificateRemoved": {
+    "message": "GST certificate removed",
+    "description": "Toast after GST certificate removal"
+  },
+  "billingFieldGstCertificateFailed": {
+    "message": "Could not upload GST certificate",
+    "description": "Toast when GST certificate upload fails"
+  },
+  "billingFieldGstCertificateUnsupportedType": {
+    "message": "Unsupported file type. Use PDF, PNG, JPG, or WEBP.",
+    "description": "Client-side GST certificate type validation"
+  },
+  "billingFieldGstCertificateTooLarge": {
+    "message": "File is too large. Maximum size is 10 MB.",
+    "description": "Client-side GST certificate size validation"
+  },
+  "billingFieldGstinInvalid": {
+    "message": "Enter a valid 15-character GSTIN.",
+    "description": "GSTIN format / checksum validation error"
+  },
+  "billingProjectedExGst": {
+    "message": "ex-GST {amount}",
+    "description": "Subline under projected total showing plan amount before tax"
+  },
+  "billingBreakdownTax": {
+    "message": "{name} ({rate}%)",
+    "description": "Tax row under plan total in billing breakdown"
+  },
+  "billingBreakdownTotalWithTax": {
+    "message": "Total with {name}",
+    "description": "Grand total row including tax under plan breakdown"
+  },
+  "billingInvoiceRevisedBadge": {
+    "message": "Revised · v{version}",
+    "description": "Tenant invoice list badge when invoice was revised"
+  },
+  "orgContactLegal": {
+    "message": "Contact & legal",
+    "description": "Company Details contact section title"
+  },
+  "orgContactLegalDesc": {
+    "message": "Address, contact, tax, and social details used across the platform",
+    "description": "Company Details contact section description"
+  },
+  "orgAddress": {
+    "message": "Address",
+    "description": "Company address line label"
+  },
+  "orgAddressPh": {
+    "message": "Street address",
+    "description": "Company address placeholder"
+  },
+  "orgCity": {
+    "message": "City",
+    "description": "Company city label"
+  },
+  "orgPostalCode": {
+    "message": "Postal code",
+    "description": "Company postal code label"
+  },
+  "orgCountry": {
+    "message": "Country",
+    "description": "Company country label"
+  },
+  "orgCountryPh": {
+    "message": "Select country",
+    "description": "Company country placeholder"
+  },
+  "orgPhone": {
+    "message": "Phone",
+    "description": "Company phone label"
+  },
+  "orgWebsite": {
+    "message": "Website",
+    "description": "Company website label"
+  },
+  "orgTaxId": {
+    "message": "Tax ID",
+    "description": "Company tax ID label"
+  },
+  "orgTaxIdPh": {
+    "message": "VAT / EIN / tax number",
+    "description": "Company tax ID placeholder"
+  },
+  "orgGstin": {
+    "message": "Registered GSTIN",
+    "description": "Company GSTIN label"
+  },
+  "orgGstinPh": {
+    "message": "15-character GSTIN",
+    "description": "Company GSTIN placeholder"
+  },
+  "orgGstinInvalid": {
+    "message": "Enter a valid 15-character GSTIN, or leave blank.",
+    "description": "Company GSTIN validation error"
+  },
+  "orgFacebook": {
+    "message": "Facebook",
+    "description": "Company Facebook URL label"
+  },
+  "orgTwitter": {
+    "message": "Twitter / X",
+    "description": "Company Twitter URL label"
+  },
+  "orgLinkedin": {
+    "message": "LinkedIn",
+    "description": "Company LinkedIn URL label"
+  },
+  "orgFinancialCalendar": {
+    "message": "Financial calendar",
+    "description": "Company FY section title"
+  },
+  "orgFinancialCalendarDesc": {
+    "message": "Defines fiscal quarters used in Targets & Quotas and Analytics",
+    "description": "Company FY section description"
+  },
+  "orgFyStartMonth": {
+    "message": "Financial year starts in",
+    "description": "FY start month label"
+  },
+  "orgFyQuartersPreview": {
+    "message": "Fiscal quarters",
+    "description": "FY quarters preview heading"
+  },
+  "orgFyQuarterLabel": {
+    "message": "Q{quarter}: {range}",
+    "description": "FY quarter preview row; quarter number and month range"
+  },
+  "usersImportTitle": {
+    "message": "Import users",
+    "description": "Bulk invite modal title"
+  },
+  "usersImportSubtitle": {
+    "message": "Invite multiple teammates from a CSV file",
+    "description": "Bulk invite modal subtitle"
+  },
+  "usersImportHelp": {
+    "message": "CSV columns: email, firstName, lastName, and optional role (role name). Max 100 rows. Default role applies when the role column is empty.",
+    "description": "Bulk invite help text"
+  },
+  "usersImportDownloadTemplate": {
+    "message": "Download CSV template",
+    "description": "Download sample CSV for user import"
+  },
+  "usersImportCsvLabel": {
+    "message": "CSV file",
+    "description": "CSV file input label"
+  },
+  "usersImportDefaultRoleHint": {
+    "message": "Used when a row has no role value",
+    "description": "Hint under default role select"
+  },
+  "usersImportStepUpload": {
+    "message": "Upload",
+    "description": "Import wizard step 1"
+  },
+  "usersImportStepPreview": {
+    "message": "Preview",
+    "description": "Import wizard step 2"
+  },
+  "usersImportStepDone": {
+    "message": "Done",
+    "description": "Import wizard step 3"
+  },
+  "usersImportPreview": {
+    "message": "Preview",
+    "description": "Run preview button"
+  },
+  "usersImportPreviewing": {
+    "message": "Validating…",
+    "description": "Preview in progress"
+  },
+  "usersImportConfirm": {
+    "message": "Invite users",
+    "description": "Commit bulk invite"
+  },
+  "usersImportInviting": {
+    "message": "Inviting…",
+    "description": "Commit in progress"
+  },
+  "usersImportFileReadError": {
+    "message": "Could not read the CSV file",
+    "description": "FileReader error"
+  },
+  "usersImportMissingFields": {
+    "message": "Choose a CSV file, default role, and business hours",
+    "description": "Client validation before preview"
+  },
+  "usersImportPreviewFailed": {
+    "message": "Could not preview the CSV",
+    "description": "Preview API failure"
+  },
+  "usersImportCannotCommit": {
+    "message": "Fix validation or seat issues before inviting",
+    "description": "Blocked commit"
+  },
+  "usersImportCommitFailed": {
+    "message": "Could not invite users from CSV",
+    "description": "Commit API failure"
+  },
+  "usersImportCommitToast": {
+    "message": "Invited {count} user(s)",
+    "description": "Success toast after bulk invite"
+  },
+  "usersImportCommitSummary": {
+    "message": "Invited {invited}. Failed {failed}. Skipped {skipped}.",
+    "description": "Results summary banner"
+  },
+  "usersImportSummaryTotal": {
+    "message": "{count} total",
+    "description": "Preview chip"
+  },
+  "usersImportSummaryValid": {
+    "message": "{count} ready",
+    "description": "Preview chip"
+  },
+  "usersImportSummaryInvalid": {
+    "message": "{count} invalid",
+    "description": "Preview chip"
+  },
+  "usersImportSummaryAlreadyMember": {
+    "message": "{count} already members",
+    "description": "Preview chip"
+  },
+  "usersImportSummaryDuplicate": {
+    "message": "{count} duplicates",
+    "description": "Preview chip"
+  },
+  "usersImportSeatWarningTitle": {
+    "message": "Seat or plan limits block this import",
+    "description": "Seat warning banner title"
+  },
+  "usersImportColRow": {
+    "message": "Row",
+    "description": "Results table column"
+  },
+  "usersImportColStatus": {
+    "message": "Status",
+    "description": "Results table column"
+  },
+  "usersImportColMessage": {
+    "message": "Details",
+    "description": "Results table column"
+  },
+  "usersImportStatusValid": {
+    "message": "Ready",
+    "description": "Row status"
+  },
+  "usersImportStatusReinvite": {
+    "message": "Re-invite",
+    "description": "Row status"
+  },
+  "usersImportStatusInvalid": {
+    "message": "Invalid",
+    "description": "Row status"
+  },
+  "usersImportStatusDuplicate": {
+    "message": "Duplicate",
+    "description": "Row status"
+  },
+  "usersImportStatusAlreadyMember": {
+    "message": "Already member",
+    "description": "Row status"
+  },
+  "usersImportStatusInvited": {
+    "message": "Invited",
+    "description": "Row status"
+  },
+  "usersImportStatusFailed": {
+    "message": "Failed",
+    "description": "Row status"
+  },
+  "usersImportStatusSkipped": {
+    "message": "Skipped",
+    "description": "Row status"
   }
 }

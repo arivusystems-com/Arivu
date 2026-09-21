@@ -10,12 +10,12 @@ declare module '@/stores/appShell' {
 
 declare module '@/stores/authRegistry' {
   // JS Pinia store (no TS declarations yet)
-  export function useAuthStore(): any;
+  export function useAuthStore(pinia?: unknown): any;
 }
 
 declare module '@/stores/auth' {
   // JS Pinia store (no TS declarations yet)
-  export function useAuthStore(): any;
+  export function useAuthStore(pinia?: unknown): any;
 }
 
 declare module '@/stores/notifications' {
@@ -149,5 +149,27 @@ declare module '@/components/record-page/slashCommands' {
       addProseMirrorPlugins?: (this: unknown) => unknown[];
     };
   };
+}
+
+declare module '@/utils/moduleListFreshness' {
+  export function dispatchRecordUpdated(detail?: {
+    moduleKey: string;
+    record?: object | null;
+    recordId?: string | null;
+    appKey?: string;
+  }): void;
+  export function markModuleListDirty(moduleKey: string, appKey?: string): void;
+  export function markModuleListRecheck(moduleKey: string, appKey?: string): void;
+}
+
+declare module '@/services/dataChangeRealtimeService' {
+  export function emitLocalDataChange(payload?: {
+    moduleKey?: string;
+    recordId?: string;
+    op?: string;
+    patch?: Record<string, unknown> | null;
+  }): void;
+  export function startDataChangeRealtime(token: string): void;
+  export function stopDataChangeRealtime(): void;
 }
 

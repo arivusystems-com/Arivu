@@ -18,12 +18,7 @@ const BASIC_ADDITIONAL = [
 ];
 
 const MODULE_DEFAULT_SECTIONS = {
-  people: [
-    { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
-    { id: 'contact', labelKey: 'settings.modFieldsSectionContact', order: 1, protected: true },
-    { id: 'assignment', labelKey: 'settings.modFieldsSectionAssignment', order: 2, protected: true },
-    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 3, protected: true }
-  ],
+  people: BASIC_ADDITIONAL,
   organizations: [
     { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
     { id: 'contact', labelKey: 'settings.modFieldsSectionContact', order: 1, protected: true },
@@ -77,12 +72,31 @@ const PEOPLE_SEED_SECTION = {
   source: 'basic',
   tags: 'basic',
   do_not_contact: 'basic',
-  email: 'contact',
-  phone: 'contact',
-  mobile: 'contact',
-  organization: 'assignment',
-  assignedto: 'assignment'
+  email: 'basic',
+  phone: 'basic',
+  mobile: 'basic',
+  organization: 'basic',
+  assignedto: 'basic'
 };
+
+/** Keep in sync with client PEOPLE_BASIC_SEED_ORDER. */
+const PEOPLE_BASIC_SEED_ORDER = [
+  'salutation',
+  'first_name',
+  'last_name',
+  'email',
+  'phone',
+  'mobile',
+  'organization',
+  'assignedto',
+  'tags',
+  'do_not_contact',
+  'source'
+];
+
+const PEOPLE_BASIC_SEED_ORDER_VERSION = 1;
+
+const PEOPLE_LEGACY_SECTION_IDS = new Set(['contact', 'assignment']);
 
 const COMMERCIAL_BASIC_SEED = {
   quotetitle: 'basic',
@@ -186,6 +200,7 @@ function normalizeFieldLayout(moduleKey, existing) {
     return defaults;
   }
 
+  const mod = String(moduleKey || '').toLowerCase();
   const wantsBasic = defaults.sections.some((s) => s.id === 'basic');
   const byId = new Map();
   for (const s of existing.sections) {
@@ -198,6 +213,7 @@ function normalizeFieldLayout(moduleKey, existing) {
         labelKey = 'settings.modFieldsSectionBasic';
       }
     }
+    if (mod === 'people' && PEOPLE_LEGACY_SECTION_IDS.has(id)) continue;
     if (byId.has(id)) continue;
     byId.set(id, {
       id,
@@ -222,7 +238,55 @@ function normalizeFieldLayout(moduleKey, existing) {
   }
 
   const sections = sortSections(Array.from(byId.values())).map((s, i) => ({ ...s, order: i }));
-  return { version: 1, sections };
+  const next = { version: 1, sections };
+  if (mod === 'people' && typeof existing.peopleBasicSeedOrder === 'number') {
+    next.peopleBasicSeedOrder = existing.peopleBasicSeedOrder;
+  }
+  return next;
+}
+
+function reorderPeopleBasicSeedFields(fields, layout) {
+  const basicId = layout.sections.find((s) => s.id === 'basic')?.id;
+  if (!basicId) return fields;
+
+  const seedRank = new Map(PEOPLE_BASIC_SEED_ORDER.map((k, i) => [k, i]));
+  const basicSeeded = [];
+  const basicOther = [];
+  const nonBasic = [];
+
+  for (const field of fields) {
+    if (String(field.sectionId) !== basicId) {
+      nonBasic.push(field);
+      continue;
+    }
+    const nk = normalizeKey(field.key);
+    if (seedRank.has(nk)) basicSeeded.push(field);
+    else basicOther.push(field);
+  }
+
+  basicSeeded.sort(
+    (a, b) => (seedRank.get(normalizeKey(a.key)) ?? 0) - (seedRank.get(normalizeKey(b.key)) ?? 0)
+  );
+
+  const bySection = new Map();
+  for (const s of layout.sections) bySection.set(s.id, []);
+  for (const f of [...basicSeeded, ...basicOther]) {
+    bySection.get(basicId).push(f);
+  }
+  for (const f of nonBasic) {
+    const sid = String(f.sectionId || '');
+    if (bySection.has(sid)) bySection.get(sid).push(f);
+    else bySection.get(layout.sections[layout.sections.length - 1].id).push(f);
+  }
+
+  const out = [];
+  let order = 0;
+  for (const s of sortSections(layout.sections)) {
+    for (const f of bySection.get(s.id) || []) {
+      out.push({ ...f, sectionId: s.id, order: order++ });
+    }
+  }
+  return out;
 }
 
 function flattenFieldsByLayout(fields, layout) {
@@ -232,6 +296,9 @@ function flattenFieldsByLayout(fields, layout) {
   for (const f of fields) {
     let sid = String(f.sectionId || '');
     if (sid === 'general' && bySection.has('basic')) sid = 'basic';
+    if (PEOPLE_LEGACY_SECTION_IDS.has(sid) && bySection.has('basic') && !bySection.has(sid)) {
+      sid = 'basic';
+    }
     if (bySection.has(sid)) bySection.get(sid).push({ ...f, sectionId: sid || f.sectionId });
     else orphan.push(f);
   }
@@ -254,11 +321,15 @@ function ensureFieldsHaveSectionIds(moduleKey, fields, layout) {
   const fallback = getDefaultSectionIdForModule(moduleKey);
   const primaryId = layout.sections.find((s) => s.id === 'basic' || s.id === 'general')?.id;
   const list = Array.isArray(fields) ? fields : [];
+  const mod = String(moduleKey || '').toLowerCase();
 
   const mapped = list.map((field) => {
     const next = { ...field };
     let sid = next.sectionId ? String(next.sectionId) : '';
     if (sid === 'general' && validIds.has('basic')) sid = 'basic';
+    if (mod === 'people' && PEOPLE_LEGACY_SECTION_IDS.has(sid) && validIds.has('basic')) {
+      sid = 'basic';
+    }
     if (sid && validIds.has(sid)) {
       next.sectionId = sid;
       return next;
@@ -268,7 +339,7 @@ function ensureFieldsHaveSectionIds(moduleKey, fields, layout) {
     return next;
   });
 
-  if (primaryId && COMMERCIAL_LAYOUT_MODULES.has(String(moduleKey || '').toLowerCase())) {
+  if (primaryId && (COMMERCIAL_LAYOUT_MODULES.has(mod) || mod === 'people')) {
     const primaryOccupied = mapped.some((f) => String(f.sectionId) === primaryId);
     if (!primaryOccupied) {
       return mapped.map((field) => {
@@ -289,12 +360,23 @@ function ensureFieldsHaveSectionIds(moduleKey, fields, layout) {
  * Never mutates owner / context / dataType.
  */
 function applyFieldLayoutOnSave(moduleKey, fields, fieldLayout) {
-  const layout = normalizeFieldLayout(moduleKey, fieldLayout);
+  const mod = String(moduleKey || '').toLowerCase();
+  let layout = normalizeFieldLayout(moduleKey, fieldLayout);
   const withSections = ensureFieldsHaveSectionIds(moduleKey, fields, layout);
   const sorted = [...withSections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  let ordered = flattenFieldsByLayout(sorted, layout);
+
+  if (mod === 'people') {
+    const currentVersion = Number(layout.peopleBasicSeedOrder || 0);
+    if (currentVersion < PEOPLE_BASIC_SEED_ORDER_VERSION) {
+      ordered = reorderPeopleBasicSeedFields(ordered, layout);
+      layout = { ...layout, peopleBasicSeedOrder: PEOPLE_BASIC_SEED_ORDER_VERSION };
+    }
+  }
+
   return {
     fieldLayout: layout,
-    fields: flattenFieldsByLayout(sorted, layout)
+    fields: ordered
   };
 }
 

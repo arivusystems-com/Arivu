@@ -34,6 +34,12 @@ const ORGANIZATION_TENANT_PLATFORM_FIELD_KEYS = Object.freeze([
   // Deferred CRM party fields (GST / external sync) — hide until product ships them on org forms
   'gstin',
   'gstRegistrationType',
+  'gstRegistered',
+  'gstCertificateUrl',
+  'gstCertificateFileName',
+  'companyName',
+  'billingEmail',
+  'billingPhone',
   'stateCode',
   'billingAddressStructured',
   'externalReferenceId',

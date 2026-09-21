@@ -478,5 +478,57 @@
   "sidebarExpand": {
     "message": "Expand sidebar",
     "description": "Aria label to expand the Astra chats/canvases sidebar"
+  },
+  "voiceStart": {
+    "message": "Start voice input",
+    "description": "Aria label for the Astra microphone button when idle"
+  },
+  "voiceStop": {
+    "message": "Stop and send",
+    "description": "Aria label for the Astra microphone button while listening"
+  },
+  "voiceListening": {
+    "message": "Listening… tap mic to send · Esc to cancel",
+    "description": "Status line under composer while Astra is listening"
+  },
+  "voicePlaceholder": {
+    "message": "Listening…",
+    "description": "Composer placeholder while voice input is active"
+  },
+  "micDenied": {
+    "message": "Microphone access was blocked. Allow the mic in your browser settings to use voice.",
+    "description": "Toast when the browser denies microphone permission"
+  },
+  "micUnsupported": {
+    "message": "Voice input isn’t supported in this browser. Try Chrome or Edge.",
+    "description": "Toast when SpeechRecognition is unavailable"
+  },
+  "micNetworkError": {
+    "message": "Voice recognition lost network. Check your connection and try again.",
+    "description": "Toast when SpeechRecognition reports a network error"
+  },
+  "micStartFailed": {
+    "message": "Couldn’t start the microphone. Try again.",
+    "description": "Toast when SpeechRecognition fails to start"
+  },
+  "speakAnswer": {
+    "message": "Read aloud",
+    "description": "Button to speak an Astra assistant reply"
+  },
+  "stopSpeaking": {
+    "message": "Stop reading",
+    "description": "Button to stop text-to-speech playback"
+  },
+  "starterLearningRecommend": {
+    "message": "Recommend Learning courses for me and what I should finish first",
+    "description": "Astra starter: learning recommend"
+  },
+  "heroLearningTitle": {
+    "message": "Learning",
+    "description": "Astra hero card: learning title"
+  },
+  "heroLearningSubtitle": {
+    "message": "Continue courses and find what to take next",
+    "description": "Astra hero card: learning subtitle"
   }
 }

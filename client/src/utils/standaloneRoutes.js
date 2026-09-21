@@ -6,7 +6,8 @@ export function resolveRoutePathname(path) {
 export function isStandalonePublicRoute(path) {
   const p = resolveRoutePathname(path);
   return (
-    p.startsWith('/book/')
+    p === '/pricing'
+    || p.startsWith('/book/')
     || p.startsWith('/appointments/manage/')
     || p.startsWith('/webforms/public/')
     || p.startsWith('/webforms/embed/')
@@ -58,6 +59,12 @@ export function isPortalAuthLifecycleRoute(path) {
   return p === '/portal/select' || p === '/portal/set-password';
 }
 
+/** External Learning Academy — own layout, never PlatformShell. */
+export function isAcademySurfaceRoute(path) {
+  const p = resolveRoutePathname(path);
+  return p === '/academy' || p.startsWith('/academy/');
+}
+
 /** Routes the tab bar must not track (public, auth, landing, trial expired). */
 export function shouldSkipTabRoute(path) {
   const p = resolveRoutePathname(path);
@@ -66,6 +73,7 @@ export function shouldSkipTabRoute(path) {
     || isStandalonePublicRoute(path)
     || isAuthLifecyclePublicRoute(path)
     || isPortalAuthLifecycleRoute(path)
+    || isAcademySurfaceRoute(path)
     || isTrialExpiredShelllessRoute(path)
     || isOnboardingShelllessRoute(path)
   );

@@ -203,6 +203,10 @@
     "message": "Q{quarter}",
     "description": "Quarter button"
   },
+  "periodQuarterOptionRange": {
+    "message": "Q{quarter} ({range})",
+    "description": "Quarter button with fiscal month range"
+  },
   "periodRangeSummary": {
     "message": "{range}",
     "description": "Computed period range"

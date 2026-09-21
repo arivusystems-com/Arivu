@@ -92,27 +92,125 @@
               <li
                 v-for="space in directSpaces"
                 :key="space._id"
+                class="group relative"
               >
-                <button
-                  type="button"
-                  class="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-neutral-800 hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                <div
+                  class="flex w-full items-center gap-0.5 rounded-lg px-1 py-0.5 text-sm text-neutral-800 hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-800"
                   :class="isSpaceSelected(space) ? 'bg-primary-50 font-medium text-primary-900 dark:bg-primary-900/30 dark:text-primary-100' : ''"
-                  @click="selectSpace(space._id)"
                 >
-                  <span class="flex min-w-0 items-center gap-2">
-                    <AvatarInitials
-                      v-bind="spaceAvatarProps(space)"
-                      size="sm"
-                    />
-                    <span class="truncate">{{ spaceDisplayName(space) }}</span>
-                  </span>
-                  <span
-                    v-if="space.unreadCount > 0"
-                    class="inline-flex min-w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold text-white"
+                  <button
+                    type="button"
+                    class="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-1.5 py-1 text-left"
+                    @click="selectSpace(space._id)"
                   >
-                    {{ space.unreadCount > 99 ? '99+' : space.unreadCount }}
-                  </span>
-                </button>
+                    <span class="flex min-w-0 items-center gap-2">
+                      <span
+                        v-if="spaceGroupAvatarPeers(space).length >= 2"
+                        class="relative inline-block h-8 w-8 shrink-0"
+                        aria-hidden="true"
+                      >
+                        <AvatarInitials
+                          v-bind="personAvatarProps(spaceGroupAvatarPeers(space)[0])"
+                          size="xs"
+                          class="absolute left-0 top-0 z-[1] rounded-full ring-2 ring-white dark:ring-neutral-900"
+                        />
+                        <AvatarInitials
+                          v-bind="personAvatarProps(spaceGroupAvatarPeers(space)[1])"
+                          size="xs"
+                          class="absolute bottom-0 right-0 z-[2] rounded-full ring-2 ring-white dark:ring-neutral-900"
+                        />
+                      </span>
+                      <AvatarInitials
+                        v-else
+                        v-bind="spaceAvatarProps(space)"
+                        size="sm"
+                      />
+                      <span class="truncate">{{ spaceDisplayName(space) }}</span>
+                      <BellSlashIcon
+                        v-if="isSpaceMuted(space)"
+                        class="h-3.5 w-3.5 shrink-0 text-neutral-400"
+                        :title="t('internalChat.muted')"
+                      />
+                    </span>
+                    <span
+                      v-if="space.unreadCount > 0 && sidebarChannelMenuId !== String(space._id)"
+                      class="inline-flex min-w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold text-white"
+                      :class="space.type === 'group_dm' || space.type === 'dm' ? 'group-hover:hidden' : ''"
+                    >
+                      {{ space.unreadCount > 99 ? '99+' : space.unreadCount }}
+                    </span>
+                  </button>
+                  <div
+                    class="relative shrink-0"
+                    data-channel-menu
+                  >
+                    <button
+                      type="button"
+                      class="rounded-md p-1 text-neutral-400 opacity-0 hover:bg-neutral-200/80 hover:text-neutral-700 group-hover:opacity-100 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
+                      :class="sidebarChannelMenuId === String(space._id) ? 'opacity-100' : ''"
+                      :title="t('internalChat.channelMenu')"
+                      :aria-expanded="sidebarChannelMenuId === String(space._id)"
+                      @click.stop="toggleSidebarChannelMenu(space)"
+                    >
+                      <EllipsisHorizontalIcon class="h-4 w-4" />
+                    </button>
+                    <div
+                      v-if="sidebarChannelMenuId === String(space._id)"
+                      class="absolute right-0 z-40 mt-1 w-56 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+                    >
+                      <button
+                        v-if="space.type === 'group_dm'"
+                        type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                        @click.stop="openMembersFromSidebar(space)"
+                      >
+                        <UsersIcon class="h-4 w-4 text-neutral-400" />
+                        {{ t('internalChat.viewMembers') }}
+                      </button>
+                      <button
+                        v-if="space.type === 'group_dm'"
+                        type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                        @click.stop="openInviteFromSidebar(space)"
+                      >
+                        <UserPlusIcon class="h-4 w-4 text-neutral-400" />
+                        {{ t('internalChat.inviteMembers') }}
+                      </button>
+                      <div
+                        v-if="space.type === 'group_dm'"
+                        class="my-1 border-t border-neutral-100 dark:border-neutral-800"
+                      />
+                      <template v-if="isSpaceMuted(space)">
+                        <button
+                          type="button"
+                          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                          @click.stop="unmuteSpaceNotifications(space)"
+                        >
+                          {{ t('internalChat.unmuteNotifications') }}
+                        </button>
+                      </template>
+                      <template v-else-if="isMuteDurationOpen(space._id)">
+                        <button
+                          v-for="opt in muteDurationOptions"
+                          :key="`dm-mute-${opt.key}`"
+                          type="button"
+                          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                          @click.stop="muteSpaceNotifications(space, opt.key)"
+                        >
+                          {{ t(opt.labelKey) }}
+                        </button>
+                      </template>
+                      <button
+                        v-else
+                        type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                        @click.stop="openMuteDurationPicker(space._id, $event)"
+                      >
+                        {{ t('internalChat.muteNotifications') }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </li>
             </ul>
             <button
@@ -172,6 +270,11 @@
                         class="truncate"
                         :class="space.canJoin ? 'text-neutral-500' : ''"
                       >{{ spaceDisplayName(space) }}</span>
+                      <BellSlashIcon
+                        v-if="isSpaceMuted(space)"
+                        class="h-3.5 w-3.5 shrink-0 text-neutral-400"
+                        :title="t('internalChat.muted')"
+                      />
                     </span>
                     <span
                       v-if="space.canJoin"
@@ -194,7 +297,7 @@
                     <button
                       type="button"
                       class="rounded-md p-1 text-neutral-400 opacity-0 hover:bg-neutral-200/80 hover:text-neutral-700 group-hover:opacity-100 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
-                      :class="sidebarChannelMenuId === String(space._id) || isSpaceSelected(space) ? 'opacity-100' : ''"
+                      :class="sidebarChannelMenuId === String(space._id) ? 'opacity-100' : ''"
                       :title="t('internalChat.channelMenu')"
                       :aria-expanded="sidebarChannelMenuId === String(space._id)"
                       @click.stop="toggleSidebarChannelMenu(space)"
@@ -203,7 +306,7 @@
                     </button>
                     <div
                       v-if="sidebarChannelMenuId === String(space._id)"
-                      class="absolute right-0 z-40 mt-1 w-44 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+                      class="absolute right-0 z-40 mt-1 w-56 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
                     >
                       <button
                         type="button"
@@ -216,10 +319,47 @@
                       <button
                         type="button"
                         class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                        @click.stop="openMembersFromSidebar(space)"
+                      >
+                        <UsersIcon class="h-4 w-4 text-neutral-400" />
+                        {{ t('internalChat.viewMembers') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
                         @click.stop="openInviteFromSidebar(space)"
                       >
                         <UserPlusIcon class="h-4 w-4 text-neutral-400" />
                         {{ t('internalChat.inviteMembers') }}
+                      </button>
+                      <div class="my-1 border-t border-neutral-100 dark:border-neutral-800" />
+                      <template v-if="isSpaceMuted(space)">
+                        <button
+                          type="button"
+                          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                          @click.stop="unmuteSpaceNotifications(space)"
+                        >
+                          {{ t('internalChat.unmuteNotifications') }}
+                        </button>
+                      </template>
+                      <template v-else-if="isMuteDurationOpen(space._id)">
+                        <button
+                          v-for="opt in muteDurationOptions"
+                          :key="`ch-mute-${opt.key}`"
+                          type="button"
+                          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                          @click.stop="muteSpaceNotifications(space, opt.key)"
+                        >
+                          {{ t(opt.labelKey) }}
+                        </button>
+                      </template>
+                      <button
+                        v-else
+                        type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                        @click.stop="openMuteDurationPicker(space._id, $event)"
+                      >
+                        {{ t('internalChat.muteNotifications') }}
                       </button>
                     </div>
                   </div>
@@ -350,6 +490,22 @@
             :icon="HashtagIcon"
             size="sm"
           />
+          <span
+            v-else-if="spaceGroupAvatarPeers(selectedSpace).length >= 2"
+            class="relative inline-block h-8 w-8 shrink-0"
+            aria-hidden="true"
+          >
+            <AvatarInitials
+              v-bind="personAvatarProps(spaceGroupAvatarPeers(selectedSpace)[0])"
+              size="xs"
+              class="absolute left-0 top-0 z-[1] rounded-full ring-2 ring-white dark:ring-neutral-900"
+            />
+            <AvatarInitials
+              v-bind="personAvatarProps(spaceGroupAvatarPeers(selectedSpace)[1])"
+              size="xs"
+              class="absolute bottom-0 right-0 z-[2] rounded-full ring-2 ring-white dark:ring-neutral-900"
+            />
+          </span>
           <AvatarInitials
             v-else
             v-bind="spaceAvatarProps(selectedSpace)"
@@ -391,7 +547,7 @@
             />
           </div>
           <div
-            v-if="selectedSpace.type === 'channel' && selectedSpace.isMember !== false"
+            v-if="selectedSpace.isMember !== false"
             class="relative shrink-0"
             data-channel-menu
           >
@@ -400,15 +556,16 @@
               class="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
               :title="t('internalChat.channelMenu')"
               :aria-expanded="showChannelMenu"
-              @click.stop="showChannelMenu = !showChannelMenu"
+              @click.stop="showChannelMenu = !showChannelMenu; muteDurationMenuId = null"
             >
               <EllipsisHorizontalIcon class="h-5 w-5" />
             </button>
             <div
               v-if="showChannelMenu"
-              class="absolute right-0 z-30 mt-1 w-48 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+              class="absolute right-0 z-30 mt-1 w-56 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
             >
               <button
+                v-if="selectedSpace.type === 'channel'"
                 type="button"
                 class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
                 @click="openRenameChannelModal()"
@@ -417,12 +574,54 @@
                 {{ t('internalChat.renameChannel') }}
               </button>
               <button
+                v-if="canManageSpaceMembers"
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                @click="openMembersFromChannelMenu"
+              >
+                <UsersIcon class="h-4 w-4 text-neutral-400" />
+                {{ t('internalChat.viewMembers') }}
+              </button>
+              <button
+                v-if="canManageSpaceMembers"
                 type="button"
                 class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
                 @click="openInviteFromChannelMenu"
               >
                 <UserPlusIcon class="h-4 w-4 text-neutral-400" />
                 {{ t('internalChat.inviteMembers') }}
+              </button>
+              <div
+                v-if="canManageSpaceMembers || selectedSpace.type === 'channel'"
+                class="my-1 border-t border-neutral-100 dark:border-neutral-800"
+              />
+              <template v-if="isSpaceMuted(selectedSpace)">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                  @click="unmuteSpaceNotifications(selectedSpace)"
+                >
+                  {{ t('internalChat.unmuteNotifications') }}
+                </button>
+              </template>
+              <template v-else-if="isMuteDurationOpen('header')">
+                <button
+                  v-for="opt in muteDurationOptions"
+                  :key="`hdr-mute-${opt.key}`"
+                  type="button"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                  @click="muteSpaceNotifications(selectedSpace, opt.key)"
+                >
+                  {{ t(opt.labelKey) }}
+                </button>
+              </template>
+              <button
+                v-else
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-800 hover:bg-neutral-50 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                @click.stop="openMuteDurationPicker('header', $event)"
+              >
+                {{ t('internalChat.muteNotifications') }}
               </button>
             </div>
           </div>
@@ -445,6 +644,51 @@
           >
             <ArrowDownTrayIcon class="h-4 w-4" />
           </button>
+        </div>
+
+        <!-- Pinned messages strip -->
+        <div
+          v-if="pinnedMessages.length"
+          class="shrink-0 border-b border-neutral-200/90 bg-white dark:border-neutral-800 dark:bg-neutral-950/40"
+        >
+          <div class="mx-auto w-full max-w-4xl px-3 py-2 sm:px-6 md:px-10 lg:px-14">
+            <div class="flex items-start gap-2.5">
+              <div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-950/50">
+                <MapPinSolidIcon class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400" />
+              </div>
+              <div class="min-w-0 flex-1 space-y-0.5">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  {{ t('internalChat.pinnedStripTitle') }}
+                </p>
+                <button
+                  v-for="pin in visiblePinnedMessages"
+                  :key="pin._id"
+                  type="button"
+                  class="flex w-full min-w-0 items-baseline gap-1.5 rounded-md py-0.5 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-900/80"
+                  @click="jumpToPinnedMessage(pin._id)"
+                >
+                  <span class="shrink-0 text-xs font-medium text-neutral-800 dark:text-neutral-100">
+                    {{ pinnedAuthorLabel(pin) }}
+                  </span>
+                  <span class="min-w-0 truncate text-xs text-neutral-500 dark:text-neutral-400">
+                    {{ pinnedPreviewText(pin) }}
+                  </span>
+                </button>
+              </div>
+              <button
+                v-if="pinnedMessages.length > 1"
+                type="button"
+                class="shrink-0 rounded-md px-2 py-1 text-[11px] font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                @click="pinnedStripExpanded = !pinnedStripExpanded"
+              >
+                {{
+                  pinnedStripExpanded
+                    ? t('internalChat.pinnedStripCollapse')
+                    : t('internalChat.pinnedStripMore', { count: pinnedMessages.length - 1 })
+                }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Search results (cross-space / API hits) -->
@@ -531,17 +775,30 @@
                 :key="msg._id"
                 :data-message-id="msg._id"
                 class="group flex w-full py-1.5"
-                :class="[
-                  isOwnMessage(msg) ? 'justify-end' : 'justify-start',
-                  String(msg._id) === String(threadRootId || '') || String(msg._id) === String(editingMessageId || '')
-                    ? 'rounded-xl bg-primary-50/70 ring-1 ring-primary-200 dark:bg-primary-900/40 dark:ring-primary-700'
-                    : '',
-                  String(msg._id) === String(focusedSearchMessageId || '')
-                    ? 'rounded-xl bg-amber-50 ring-2 ring-amber-400/80 dark:bg-amber-900/40 dark:ring-amber-600'
-                    : '',
-                ]"
+                :class="isSystemMessage(msg)
+                  ? 'justify-center'
+                  : [
+                    isOwnMessage(msg) ? 'justify-end' : 'justify-start',
+                    String(msg._id) === String(threadRootId || '') || String(msg._id) === String(editingMessageId || '')
+                      ? 'rounded-xl bg-primary-50/70 ring-1 ring-primary-200 dark:bg-primary-900/40 dark:ring-primary-700'
+                      : '',
+                    String(msg._id) === String(focusedSearchMessageId || '')
+                      ? 'rounded-xl bg-amber-50 ring-2 ring-amber-400/80 dark:bg-amber-900/40 dark:ring-amber-600'
+                      : '',
+                    String(msg._id) === String(pinFlashMessageId || '')
+                      ? 'rounded-xl bg-primary-50/50 ring-1 ring-primary-300/70 transition dark:bg-primary-950/30 dark:ring-primary-700/60'
+                      : '',
+                  ]"
               >
                 <div
+                  v-if="isSystemMessage(msg)"
+                  class="max-w-lg px-3 text-center text-xs leading-relaxed text-neutral-500 dark:text-neutral-400"
+                >
+                  <span>{{ systemMessageText(msg) }}</span>
+                  <span class="ml-1.5 whitespace-nowrap text-neutral-400 dark:text-neutral-500">{{ formatTime(msg.createdAt) }}</span>
+                </div>
+                <div
+                  v-else
                   class="flex max-w-[min(92%,22rem)] gap-2 sm:max-w-[min(85%,32rem)]"
                   :class="isOwnMessage(msg) ? 'flex-row-reverse' : 'flex-row'"
                 >
@@ -571,6 +828,14 @@
                           v-if="msg.editedAt"
                           class="ml-1 font-medium text-neutral-400 dark:text-neutral-500"
                         >· {{ t('internalChat.editedLabel') }}</span>
+                        <span
+                          v-if="isPinned(msg)"
+                          class="ml-1 inline-flex items-center text-primary-500 dark:text-primary-400"
+                          :title="t('internalChat.pinnedLabel')"
+                        >
+                          <MapPinSolidIcon class="inline h-3 w-3" aria-hidden="true" />
+                          <span class="sr-only">{{ t('internalChat.pinnedLabel') }}</span>
+                        </span>
                       </span>
                     </div>
 
@@ -579,6 +844,7 @@
                       :class="isOwnMessage(msg) ? 'ml-auto' : ''"
                     >
                       <div
+                        v-if="!msg.deletedAt"
                         class="absolute bottom-[calc(100%+4px)] z-20 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100"
                         :class="isOwnMessage(msg) ? 'right-0' : 'left-0'"
                       >
@@ -668,10 +934,34 @@
                           >
                             <button
                               type="button"
-                              class="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                              class="rounded-md p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                              :class="isPinned(msg)
+                                ? 'text-primary-600 dark:text-primary-400'
+                                : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100'"
                               @click="togglePin(msg)"
                             >
-                              <BookmarkIcon class="h-3.5 w-3.5" />
+                              <MapPinSolidIcon
+                                v-if="isPinned(msg)"
+                                class="h-3.5 w-3.5"
+                              />
+                              <MapPinIcon
+                                v-else
+                                class="h-3.5 w-3.5"
+                              />
+                            </button>
+                          </HoverTooltip>
+                          <HoverTooltip
+                            :content="t('internalChat.markAsUnread')"
+                            preferred-placement="above"
+                            :z-index="Z_INDEX_FLOATING_OVERLAY"
+                            :show-delay="80"
+                          >
+                            <button
+                              type="button"
+                              class="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                              @click="markMessageAsUnread(msg)"
+                            >
+                              <EnvelopeIcon class="h-3.5 w-3.5" />
                             </button>
                           </HoverTooltip>
                           <HoverTooltip
@@ -693,6 +983,16 @@
                       </div>
 
                       <div
+                        v-if="msg.deletedAt"
+                        class="rounded-2xl px-3 py-2 text-sm italic leading-snug text-neutral-500 dark:text-neutral-400"
+                        :class="isOwnMessage(msg)
+                          ? 'rounded-br-md bg-neutral-100 dark:bg-neutral-800/80'
+                          : 'rounded-bl-md bg-neutral-100 dark:bg-neutral-800/80'"
+                      >
+                        {{ t('internalChat.messageDeletedByAuthor') }}
+                      </div>
+                      <div
+                        v-else
                         class="rounded-2xl px-3 py-2 text-sm leading-snug shadow-sm"
                         :class="isOwnMessage(msg)
                           ? 'rounded-br-md bg-primary-600 text-white'
@@ -735,6 +1035,7 @@
                           class="ic-md break-words text-sm leading-snug"
                           :class="isOwnMessage(msg) ? 'ic-md--own' : 'ic-md--other'"
                           v-html="messageBodyHtml(msg)"
+                          @click.capture="onMessageBodyClick"
                         />
                         <div
                           v-if="messageImageAttachments(msg).length"
@@ -783,7 +1084,7 @@
                     </div>
 
                     <div
-                      v-if="msg.reactions?.length"
+                      v-if="!msg.deletedAt && msg.reactions?.length"
                       class="mt-1 flex flex-wrap items-center gap-1"
                       :class="isOwnMessage(msg) ? 'justify-end' : 'justify-start'"
                     >
@@ -882,9 +1183,32 @@
             </button>
           </div>
 
+          <div
+            v-if="composerNonMemberMentions.length"
+            class="mb-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800/60 dark:bg-amber-950/30"
+          >
+            <div
+              v-for="u in composerNonMemberMentions"
+              :key="`nm-${u._id}`"
+              class="flex items-center justify-between gap-2 py-0.5"
+            >
+              <p class="min-w-0 truncate text-xs text-amber-900 dark:text-amber-100">
+                {{ t('internalChat.mentionNotInGroup', { name: userLabel(u) }) }}
+              </p>
+              <button
+                type="button"
+                class="shrink-0 rounded-md bg-amber-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-500 dark:text-neutral-900 dark:hover:bg-amber-400"
+                :disabled="addingMentionUserId === String(u._id)"
+                @click="addMentionedUserToGroup(u)"
+              >
+                {{ t('internalChat.addToGroup') }}
+              </button>
+            </div>
+          </div>
+
           <form @submit.prevent="submitMessage">
             <div
-              class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-shadow focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:focus-within:border-primary-600"
+              class="rounded-2xl border border-neutral-200 bg-white shadow-sm transition-shadow focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:focus-within:border-primary-600"
             >
               <div
                 v-if="quotingMessage"
@@ -993,13 +1317,14 @@
                   v-model="draft"
                   :placeholder="composerPlaceholder"
                   :disabled="!selectedSpaceId"
+                  :mention-labels="composerMentionLabels"
                   @submit="submitMessage"
                   @input="onComposerInput"
                   @update:text="onComposerPlainText"
                 />
                 <ul
                   v-if="mentionSuggestions.length || showMentionAllOption"
-                  class="absolute bottom-full left-2 z-10 mb-1 max-h-40 w-64 overflow-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+                  class="absolute bottom-full left-2 z-30 mb-1 max-h-40 w-64 overflow-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
                 >
                   <li v-if="showMentionAllOption">
                     <button
@@ -1022,14 +1347,35 @@
                     v-for="u in mentionSuggestions"
                     :key="u._id"
                   >
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                      @mousedown.prevent="insertMention(u)"
+                    <div
+                      class="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     >
-                      <AvatarInitials v-bind="personAvatarProps(u)" size="sm" />
-                      <span class="truncate">{{ userLabel(u) }}</span>
-                    </button>
+                      <button
+                        type="button"
+                        class="flex min-w-0 flex-1 items-center gap-2 text-left"
+                        @mousedown.prevent="insertMention(u)"
+                      >
+                        <AvatarInitials v-bind="personAvatarProps(u)" size="sm" />
+                        <span class="min-w-0 flex-1">
+                          <span class="block truncate text-neutral-900 dark:text-white">{{ userLabel(u) }}</span>
+                          <span
+                            v-if="isNonMemberMentionCandidate(u)"
+                            class="block truncate text-[11px] text-neutral-500 dark:text-neutral-400"
+                          >
+                            {{ t('internalChat.mentionNotInGroupShort') }}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        v-if="isNonMemberMentionCandidate(u)"
+                        type="button"
+                        class="shrink-0 rounded-md bg-primary-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                        :disabled="addingMentionUserId === String(u._id)"
+                        @mousedown.prevent="addMentionedUserToGroup(u, { insertMentionAfter: true })"
+                      >
+                        {{ t('internalChat.addToGroup') }}
+                      </button>
+                    </div>
                   </li>
                 </ul>
               </div>
@@ -1155,6 +1501,7 @@
               <div
                 class="ic-md ic-md--other break-words text-sm text-neutral-800 dark:text-neutral-100"
                 v-html="messageBodyHtml(threadRootMessage)"
+                @click.capture="onMessageBodyClick"
               />
             </div>
 
@@ -1229,6 +1576,7 @@
                       class="ic-md break-words"
                       :class="isOwnMessage(msg) ? 'ic-md--own' : 'ic-md--other'"
                       v-html="messageBodyHtml(msg)"
+                      @click.capture="onMessageBodyClick"
                     />
                     <div
                       v-if="messageImageAttachments(msg).length"
@@ -1272,6 +1620,7 @@
                 v-model="threadDraft"
                 bubble-plugin-key="internalChatThreadBubble"
                 :placeholder="t('internalChat.threadReplyPlaceholder')"
+                :mention-labels="composerMentionLabels"
                 @submit="submitThreadReply"
               />
               <div class="flex items-center justify-end px-2 pb-2">
@@ -1551,7 +1900,11 @@
             {{ t('internalChat.inviteMembers') }}
           </h3>
           <p class="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-            {{ t('internalChat.inviteModalSubtitle') }}
+            {{
+              selectedSpace?.type === 'group_dm'
+                ? t('internalChat.inviteModalSubtitleGroup')
+                : t('internalChat.inviteModalSubtitle')
+            }}
           </p>
         </div>
         <div class="space-y-3 px-5 py-4">
@@ -1603,6 +1956,127 @@
             @click="submitInviteMembers"
           >
             {{ t('internalChat.inviteSend') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View members modal -->
+    <div
+      v-if="showMembersModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/50 p-4 backdrop-blur-[2px]"
+      @click.self="closeMembersModal"
+    >
+      <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10">
+        <div class="border-b border-neutral-100 px-5 py-4 dark:border-neutral-800">
+          <h3 class="text-base font-semibold text-neutral-900 dark:text-white">
+            {{ t('internalChat.membersTitle') }}
+          </h3>
+          <p class="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+            {{ t('internalChat.membersCount', { count: spaceMembers.length }) }}
+          </p>
+        </div>
+        <div class="px-5 py-4">
+          <div
+            v-if="loadingMembers"
+            class="space-y-2 py-2"
+          >
+            <div
+              v-for="n in 4"
+              :key="n"
+              class="flex items-center gap-2"
+            >
+              <div class="h-8 w-8 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-800" />
+              <div class="h-3 w-36 animate-pulse rounded bg-neutral-200 dark:bg-neutral-800" />
+            </div>
+          </div>
+          <div
+            v-else
+            class="max-h-64 space-y-0.5 overflow-auto rounded-xl border border-neutral-100 p-1 dark:border-neutral-800"
+          >
+            <div
+              v-for="m in spaceMembers"
+              :key="m.userId"
+              class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm"
+            >
+              <AvatarInitials
+                v-bind="personAvatarProps({
+                  firstName: m.firstName,
+                  lastName: m.lastName,
+                  email: m.email,
+                  avatar: m.avatar,
+                })"
+                size="sm"
+              />
+              <span class="min-w-0 flex-1 truncate text-neutral-900 dark:text-neutral-100">
+                {{ userLabel(m) }}
+              </span>
+              <span
+                v-if="String(m.userId) === String(authStore.user?._id)"
+                class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-neutral-400"
+              >
+                {{ t('internalChat.membersYou') }}
+              </span>
+              <div
+                v-if="m.canRemove"
+                class="relative shrink-0"
+                data-member-menu
+              >
+                <button
+                  type="button"
+                  class="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-50 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                  :disabled="removingMemberId === String(m.userId)"
+                  :title="t('internalChat.memberMenu')"
+                  :aria-label="t('internalChat.memberMenu')"
+                  :aria-expanded="memberMenuUserId === String(m.userId)"
+                  @click.stop="toggleMemberMenu(m)"
+                >
+                  <EllipsisHorizontalIcon class="h-4 w-4" />
+                </button>
+                <div
+                  v-if="memberMenuUserId === String(m.userId)"
+                  class="absolute right-0 z-40 mt-1 w-40 overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger-700 hover:bg-danger-50 disabled:opacity-50 dark:text-danger-300 dark:hover:bg-danger-950/40"
+                    :disabled="removingMemberId === String(m.userId)"
+                    @click.stop="onMemberMenuRemove(m)"
+                  >
+                    <UserMinusIcon class="h-4 w-4" />
+                    {{
+                      String(m.userId) === String(authStore.user?._id)
+                        ? t('internalChat.leaveSpace')
+                        : t('internalChat.removeMember')
+                    }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p
+              v-if="!spaceMembers.length"
+              class="px-2 py-3 text-center text-xs text-neutral-500"
+            >
+              {{ t('internalChat.noMembers') }}
+            </p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-neutral-100 bg-neutral-50/80 px-5 py-3 dark:border-neutral-800 dark:bg-neutral-950/40">
+          <button
+            type="button"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-200/70 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            @click="closeMembersModal"
+          >
+            {{ t('actions.close') }}
+          </button>
+          <button
+            v-if="membersCanInvite"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700"
+            @click="openInviteFromMembersModal"
+          >
+            <UserPlusIcon class="h-4 w-4" />
+            {{ t('internalChat.inviteMembers') }}
           </button>
         </div>
       </div>
@@ -1825,24 +2299,29 @@ import {
   ArrowLeftIcon,
   ArrowUturnLeftIcon,
   AtSymbolIcon,
-  BookmarkIcon,
+  BellSlashIcon,
   ChatBubbleLeftIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   Cog6ToothIcon,
   DocumentIcon,
   EllipsisHorizontalIcon,
+  EnvelopeIcon,
   FaceSmileIcon,
   HashtagIcon,
   LockClosedIcon,
   MagnifyingGlassIcon,
+  MapPinIcon,
   PaperAirplaneIcon,
   PaperClipIcon,
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
+  UserMinusIcon,
   UserPlusIcon,
+  UsersIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import { MapPinIcon as MapPinSolidIcon } from '@heroicons/vue/24/solid';
 import apiClient from '@/utils/apiClient';
 import { FLOATING_OVERLAY_Z_CLASS, Z_INDEX_FLOATING_OVERLAY } from '@/constants/zIndexLayers';
 import { useAuthStore } from '@/stores/auth';
@@ -1871,6 +2350,9 @@ import {
 import { extractImageFilesFromClipboard, isImageFile } from '@/modules/contentStudio/editor/imageFileTransfer';
 import { createInternalChatStream } from '@/composables/useInternalChatStream';
 import { useTabs } from '@/composables/useTabs';
+import { isRecordDetailTabPath } from '@/utils/navigationLabels';
+import { shouldSkipTabRoute } from '@/utils/standaloneRoutes';
+import { openRecordInTab } from '@/utils/tabNavigation';
 import {
   createChatChannel,
   createChatDm,
@@ -1879,12 +2361,16 @@ import {
   editChatMessage,
   exportChatSpace,
   fetchChatMessages,
+  fetchChatMembers,
   fetchChatSettings,
   fetchChatSpaces,
   fetchChatTeammates,
   inviteChatMembers,
+  removeChatMember,
   joinChatChannel,
   markChatRead,
+  markChatSpaceUnread,
+  muteChatSpace,
   pinChatMessage,
   publishChatTyping,
   renameChatChannel,
@@ -1900,14 +2386,15 @@ import {
   setInternalChatFocus,
 } from '@/utils/internalChatFocus';
 import { alertForInternalChatSseMessage } from '@/utils/internalChatNotificationAlerts';
+import { confirmAction } from '@/composables/useConfirmAction';
 import { useNotifications } from '@/composables/useNotifications';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 const route = useRoute();
-const { clearInternalChatMainTabAlert } = useTabs();
+const { clearInternalChatMainTabAlert, openTab } = useTabs();
 const router = useRouter();
-const { info: notifyInfo, warning: notifyWarning } = useNotifications();
+const { success, error: notifyError, info: notifyInfo, warning: notifyWarning } = useNotifications();
 
 const quickEmojis = ['👍', '❤️', '😂', '🎉', '👀'];
 
@@ -2088,7 +2575,22 @@ const spaceFilter = ref('');
 const showChannelModal = ref(false);
 const showDmModal = ref(false);
 const showInviteModal = ref(false);
+const showMembersModal = ref(false);
+const spaceMembers = ref([]);
+const spaceMemberIds = ref([]);
+const memberMenuUserId = ref(null);
+const membersCanInvite = ref(false);
+const removingMemberId = ref(null);
+const loadingMembers = ref(false);
 const showChannelMenu = ref(false);
+const suppressAutoMarkReadForSpaceId = ref(null);
+const muteDurationMenuId = ref(null);
+const muteDurationOptions = [
+  { key: '1h', labelKey: 'internalChat.muteFor1Hour' },
+  { key: '8h', labelKey: 'internalChat.muteFor8Hours' },
+  { key: '24h', labelKey: 'internalChat.muteFor24Hours' },
+  { key: 'forever', labelKey: 'internalChat.muteForever' },
+];
 const sidebarChannelMenuId = ref(null);
 const showRenameChannelModal = ref(false);
 const renameChannelName = ref('');
@@ -2126,6 +2628,7 @@ const seenZoneAnchorId = computed(() => (
 const mentionSuggestions = ref([]);
 const mentionQuery = ref('');
 const mentionMenuActive = ref(false);
+const addingMentionUserId = ref('');
 
 const showMentionAllOption = computed(() => {
   if (!mentionMenuActive.value) return false;
@@ -2133,6 +2636,31 @@ const showMentionAllOption = computed(() => {
   return q === '' || 'all'.startsWith(q);
 });
 const pinnedIds = ref([]);
+const pinnedMessages = ref([]);
+const pinnedStripExpanded = ref(false);
+const pinFlashMessageId = ref(null);
+let pinFlashTimer = null;
+
+const visiblePinnedMessages = computed(() => {
+  if (pinnedStripExpanded.value || pinnedMessages.value.length <= 1) {
+    return pinnedMessages.value;
+  }
+  return pinnedMessages.value.slice(0, 1);
+});
+
+function flashPinnedMessage(messageId) {
+  const mid = String(messageId || '');
+  if (!mid) return;
+  if (pinFlashTimer) {
+    clearTimeout(pinFlashTimer);
+    pinFlashTimer = null;
+  }
+  pinFlashMessageId.value = mid;
+  pinFlashTimer = window.setTimeout(() => {
+    if (String(pinFlashMessageId.value) === mid) pinFlashMessageId.value = null;
+    pinFlashTimer = null;
+  }, 1600);
+}
 
 const selectedSpace = computed(() =>
   spaces.value.find((s) => String(s._id) === String(selectedSpaceId.value || '')) || null
@@ -2151,6 +2679,109 @@ const directSpaces = computed(() =>
 const channelSpaces = computed(() =>
   filteredSpaces.value.filter((s) => s.type === 'channel')
 );
+
+const canManageSpaceMembers = computed(() => {
+  const type = selectedSpace.value?.type;
+  return type === 'channel' || type === 'group_dm';
+});
+
+function isSpaceMuted(space) {
+  return space?.membership?.muted === true;
+}
+
+function applySpaceMembershipPatch(spaceId, patch) {
+  const space = spaces.value.find((s) => String(s._id) === String(spaceId));
+  if (!space) return;
+  space.membership = { ...(space.membership || {}), ...patch };
+}
+
+function closeSpaceMenus() {
+  showChannelMenu.value = false;
+  sidebarChannelMenuId.value = null;
+  muteDurationMenuId.value = null;
+}
+
+function openMuteDurationPicker(menuId, event) {
+  event?.stopPropagation?.();
+  muteDurationMenuId.value = String(menuId);
+}
+
+function isMuteDurationOpen(menuId) {
+  return muteDurationMenuId.value === String(menuId);
+}
+
+async function muteSpaceNotifications(space, durationKey = 'forever') {
+  if (!space?._id) return;
+  const sid = String(space._id);
+  closeSpaceMenus();
+  try {
+    const result = await muteChatSpace(sid, { muted: true, durationKey });
+    applySpaceMembershipPatch(sid, {
+      muted: true,
+      mutedUntil: result?.mutedUntil || null,
+    });
+  } catch (err) {
+    error.value = err?.response?.data?.message || t('internalChat.muteFailed');
+  }
+}
+
+async function unmuteSpaceNotifications(space) {
+  if (!space?._id) return;
+  const sid = String(space._id);
+  closeSpaceMenus();
+  try {
+    await muteChatSpace(sid, { muted: false });
+    applySpaceMembershipPatch(sid, { muted: false, mutedUntil: null });
+  } catch (err) {
+    error.value = err?.response?.data?.message || t('internalChat.muteFailed');
+  }
+}
+
+async function markMessageAsUnread(msg) {
+  if (!selectedSpaceId.value || !msg?._id || String(msg._id).startsWith('temp_')) return;
+  if (msg.deletedAt || isSystemMessage(msg)) return;
+  const sid = String(selectedSpaceId.value);
+  try {
+    await markChatSpaceUnread(sid, { messageId: msg._id });
+    const row = spaces.value.find((s) => String(s._id) === sid);
+    if (row) {
+      row.unreadCount = Math.max(1, Number(row.unreadCount) || 0);
+      applySpaceMembershipPatch(sid, { forceUnread: true });
+    }
+    suppressAutoMarkReadForSpaceId.value = sid;
+  } catch (err) {
+    error.value = err?.response?.data?.message || t('internalChat.markUnreadFailed');
+  }
+}
+
+function safeMarkChatRead(spaceId, messageId) {
+  if (
+    suppressAutoMarkReadForSpaceId.value
+    && String(suppressAutoMarkReadForSpaceId.value) === String(spaceId)
+  ) {
+    return Promise.resolve();
+  }
+  if (messageId) return markChatRead(spaceId, messageId);
+  return markChatRead(spaceId);
+}
+
+function isNonMemberMentionCandidate(user) {
+  if (!user?._id || !canManageSpaceMembers.value || !membersCanInvite.value) return false;
+  const id = String(user._id);
+  return !spaceMemberIds.value.map(String).includes(id);
+}
+
+const composerNonMemberMentions = computed(() => {
+  if (!canManageSpaceMembers.value || !membersCanInvite.value) return [];
+  if (isInternalChatBodyEmpty(draft.value) && !composerPlainText.value.includes('@')) return [];
+  const { mentionUserIds } = prepareOutgoingBody(draft.value);
+  if (!mentionUserIds.length) return [];
+  const memberSet = new Set(spaceMemberIds.value.map(String));
+  const byId = new Map(orgUsers.value.map((u) => [String(u._id), u]));
+  return mentionUserIds
+    .map((id) => byId.get(String(id)))
+    .filter((u) => u && !memberSet.has(String(u._id)));
+});
 
 const recordSpaces = computed(() =>
   filteredSpaces.value.filter((s) => s.type === 'record')
@@ -2192,9 +2823,11 @@ const filteredChannelInviteCandidates = computed(() => {
 });
 
 const filteredInviteCandidates = computed(() => {
+  const memberSet = new Set(spaceMemberIds.value.map(String));
+  const base = dmCandidates.value.filter((u) => !memberSet.has(String(u._id)));
   const q = inviteFilter.value.trim().toLowerCase();
-  if (!q) return dmCandidates.value;
-  return dmCandidates.value.filter((u) => {
+  if (!q) return base;
+  return base.filter((u) => {
     const label = userLabel(u).toLowerCase();
     const email = String(u.email || '').toLowerCase();
     return label.includes(q) || email.includes(q);
@@ -2233,6 +2866,24 @@ function toggleChannelInvite(id) {
   }
 }
 
+async function refreshSpaceMemberIds(spaceId = selectedSpaceId.value) {
+  const sid = String(spaceId || '');
+  if (!sid) {
+    spaceMemberIds.value = [];
+    return [];
+  }
+  try {
+    const result = await fetchChatMembers(sid);
+    const ids = (result.members || []).map((m) => String(m.userId));
+    spaceMemberIds.value = ids;
+    membersCanInvite.value = result.canInvite === true;
+    return result.members || [];
+  } catch {
+    spaceMemberIds.value = [];
+    return [];
+  }
+}
+
 function openInviteModal() {
   showChannelMenu.value = false;
   sidebarChannelMenuId.value = null;
@@ -2240,6 +2891,7 @@ function openInviteModal() {
   inviteFilter.value = '';
   showInviteModal.value = true;
   loadOrgUsers();
+  refreshSpaceMemberIds();
 }
 
 function openInviteFromChannelMenu() {
@@ -2255,9 +2907,93 @@ function openInviteFromSidebar(space) {
   openInviteModal();
 }
 
+function openMembersFromChannelMenu() {
+  showChannelMenu.value = false;
+  sidebarChannelMenuId.value = null;
+  openMembersModal();
+}
+
+function openMembersFromSidebar(space) {
+  sidebarChannelMenuId.value = null;
+  showChannelMenu.value = false;
+  if (space?._id) selectSpace(space._id);
+  openMembersModal(space?._id);
+}
+
+async function openMembersModal(spaceId = selectedSpaceId.value) {
+  const sid = String(spaceId || selectedSpaceId.value || '');
+  if (!sid) return;
+  showMembersModal.value = true;
+  loadingMembers.value = true;
+  spaceMembers.value = [];
+  try {
+    const result = await fetchChatMembers(sid);
+    spaceMembers.value = result.members || [];
+    spaceMemberIds.value = spaceMembers.value.map((m) => String(m.userId));
+    membersCanInvite.value = result.canInvite === true;
+  } catch (err) {
+    error.value = err?.response?.data?.message || t('internalChat.membersLoadFailed');
+    showMembersModal.value = false;
+  } finally {
+    loadingMembers.value = false;
+  }
+}
+
+async function removeSpaceMember(member) {
+  const sid = String(selectedSpaceId.value || '');
+  const uid = String(member?.userId || '');
+  if (!sid || !uid || removingMemberId.value) return;
+  const isSelf = uid === String(authStore.user?._id || '');
+  memberMenuUserId.value = null;
+  removingMemberId.value = uid;
+  error.value = '';
+  try {
+    await removeChatMember(sid, uid);
+    if (isSelf) {
+      closeMembersModal();
+      spaces.value = spaces.value.filter((s) => String(s._id) !== sid);
+      if (String(selectedSpaceId.value || '') === sid) {
+        selectedSpaceId.value = spaces.value[0]?._id || null;
+      }
+      return;
+    }
+    await openMembersModal(sid);
+    await loadSpaces();
+  } catch (err) {
+    error.value = err?.response?.data?.message
+      || (isSelf ? t('internalChat.leaveFailed') : t('internalChat.removeMemberFailed'));
+  } finally {
+    removingMemberId.value = null;
+  }
+}
+
+function toggleMemberMenu(member) {
+  const uid = String(member?.userId || '');
+  if (!uid) return;
+  memberMenuUserId.value = memberMenuUserId.value === uid ? null : uid;
+}
+
+function onMemberMenuRemove(member) {
+  memberMenuUserId.value = null;
+  removeSpaceMember(member);
+}
+
+function closeMembersModal() {
+  showMembersModal.value = false;
+  loadingMembers.value = false;
+  removingMemberId.value = null;
+  memberMenuUserId.value = null;
+}
+
+function openInviteFromMembersModal() {
+  closeMembersModal();
+  openInviteModal();
+}
+
 function toggleSidebarChannelMenu(space) {
   const sid = String(space?._id || '');
   showChannelMenu.value = false;
+  muteDurationMenuId.value = null;
   sidebarChannelMenuId.value = sidebarChannelMenuId.value === sid ? null : sid;
 }
 
@@ -2315,12 +3051,18 @@ async function submitRenameChannel() {
 }
 
 function closeChannelMenuOnOutsideClick(event) {
-  if (!showChannelMenu.value && !sidebarChannelMenuId.value) return;
   const target = event.target;
   if (!(target instanceof Element)) return;
-  if (target.closest('[data-channel-menu]')) return;
-  showChannelMenu.value = false;
-  sidebarChannelMenuId.value = null;
+  if (showChannelMenu.value || sidebarChannelMenuId.value) {
+    if (!target.closest('[data-channel-menu]')) {
+      showChannelMenu.value = false;
+      sidebarChannelMenuId.value = null;
+      muteDurationMenuId.value = null;
+    }
+  }
+  if (memberMenuUserId.value && !target.closest('[data-member-menu]')) {
+    memberMenuUserId.value = null;
+  }
 }
 
 function closeInviteModal() {
@@ -2394,12 +3136,75 @@ const mentionDirectory = computed(() => {
   return [...byId.values()];
 });
 
+/** Labels for live @mention chips in the TipTap composer. */
+const composerMentionLabels = computed(() => (
+  mentionDirectory.value
+    .map((u) => internalChatUserDisplayName(u))
+    .filter(Boolean)
+));
+
 function formatMentionText(text) {
   return formatInternalChatMentions(text, mentionDirectory.value);
 }
 
 function messageBodyHtml(msg) {
   return renderInternalChatMessageHtml(msg?.body, mentionDirectory.value);
+}
+
+/** Same-origin app path from an anchor href, or null for external / non-navigable links. */
+function resolveSameOriginAppPath(href) {
+  const raw = String(href || '').trim();
+  if (!raw || raw.startsWith('#') || raw.startsWith('mailto:') || raw.startsWith('tel:') || raw.startsWith('javascript:')) {
+    return null;
+  }
+  try {
+    const url = new URL(raw, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    if (typeof window !== 'undefined' && url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Prefer human labels; never use a raw URL/path as the tab title (record pages fill the name). */
+function tabTitleFromAnchor(anchor, path) {
+  const text = String(anchor?.textContent || '').trim();
+  if (!text) return undefined;
+  if (/^https?:\/\//i.test(text)) return undefined;
+  const href = String(anchor?.getAttribute?.('href') || '').trim();
+  if (text === href || (path && (text === path || text.endsWith(path)))) return undefined;
+  try {
+    const asUrl = new URL(text, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    if (`${asUrl.pathname}${asUrl.search}${asUrl.hash}` === path) return undefined;
+  } catch {
+    /* plain label */
+  }
+  return text;
+}
+
+/** Open in-app record (and other SPA) links in the tab bar instead of target=_blank bounce. */
+function onMessageBodyClick(event) {
+  if (event.defaultPrevented) return;
+  if (typeof event.button === 'number' && event.button !== 0) return;
+  const anchor = event.target?.closest?.('a[href]');
+  if (!anchor || !event.currentTarget?.contains?.(anchor)) return;
+
+  const path = resolveSameOriginAppPath(anchor.getAttribute('href'));
+  if (!path || shouldSkipTabRoute(path)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const title = tabTitleFromAnchor(anchor, path);
+  const openInBackground = Boolean(event.metaKey || event.ctrlKey || event.shiftKey);
+  const options = { background: openInBackground, insertAdjacent: true };
+  if (title) options.title = title;
+
+  if (isRecordDetailTabPath(path)) {
+    openRecordInTab(path, options);
+  } else {
+    openTab(path, options);
+  }
 }
 
 function prepareOutgoingBody(html) {
@@ -2565,6 +3370,7 @@ async function focusMessageFromRouteQuery() {
       ? result.readState.members
       : [];
     pinnedIds.value = (result.space?.pinnedMessageIds || []).map(String);
+    pinnedMessages.value = Array.isArray(result.pinnedMessages) ? result.pinnedMessages : [];
 
     const threadRoot = result.focus?.threadRootId
       ? String(result.focus.threadRootId)
@@ -2594,7 +3400,7 @@ async function focusMessageFromRouteQuery() {
     delete nextQuery.messageId;
     router.replace({ query: nextQuery }).catch(() => {});
 
-    await markChatRead(spaceId, messageId);
+    await safeMarkChatRead(spaceId, messageId);
   } catch (err) {
     if (seq !== messagesLoadSeq) return;
     error.value = err?.response?.data?.message || t('internalChat.loadFailed');
@@ -2678,6 +3484,15 @@ function spaceAvatarProps(space) {
   });
 }
 
+/** Up to two peer users for stacked group-DM avatars (excludes current user). */
+function spaceGroupAvatarPeers(space) {
+  if (!space || space.type !== 'group_dm') return [];
+  const peers = Array.isArray(space.peerUsers) ? space.peerUsers : [];
+  if (peers.length >= 2) return peers.slice(0, 2);
+  if (peers.length === 1 && space.peer) return [peers[0]];
+  return peers.slice(0, 2);
+}
+
 function presenceAvatarUser(viewer) {
   if (!viewer) return null;
   return {
@@ -2702,9 +3517,35 @@ function isOwnMessage(msg) {
   return String(msg?.authorId || msg?.author?._id || '') === me;
 }
 
+function isSystemMessage(msg) {
+  return msg?.kind === 'system' || Boolean(msg?.systemEvent?.type);
+}
+
+function systemMessageText(msg) {
+  const ev = msg?.systemEvent || {};
+  const actor = ev.actorName || authorLabel(msg) || t('internalChat.someone');
+  const target = ev.targetName || t('internalChat.someone');
+  switch (ev.type) {
+    case 'group_created':
+      return t('internalChat.systemGroupCreated', { name: actor });
+    case 'channel_created':
+      return t('internalChat.systemChannelCreated', { name: actor });
+    case 'member_added':
+      return t('internalChat.systemMemberAdded', { actor, target });
+    case 'member_removed':
+      return t('internalChat.systemMemberRemoved', { actor, target });
+    case 'member_left':
+      return t('internalChat.systemMemberLeft', { name: actor });
+    case 'chat_pinned':
+      return t('internalChat.systemChatPinned', { name: actor });
+    default:
+      return msg?.body || '';
+  }
+}
+
 function userLabel(u) {
   const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
-  return name || u.email || String(u._id);
+  return name || u.email || String(u._id || u.userId || '');
 }
 
 function formatTime(iso) {
@@ -2855,6 +3696,9 @@ async function loadMessages() {
     messages.value = [];
     readStateMembers.value = [];
     readStateMode.value = 'private';
+    pinnedIds.value = [];
+    pinnedMessages.value = [];
+    pinnedStripExpanded.value = false;
     messageListReady.value = true;
     return;
   }
@@ -2871,14 +3715,28 @@ async function loadMessages() {
       ? result.readState.members
       : [];
     pinnedIds.value = (result.space?.pinnedMessageIds || []).map(String);
+    pinnedMessages.value = Array.isArray(result.pinnedMessages) ? result.pinnedMessages : [];
+    pinnedStripExpanded.value = false;
     if (threadRootId.value) {
       const root = messages.value.find((m) => String(m._id) === String(threadRootId.value));
       if (root) threadRootMessage.value = root;
     }
     const space = spaces.value.find((s) => String(s._id) === String(selectedSpaceId.value));
     if (space) {
-      space.unreadCount = 0;
+      const suppressed = suppressAutoMarkReadForSpaceId.value
+        && String(suppressAutoMarkReadForSpaceId.value) === String(space._id);
+      if (!suppressed) {
+        space.unreadCount = 0;
+        if (space.membership) space.membership.forceUnread = false;
+      }
       space.pinnedMessageIds = result.space?.pinnedMessageIds || [];
+    }
+    const spaceType = space?.type || result.space?.type;
+    if (spaceType === 'channel' || spaceType === 'group_dm') {
+      refreshSpaceMemberIds(selectedSpaceId.value).catch(() => {});
+    } else {
+      spaceMemberIds.value = [];
+      membersCanInvite.value = false;
     }
   } catch (err) {
     if (seq !== messagesLoadSeq) return;
@@ -2891,7 +3749,7 @@ async function loadMessages() {
   // Pin while invisible, then reveal already at bottom.
   await scrollToBottom({ reveal: true, loadSeq: seq });
   if (seq === messagesLoadSeq && selectedSpaceId.value) {
-    markChatRead(selectedSpaceId.value).catch(() => {});
+    safeMarkChatRead(selectedSpaceId.value).catch(() => {});
   }
 }
 
@@ -2947,7 +3805,7 @@ function mergeLatestMessagesForSpace(spaceId) {
       }
       scrollToBottom();
       const last = toAdd[toAdd.length - 1];
-      if (last?._id) markChatRead(sid, last._id);
+      if (last?._id) safeMarkChatRead(sid, last._id);
     } catch {
       /* best-effort */
     }
@@ -3026,6 +3884,14 @@ async function selectSpace(id) {
 
   mobileShowConversation.value = true;
 
+  if (
+    suppressAutoMarkReadForSpaceId.value
+    && String(selectedSpaceId.value || '') === String(suppressAutoMarkReadForSpaceId.value)
+    && String(selectedSpaceId.value || '') !== targetId
+  ) {
+    suppressAutoMarkReadForSpaceId.value = null;
+  }
+
   if (String(selectedSpaceId.value || '') === targetId && !space?.canJoin) {
     // Already selected — still sync URL if needed
     if (String(route.query.spaceId || '') !== targetId) {
@@ -3091,17 +3957,31 @@ function onComposerInput() {
 }
 
 function updateMentionSuggestions() {
-  const plain = composerPlainText.value || plainTextFromInternalChatHtml(draft.value);
-  const match = plain.match(/(?:^|\s)@([^\s@]*)$/);
-  if (!match) {
-    mentionSuggestions.value = [];
-    mentionQuery.value = '';
-    mentionMenuActive.value = false;
-    return;
+  const editorApi = composerEditorRef.value;
+  let q = null;
+  if (typeof editorApi?.getActiveMentionQuery === 'function') {
+    const fromEditor = editorApi.getActiveMentionQuery();
+    if (fromEditor === null) {
+      mentionSuggestions.value = [];
+      mentionQuery.value = '';
+      mentionMenuActive.value = false;
+      return;
+    }
+    q = String(fromEditor).toLowerCase();
+  } else {
+    const plain = composerPlainText.value || plainTextFromInternalChatHtml(draft.value);
+    const match = plain.match(/(?:^|\s)@([^\s@]*)$/);
+    if (!match) {
+      mentionSuggestions.value = [];
+      mentionQuery.value = '';
+      mentionMenuActive.value = false;
+      return;
+    }
+    q = match[1].toLowerCase();
   }
-  const q = match[1].toLowerCase();
   mentionQuery.value = q;
   mentionMenuActive.value = true;
+  if (!orgUsers.value.length) loadOrgUsers();
   const me = String(authStore.user?._id || '');
   mentionSuggestions.value = orgUsers.value
     .filter((u) => String(u._id) !== me)
@@ -3130,6 +4010,34 @@ function insertMention(user) {
   replaceActiveMentionToken(label);
 }
 
+async function addMentionedUserToGroup(user, { insertMentionAfter = false } = {}) {
+  if (!user?._id || !selectedSpaceId.value || !isNonMemberMentionCandidate(user)) return;
+  const name = userLabel(user);
+  const ok = await confirmAction({
+    title: t('internalChat.addToGroupTitle'),
+    message: t('internalChat.addToGroupConfirm', { name }),
+    confirmLabel: t('internalChat.addToGroup'),
+    tone: 'success',
+  });
+  if (!ok) return;
+
+  addingMentionUserId.value = String(user._id);
+  try {
+    await inviteChatMembers(selectedSpaceId.value, [user._id]);
+    spaceMemberIds.value = [...new Set([...spaceMemberIds.value.map(String), String(user._id)])];
+    membersCanInvite.value = true;
+    if (insertMentionAfter) insertMention(user);
+    success(t('internalChat.addToGroupSuccess', { name }));
+    loadSpaces().catch(() => {});
+  } catch (err) {
+    const msg = err?.response?.data?.message || t('internalChat.inviteFailed');
+    error.value = msg;
+    notifyError(msg);
+  } finally {
+    addingMentionUserId.value = '';
+  }
+}
+
 function insertMentionAll() {
   replaceActiveMentionToken('@all');
 }
@@ -3140,15 +4048,102 @@ function isPinned(msg) {
 
 async function togglePin(msg) {
   if (!selectedSpaceId.value || String(msg._id).startsWith('temp_')) return;
+  const nextPin = !isPinned(msg);
   try {
     const result = await pinChatMessage(
       selectedSpaceId.value,
       msg._id,
-      !isPinned(msg)
+      nextPin
     );
-    pinnedIds.value = (result?.pinnedMessageIds || []).map(String);
+    const ids = result?.pinnedMessageIds ?? result?.data?.pinnedMessageIds;
+    if (Array.isArray(ids)) {
+      pinnedIds.value = ids.map(String);
+    } else if (nextPin) {
+      pinnedIds.value = [...new Set([...pinnedIds.value, String(msg._id)])];
+    } else {
+      pinnedIds.value = pinnedIds.value.filter((id) => id !== String(msg._id));
+    }
+    syncPinnedMessagesFromIds(msg, nextPin);
   } catch (err) {
-    error.value = err?.response?.data?.message || t('internalChat.pinFailed');
+    error.value = err?.response?.data?.message || err?.message || t('internalChat.pinFailed');
+  }
+}
+
+function syncPinnedMessagesFromIds(touchedMsg, justPinned) {
+  const idSet = new Set(pinnedIds.value.map(String));
+  let next = pinnedMessages.value.filter((m) => idSet.has(String(m._id)));
+  if (justPinned && touchedMsg?._id && idSet.has(String(touchedMsg._id))) {
+    const exists = next.some((m) => String(m._id) === String(touchedMsg._id));
+    if (!exists) next = [touchedMsg, ...next];
+  }
+  // Keep server pin order when possible
+  const byId = new Map(next.map((m) => [String(m._id), m]));
+  pinnedMessages.value = pinnedIds.value
+    .map((id) => byId.get(String(id)))
+    .filter(Boolean);
+}
+
+function pinnedAuthorLabel(msg) {
+  return authorLabel(msg);
+}
+
+function pinnedPreviewText(msg) {
+  if (!msg) return '';
+  if (msg.kind === 'system') {
+    return systemMessageText(msg) || t('internalChat.pinnedLabel');
+  }
+  const text = plainTextFromInternalChatHtml(
+    formatInternalChatMentions(msg.body || '', mentionDirectory.value)
+  ).trim();
+  if (text) return text.length > 100 ? `${text.slice(0, 100)}…` : text;
+  const images = messageImageAttachments(msg);
+  if (images.length) return t('internalChat.quoteAttachmentPreview');
+  if (messageFileAttachments(msg).length) {
+    return messageFileAttachments(msg)[0]?.fileName || t('internalChat.quoteAttachmentPreview');
+  }
+  return t('internalChat.pinnedLabel');
+}
+
+async function jumpToPinnedMessage(messageId) {
+  const mid = String(messageId || '');
+  if (!mid || !selectedSpaceId.value) return;
+  closeThread();
+  await nextTick();
+  const el = messageListEl.value?.querySelector(`[data-message-id="${CSS.escape(mid)}"]`);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    flashPinnedMessage(mid);
+    return;
+  }
+
+  const seq = ++messagesLoadSeq;
+  loadingMessages.value = true;
+  messageListReady.value = false;
+  try {
+    const result = await fetchChatMessages(selectedSpaceId.value, {
+      aroundMessageId: mid,
+      limit: 50,
+    });
+    if (seq !== messagesLoadSeq) return;
+    messages.value = result.messages || [];
+    readStateMode.value = result.readState?.mode || 'private';
+    readStateMembers.value = Array.isArray(result.readState?.members)
+      ? result.readState.members
+      : [];
+    pinnedIds.value = (result.space?.pinnedMessageIds || []).map(String);
+    pinnedMessages.value = Array.isArray(result.pinnedMessages)
+      ? result.pinnedMessages
+      : pinnedMessages.value;
+    messageListReady.value = true;
+    await nextTick();
+    await scrollToSearchMatch(mid);
+    flashPinnedMessage(mid);
+  } catch (err) {
+    if (seq !== messagesLoadSeq) return;
+    error.value = err?.response?.data?.message || t('internalChat.loadFailed');
+    messageListReady.value = true;
+  } finally {
+    if (seq === messagesLoadSeq) loadingMessages.value = false;
   }
 }
 
@@ -3228,9 +4223,26 @@ function applyMessageEditLocally(messageId, patch) {
 
 async function removeMessage(msg) {
   if (!selectedSpaceId.value || String(msg._id).startsWith('temp_')) return;
+  const ok = await confirmAction({
+    title: t('internalChat.deleteMessageTitle'),
+    message: t('internalChat.deleteMessageConfirm'),
+    confirmLabel: t('actions.delete'),
+    tone: 'danger',
+  });
+  if (!ok) return;
   try {
     await deleteChatMessage(selectedSpaceId.value, msg._id);
-    messages.value = messages.value.filter((m) => m._id !== msg._id);
+    const mid = String(msg._id);
+    applyMessageEditLocally(mid, {
+      deletedAt: new Date().toISOString(),
+      deletedBy: authStore.user?._id || null,
+      body: '',
+      attachments: [],
+      quote: null,
+      reactions: [],
+    });
+    pinnedMessages.value = pinnedMessages.value.filter((m) => String(m._id) !== mid);
+    pinnedIds.value = pinnedIds.value.filter((id) => id !== mid);
   } catch (err) {
     error.value = err?.response?.data?.message || t('internalChat.deleteFailed');
   }
@@ -3471,6 +4483,42 @@ async function submitMessage() {
   if (pendingAttachments.value.some((a) => a.uploading)) return;
   const attachments = toSendAttachments(pendingAttachments.value);
   if ((isInternalChatBodyEmpty(body) && !attachments.length) || !selectedSpaceId.value || sending.value) return;
+
+  if (canManageSpaceMembers.value && membersCanInvite.value && mentionUserIds.length) {
+    const memberSet = new Set(spaceMemberIds.value.map(String));
+    const missingIds = mentionUserIds.filter((id) => !memberSet.has(String(id)));
+    if (missingIds.length) {
+      const byId = new Map(orgUsers.value.map((u) => [String(u._id), u]));
+      const names = missingIds
+        .map((id) => {
+          const u = byId.get(String(id));
+          return u ? userLabel(u) : null;
+        })
+        .filter(Boolean)
+        .join(', ');
+      const ok = await confirmAction({
+        title: t('internalChat.addToGroupTitle'),
+        message: t('internalChat.addToGroupConfirmSend', {
+          names: names || t('internalChat.someone'),
+        }),
+        confirmLabel: t('internalChat.addToGroupAndSend'),
+        tone: 'success',
+      });
+      if (!ok) return;
+      try {
+        await inviteChatMembers(selectedSpaceId.value, missingIds);
+        spaceMemberIds.value = [
+          ...new Set([...spaceMemberIds.value.map(String), ...missingIds.map(String)]),
+        ];
+      } catch (err) {
+        const msg = err?.response?.data?.message || t('internalChat.inviteFailed');
+        error.value = msg;
+        notifyError(msg);
+        return;
+      }
+    }
+  }
+
   sending.value = true;
   const tempId = `temp_${Date.now()}`;
   const optimisticAttachments = pendingAttachments.value.map((a) => ({
@@ -3707,24 +4755,53 @@ function onStreamEvent(payload) {
   if (payload.type === 'message.deleted') {
     if (String(payload.spaceId) !== String(selectedSpaceId.value)) return;
     const mid = String(payload.messageId);
-    messages.value = messages.value.filter((m) => String(m._id) !== mid);
-    threadMessages.value = threadMessages.value.filter((m) => String(m._id) !== mid);
-    if (payload.threadRootId) {
-      bumpRootReplyCount(payload.threadRootId, -1);
-    }
-    if (String(threadRootId.value || '') === mid) {
-      closeThread();
-    }
+    applyMessageEditLocally(mid, {
+      deletedAt: payload.deletedAt || new Date().toISOString(),
+      deletedBy: payload.deletedBy || null,
+      body: '',
+      attachments: [],
+      quote: null,
+      reactions: [],
+    });
+    pinnedMessages.value = pinnedMessages.value.filter((m) => String(m._id) !== mid);
+    pinnedIds.value = pinnedIds.value.filter((id) => id !== mid);
     return;
   }
-  if (payload.type === 'space.updated' && payload.pinnedMessageIds) {
+  if (payload.type === 'space.updated' && Array.isArray(payload.pinnedMessageIds)) {
     if (String(payload.spaceId) === String(selectedSpaceId.value)) {
       pinnedIds.value = payload.pinnedMessageIds.map(String);
+      const idSet = new Set(pinnedIds.value);
+      const byId = new Map();
+      for (const m of pinnedMessages.value) {
+        if (idSet.has(String(m._id))) byId.set(String(m._id), m);
+      }
+      for (const m of messages.value) {
+        if (idSet.has(String(m._id))) byId.set(String(m._id), m);
+      }
+      pinnedMessages.value = pinnedIds.value
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean);
     }
     loadSpaces();
     return;
   }
   if (payload.type === 'space.updated') {
+    if (payload.action === 'member_removed') {
+      const sid = String(payload.spaceId || '');
+      const removedId = String(payload.removedUserId || '');
+      const meId = String(authStore.user?._id || '');
+      if (removedId && removedId === meId && sid) {
+        closeMembersModal();
+        spaces.value = spaces.value.filter((s) => String(s._id) !== sid);
+        if (String(selectedSpaceId.value || '') === sid) {
+          selectedSpaceId.value = spaces.value[0]?._id || null;
+        }
+        return;
+      }
+      if (showMembersModal.value && String(selectedSpaceId.value || '') === sid) {
+        openMembersModal(sid);
+      }
+    }
     if (payload.action === 'renamed' || payload.name != null) {
       applySpaceNamePatch(payload.spaceId, {
         ...(payload.name != null ? { name: payload.name } : {}),
@@ -3759,10 +4836,23 @@ function onStreamEvent(payload) {
     if (String(payload.spaceId) !== String(selectedSpaceId.value)) return;
     const mid = String(payload.messageId || '');
     const patch = {};
-    if (payload.reactions) patch.reactions = payload.reactions;
-    if (payload.body !== undefined) patch.body = payload.body;
-    if (payload.editedAt) patch.editedAt = payload.editedAt;
-    if (payload.mentionUserIds) patch.mentionUserIds = payload.mentionUserIds;
+    if (payload.deletedAt) {
+      patch.deletedAt = payload.deletedAt;
+      patch.deletedBy = payload.deletedBy || null;
+      patch.body = '';
+      patch.attachments = [];
+      patch.quote = null;
+      patch.reactions = [];
+      pinnedMessages.value = pinnedMessages.value.filter((m) => String(m._id) !== mid);
+      pinnedIds.value = pinnedIds.value.filter((id) => id !== mid);
+    } else {
+      if (payload.reactions) patch.reactions = payload.reactions;
+      if (payload.body !== undefined) patch.body = payload.body;
+      if (payload.editedAt) patch.editedAt = payload.editedAt;
+      if (payload.mentionUserIds) patch.mentionUserIds = payload.mentionUserIds;
+      if (payload.attachments) patch.attachments = payload.attachments;
+      if (payload.quote !== undefined) patch.quote = payload.quote;
+    }
     if (!Object.keys(patch).length) return;
     applyMessageEditLocally(mid, patch);
     return;
@@ -3770,11 +4860,14 @@ function onStreamEvent(payload) {
   if (payload.type === 'message.created') {
     const sid = String(payload.spaceId || '');
     const authorId = payload.message?.authorId || payload.message?.author?._id;
-    alertForInternalChatSseMessage({
-      spaceId: sid,
-      authorId,
-      currentUserId: authStore.user?._id,
-    });
+    const spaceRow = spaces.value.find((s) => String(s._id) === sid);
+    if (payload.message?.kind !== 'system' && !isSpaceMuted(spaceRow)) {
+      alertForInternalChatSseMessage({
+        spaceId: sid,
+        authorId,
+        currentUserId: authStore.user?._id,
+      });
+    }
     if (sid === String(selectedSpaceId.value)) {
       const rawThread = payload.message?.threadRootId;
       const msgThread = rawThread != null && rawThread !== ''
@@ -3822,7 +4915,7 @@ function onStreamEvent(payload) {
               threadMessages.value = [...threadMessages.value, normalized];
             }
             nextTick(() => scrollThreadToBottom());
-            markChatRead(selectedSpaceId.value, payload.message._id);
+            safeMarkChatRead(selectedSpaceId.value, payload.message._id);
           }
         }
         return;
@@ -3862,7 +4955,7 @@ function onStreamEvent(payload) {
             messages.value = [...messages.value, normalized];
           }
           scrollToBottom();
-          markChatRead(selectedSpaceId.value, payload.message._id);
+          safeMarkChatRead(selectedSpaceId.value, payload.message._id);
         }
       }
     }
@@ -3883,6 +4976,7 @@ function onMobileMqChange(e) {
 watch(selectedSpaceId, (id) => {
   showChannelMenu.value = false;
   sidebarChannelMenuId.value = null;
+  muteDurationMenuId.value = null;
   setInternalChatFocus({ spaceId: id, routeActive: true });
   loadMessages();
   if (id) {
@@ -4022,6 +5116,7 @@ onUnmounted(() => {
   window.removeEventListener('arivu:internal-chat-workspace', onInternalChatWorkspaceEvent);
   if (loadSpacesDebounceTimer) clearTimeout(loadSpacesDebounceTimer);
   if (mergeCatchUpTimer) clearTimeout(mergeCatchUpTimer);
+  if (pinFlashTimer) clearTimeout(pinFlashTimer);
   closeEmojiPicker();
 });
 </script>

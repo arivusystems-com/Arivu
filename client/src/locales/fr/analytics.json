@@ -2090,5 +2090,37 @@
   "datePresetThisWeek": {
     "message": "This week",
     "description": "Date preset this week"
+  },
+  "shareReportTitle": {
+    "message": "Share report",
+    "description": "Report share dialog title"
+  },
+  "shareReportSaved": {
+    "message": "Sharing updated",
+    "description": "Toast after report share save"
+  },
+  "actionShare": {
+    "message": "Share",
+    "description": "Share report action"
+  },
+  "shareNoneSelected": {
+    "message": "Select…",
+    "description": "Empty multi-select placeholder in share picker"
+  },
+  "shareSelectedCount": {
+    "message": "{count} selected",
+    "description": "Multi-select summary when multiple share targets chosen"
+  },
+  "shareNoOptions": {
+    "message": "No options available",
+    "description": "Empty state inside share multi-select dropdown"
+  },
+  "shareGroupsRequired": {
+    "message": "Select at least one group to share with",
+    "description": "Validation when Groups visibility has no group targets"
+  },
+  "shareRolesRequired": {
+    "message": "Select at least one role to share with",
+    "description": "Validation when Roles visibility has no role targets"
   }
 }

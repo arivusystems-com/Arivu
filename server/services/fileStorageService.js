@@ -36,7 +36,10 @@ const ALLOWED_MIME_TYPES = [
   'text/csv',
   'text/markdown',
   'application/json',
-  'application/octet-stream'
+  'application/octet-stream',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
 ];
 
 const EXTENSION_MIME_TYPES = {
@@ -59,7 +62,10 @@ const EXTENSION_MIME_TYPES = {
   '.csv': 'text/csv',
   '.md': 'text/markdown',
   '.json': 'application/json',
-  '.zip': 'application/zip'
+  '.zip': 'application/zip',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
 };
 
 function resolveUploadMimeType(file) {
@@ -194,12 +200,13 @@ function resolveLegacyLocalPath(storagePath) {
   return normalizedFile;
 }
 
-function validateFile(file) {
+function validateFile(file, opts = {}) {
   if (!file) {
     throw new Error('File is required');
   }
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`File size exceeds maximum allowed size of ${MAX_FILE_SIZE} bytes`);
+  const maxSize = Number(opts.maxFileSize) > 0 ? Number(opts.maxFileSize) : MAX_FILE_SIZE;
+  if (file.size > maxSize) {
+    throw new Error(`File size exceeds maximum allowed size of ${maxSize} bytes`);
   }
   const mimeType = resolveUploadMimeType(file);
   if (!isAllowedUploadMime(mimeType)) {
@@ -256,7 +263,7 @@ async function uploadMulterFile(file, context = {}) {
   if (!file?.buffer) {
     throw new Error('File buffer is required (use multer memory storage)');
   }
-  validateFile(file);
+  validateFile(file, { maxFileSize: context.maxFileSize });
   return uploadBuffer({
     buffer: file.buffer,
     originalName: file.originalname,
@@ -267,13 +274,14 @@ async function uploadMulterFile(file, context = {}) {
   });
 }
 
-async function persistMulterUpload(req, category = 'general') {
+async function persistMulterUpload(req, category = 'general', opts = {}) {
   if (!req.file) {
     throw new Error('No file uploaded');
   }
   return uploadMulterFile(req.file, {
     organizationId: req.user?.organizationId,
-    category
+    category,
+    maxFileSize: opts.maxFileSize,
   });
 }
 

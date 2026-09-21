@@ -157,7 +157,10 @@
                   : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-400'"
                 @click="selectQuarter(q)"
               >
-                {{ t('performance.periodQuarterOption', { quarter: q }) }}
+                {{ t('performance.periodQuarterOptionRange', {
+                  quarter: q,
+                  range: getQuarterMonthLabels(q, fiscalYearStartMonth),
+                }) }}
               </button>
             </div>
           </div>
@@ -414,12 +417,20 @@ import {
   formatTargetValue,
   getMonthRange,
   getQuarterRange,
-  currentCalendarQuarter,
+  getQuarterMonthLabels,
+  currentFiscalQuarter,
+  currentFiscalYear,
 } from '@/utils/targetDisplayUtils';
 
 const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
+
+const fiscalYearStartMonth = ref(
+  Number(authStore.organization?.settings?.fiscalYearStartMonth)
+  || Number(authStore.organization?.settings?.analytics?.fiscalYearStartMonth)
+  || 1
+);
 
 const stepItems = computed(() => [
   { id: 'type', label: t('performance.wizardStepType'), hint: t('performance.wizardStepTypeHint') },
@@ -464,7 +475,7 @@ const selectedModuleKeys = ref([]);
 const periodPreset = ref('quarter');
 const periodYear = ref(new Date().getFullYear());
 const periodMonth = ref(new Date().getMonth());
-const selectedQuarter = ref(currentCalendarQuarter());
+const selectedQuarter = ref(currentFiscalQuarter(new Date(), fiscalYearStartMonth.value));
 const assignedTo = ref('');
 const orgUsers = ref([]);
 const loadingUsers = ref(false);
@@ -488,7 +499,7 @@ const suggestedModules = computed(() => {
 });
 
 const periodYearOptions = computed(() => {
-  const y = new Date().getFullYear();
+  const y = currentFiscalYear(new Date(), fiscalYearStartMonth.value);
   return [y - 1, y, y + 1];
 });
 
@@ -576,8 +587,8 @@ function applyPeriodPreset(id) {
     periodMonth.value = now.getMonth();
     syncPeriodFromSelection();
   } else if (id === 'quarter') {
-    periodYear.value = now.getFullYear();
-    selectedQuarter.value = currentCalendarQuarter();
+    periodYear.value = currentFiscalYear(now, fiscalYearStartMonth.value);
+    selectedQuarter.value = currentFiscalQuarter(now, fiscalYearStartMonth.value);
     syncPeriodFromSelection();
   }
 }
@@ -588,7 +599,11 @@ function syncPeriodFromSelection() {
     form.value.periodStart = start;
     form.value.periodEnd = end;
   } else if (periodPreset.value === 'quarter') {
-    const { start, end } = getQuarterRange(periodYear.value, selectedQuarter.value);
+    const { start, end } = getQuarterRange(
+      periodYear.value,
+      selectedQuarter.value,
+      fiscalYearStartMonth.value
+    );
     form.value.periodStart = start;
     form.value.periodEnd = end;
   }
@@ -734,6 +749,24 @@ watch(assignedTo, (id) => {
 
 onMounted(async () => {
   assignedTo.value = authStore.user?._id ? String(authStore.user._id) : '';
+  try {
+    const orgRes = await apiClient('/settings/organization', { method: 'GET', cache: 'no-store' });
+    const month = Number(orgRes?.data?.fiscalYearStartMonth);
+    if (Number.isFinite(month) && month >= 1 && month <= 12) {
+      fiscalYearStartMonth.value = month;
+      if (authStore.organization) {
+        authStore.organization = {
+          ...authStore.organization,
+          settings: {
+            ...(authStore.organization.settings || {}),
+            fiscalYearStartMonth: month,
+          },
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('[TargetCreationWizard] failed to load fiscal year start month', e?.message || e);
+  }
   await loadOrgUsers();
   applyPeriodPreset('quarter');
   if (assignedTo.value) {

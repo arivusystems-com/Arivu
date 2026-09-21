@@ -23,6 +23,7 @@ const { hashToken, buildInviteUrl } = require('../utils/userAuthTokens');
 const { generateSecurePassword } = require('../services/provisioning/utils/passwordGenerator');
 const mongoose = require('mongoose');
 const { APP_KEYS } = require('../constants/appKeys');
+const { isTenantPrivilegedUser } = require('../utils/tenantPrivilegedAccess');
 const {
     materializeEffectiveCRMEnvelopeOnUser,
     enrichLeanUsersWithEffectiveCRMPermissions,
@@ -128,9 +129,12 @@ async function mirrorUserStatusToMaster(ScopedUser, user, organization, status) 
  * Deactivate: inactive status, revoke sessions, release seats, disable app access.
  * Does not transfer records or set deleted.
  */
-async function applyUserDeactivation(user, organization, ScopedUser) {
-    const appAccess = user.appAccess || [];
-    for (const appAccessEntry of appAccess) {
+async function applyUserDeactivation(user, organization, ScopedUser, initiatedByUserId = null) {
+    const activeAppKeys = (user.appAccess || [])
+        .filter((appAccessEntry) => appAccessEntry.status === 'ACTIVE')
+        .map((appAccessEntry) => appAccessEntry.appKey);
+
+    for (const appAccessEntry of user.appAccess || []) {
         if (appAccessEntry.status === 'ACTIVE') {
             await decrementSeat(organization._id, appAccessEntry.appKey);
         }
@@ -157,6 +161,33 @@ async function applyUserDeactivation(user, organization, ScopedUser) {
         emailVerificationTokenHash: null,
         status: 'inactive'
     });
+
+    try {
+        const {
+            syncCommercialBillingAfterDeactivation,
+        } = require('../services/commercial/userLifecycleBillingSync');
+        await syncCommercialBillingAfterDeactivation({
+            organizationId: organization._id,
+            userId: user._id,
+            userType: user.userType,
+            activeAppKeys,
+            initiatedByUserId,
+        });
+    } catch (commercialErr) {
+        console.warn('[userLifecycle] commercial deactivation sync failed:', commercialErr.message);
+    }
+
+    try {
+        const {
+            reconcileCommercialBillingAfterMutation,
+        } = require('../services/commercial/reconcileCommercialSubscription');
+        await reconcileCommercialBillingAfterMutation({
+            organizationId: organization._id,
+            initiatedByUserId,
+        });
+    } catch (reconcileErr) {
+        console.warn('[userLifecycle] commercial reconcile after deactivation failed:', reconcileErr.message);
+    }
 }
 
 function getTenantModel(connection, modelName, sourceModel) {
@@ -467,12 +498,21 @@ exports.getUsers = async (req, res) => {
 
         if (userType) {
             const normalizedType = String(userType).toUpperCase();
-            if (normalizedType === 'INTERNAL') {
+            if (normalizedType === 'INTERNAL' || normalizedType === 'STANDARD') {
                 andConditions.push({
                     $or: [
+                        { userType: 'STANDARD' },
                         { userType: 'INTERNAL' },
                         { userType: { $exists: false } },
                         { userType: null }
+                    ]
+                });
+            } else if (normalizedType === 'ADMIN') {
+                andConditions.push({
+                    $or: [
+                        { userType: 'ADMIN' },
+                        { userType: 'SYSTEM' },
+                        { isOwner: true }
                     ]
                 });
             } else {
@@ -579,6 +619,39 @@ exports.getUsers = async (req, res) => {
             console.warn('[getUsers] Permission enrichment failed, returning raw users:', permissionProjectionError.message);
         }
 
+        {
+          const {
+            normalizePlatformUserType,
+            PLATFORM_USER_TYPES,
+          } = require('../constants/platformUserTypes');
+          const { isPrivilegedSystemRoleName } = require('../utils/tenantPrivilegedAccess');
+          const healOps = [];
+          usersWithEffectivePermissions = usersWithEffectivePermissions.map((u) => {
+            const roleName = u?.roleId?.name || u?.role;
+            const next = (() => {
+              if (u?.isOwner || isPrivilegedSystemRoleName(roleName)) {
+                return PLATFORM_USER_TYPES.ADMIN;
+              }
+              return normalizePlatformUserType(u?.userType, {
+                isOwner: u?.isOwner,
+                roleName,
+              });
+            })();
+            if (String(u?.userType || '') !== next) {
+              healOps.push({ id: u._id, userType: next });
+              return { ...u, userType: next };
+            }
+            return u;
+          });
+          if (healOps.length > 0) {
+            Promise.all(
+              healOps.map((op) =>
+                ScopedUser.updateOne({ _id: op.id }, { $set: { userType: op.userType } }).catch(() => null)
+              )
+            ).catch(() => null);
+          }
+        }
+
         res.json({
             success: true,
             data: usersWithEffectivePermissions,
@@ -607,8 +680,8 @@ exports.getAddCapabilities = async (req, res) => {
             });
         }
 
-        // Check if user is owner or admin (Sales ADMIN)
-        const isCRMAdmin = user.isOwner || String(user.role || '').toLowerCase() === 'admin';
+        // Check if user is owner or Admin userType (tenant privileged)
+        const isCRMAdmin = isTenantPrivilegedUser(user);
         if (!isCRMAdmin) {
             return res.status(403).json({
                 success: false,
@@ -832,7 +905,7 @@ exports.getUser = async (req, res) => {
 };
 
 // --- Invite/Create new user (Unified Add User Flow) ---
-exports.inviteUser = async (req, res) => {
+async function runInviteUser(req, res) {
     const { 
         email, 
         firstName, 
@@ -861,7 +934,7 @@ exports.inviteUser = async (req, res) => {
             });
         }
 
-        const isCRMAdmin = user.isOwner || String(user.role || '').toLowerCase() === 'admin';
+        const isCRMAdmin = isTenantPrivilegedUser(user);
         if (!isCRMAdmin) {
             return res.status(403).json({
                 success: false,
@@ -978,10 +1051,27 @@ exports.inviteUser = async (req, res) => {
             reinviteUser = existingUser;
         }
 
+        // Email is globally unique in UserDirectory (login routing). Refuse invites that
+        // would overwrite another tenant's directory claim.
+        const normalizedInviteEmail = String(email).toLowerCase().trim();
+        const directoryClaim = await UserDirectory.findOne({ email: normalizedInviteEmail })
+            .select('organizationId')
+            .lean();
+        if (
+            directoryClaim?.organizationId
+            && String(directoryClaim.organizationId) !== String(organization._id)
+        ) {
+            return res.status(409).json({
+                success: false,
+                message: 'This email already belongs to another workspace. Use a different email, or ask them to sign in to their existing workspace.',
+                code: 'EMAIL_IN_OTHER_TENANT'
+            });
+        }
+
         const wasInactive = reinviteUser?.status === 'inactive' || reinviteUser?.status === 'deleted';
 
         let finalAppAccess = [];
-        let finalUserType = userType || 'INTERNAL';
+        let finalUserType = userType || 'STANDARD';
         let roleDoc = null;
         let legacyRole = null;
         let isOwner = false;
@@ -1113,9 +1203,20 @@ exports.inviteUser = async (req, res) => {
             if (rbacV2) {
                 const derived = deriveAppAccessFromRole(roleDoc, organization);
                 finalAppAccess = derived.appAccess;
-                finalUserType = roleDoc.userType || 'INTERNAL';
+                finalUserType = roleDoc.userType || 'STANDARD';
                 legacyRole = mapRoleNameToLegacyEnum(roleDoc.name);
                 isOwner = roleDoc.name === 'Owner';
+                {
+                  const { normalizePlatformUserType, PLATFORM_USER_TYPES } = require('../constants/platformUserTypes');
+                  const { isPrivilegedSystemRoleName } = require('../utils/tenantPrivilegedAccess');
+                  finalUserType = normalizePlatformUserType(finalUserType, {
+                    isOwner,
+                    roleName: roleDoc.name,
+                  });
+                  if (isPrivilegedSystemRoleName(roleDoc.name)) {
+                    finalUserType = PLATFORM_USER_TYPES.ADMIN;
+                  }
+                }
             } else {
                 // Map role name to legacy role enum for backward compatibility
                 legacyRole = roleDoc.name.toLowerCase();
@@ -1148,9 +1249,18 @@ exports.inviteUser = async (req, res) => {
                     addedAt: new Date()
                 }];
 
-                // Default to INTERNAL for legacy format
-                finalUserType = 'INTERNAL';
+                // Default to STANDARD for legacy format
+                finalUserType = 'STANDARD';
             }
+        }
+
+        {
+          const { normalizePlatformUserType, PLATFORM_USER_TYPES } = require('../constants/platformUserTypes');
+          finalUserType = normalizePlatformUserType(finalUserType, {
+            isOwner,
+            roleName: legacyRole || roleDoc?.name,
+          });
+          if (isOwner) finalUserType = PLATFORM_USER_TYPES.ADMIN;
         }
 
         // ============================================
@@ -1374,6 +1484,32 @@ exports.inviteUser = async (req, res) => {
                 await incrementSeat(organization._id, appAccessEntry.appKey);
             }
         }
+
+        try {
+            const { syncCommercialBillingAfterInvite } = require('../services/commercial/inviteBillingSync');
+            await syncCommercialBillingAfterInvite({
+                organizationId: organization._id,
+                userId: newUser._id,
+                userType: finalUserType,
+                appAccess: finalAppAccess,
+                initiatedByUserId: req.user._id,
+                isNewBillableSeat: !reinviteUser || wasInactive,
+            });
+        } catch (commercialErr) {
+            console.warn('[inviteUser] commercial billing sync failed:', commercialErr.message);
+        }
+
+        try {
+            const {
+                reconcileCommercialBillingAfterMutation,
+            } = require('../services/commercial/reconcileCommercialSubscription');
+            await reconcileCommercialBillingAfterMutation({
+                organizationId: organization._id,
+                initiatedByUserId: req.user._id,
+            });
+        } catch (reconcileErr) {
+            console.warn('[inviteUser] commercial reconcile failed:', reconcileErr.message);
+        }
         
         // Increment the role's user count (if roleId provided)
         if (roleId && (!reinviteUser || wasInactive)) {
@@ -1493,6 +1629,228 @@ exports.inviteUser = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: 'Server error inviting user',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+}
+
+exports.inviteUser = runInviteUser;
+exports.runInviteUser = runInviteUser;
+
+/**
+ * Preview CSV bulk invite (no users created, no emails sent).
+ */
+exports.previewBulkInvite = async (req, res) => {
+    try {
+        const userBulkInviteService = require('../services/userBulkInviteService');
+        const organization = req.organization || await Organization.findById(req.user.organizationId);
+        if (!organization) {
+            return res.status(404).json({ success: false, message: 'Organization not found' });
+        }
+
+        let rows = req.body?.rows;
+        if ((!rows || !Array.isArray(rows)) && typeof req.body?.csvText === 'string') {
+            const parsed = userBulkInviteService.parseInviteCsv(req.body.csvText);
+            if (!parsed.ok) {
+                return res.status(400).json({
+                    success: false,
+                    message: parsed.message,
+                    code: parsed.code,
+                    maxRows: parsed.maxRows
+                });
+            }
+            rows = parsed.rows;
+        }
+
+        const result = await userBulkInviteService.previewBulkInvite({
+            actor: req.user,
+            organization,
+            rows,
+            businessHourSetId: req.body?.businessHourSetId,
+            defaultRoleId: req.body?.defaultRoleId
+        });
+
+        if (!result.ok) {
+            return res.status(result.statusCode || 400).json({
+                success: false,
+                message: result.message,
+                code: result.code
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: result.data
+        });
+    } catch (error) {
+        console.error('Preview bulk invite error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error previewing bulk invite',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+/**
+ * Commit CSV bulk invite via the shared inviteUser path (per-row results).
+ */
+exports.commitBulkInvite = async (req, res) => {
+    try {
+        const userBulkInviteService = require('../services/userBulkInviteService');
+        const organization = req.organization || await Organization.findById(req.user.organizationId);
+        if (!organization) {
+            return res.status(404).json({ success: false, message: 'Organization not found' });
+        }
+
+        if (!isTenantPrivilegedUser(req.user)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only Sales administrators can add users',
+                code: 'INSUFFICIENT_PERMISSIONS'
+            });
+        }
+
+        const businessHourSetId = req.body?.businessHourSetId;
+        const defaultRoleId = req.body?.defaultRoleId;
+        const sendEmail = req.body?.sendEmail !== false;
+
+        let rows = req.body?.rows;
+        if ((!rows || !Array.isArray(rows)) && typeof req.body?.csvText === 'string') {
+            const parsed = userBulkInviteService.parseInviteCsv(req.body.csvText);
+            if (!parsed.ok) {
+                return res.status(400).json({
+                    success: false,
+                    message: parsed.message,
+                    code: parsed.code,
+                    maxRows: parsed.maxRows
+                });
+            }
+            rows = parsed.rows;
+        }
+
+        const preview = await userBulkInviteService.previewBulkInvite({
+            actor: req.user,
+            organization,
+            rows,
+            businessHourSetId,
+            defaultRoleId
+        });
+
+        if (!preview.ok) {
+            return res.status(preview.statusCode || 400).json({
+                success: false,
+                message: preview.message,
+                code: preview.code
+            });
+        }
+
+        if (preview.data.seatWarnings?.length) {
+            const blocking = preview.data.seatWarnings.filter((w) =>
+                ['USER_LIMIT_REACHED', 'USER_LIMIT_SHORTFALL', 'SEAT_BLOCKED', 'SEAT_SHORTFALL'].includes(w.code)
+            );
+            if (blocking.length && req.body?.allowSeatOverage !== true) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Seat or user-limit shortfall — resolve capacity before inviting',
+                    code: 'SEAT_SHORTFALL',
+                    data: preview.data
+                });
+            }
+        }
+
+        const invitable = preview.data.rows.filter(
+            (r) => r.status === 'valid' || r.status === 'reinvite'
+        );
+
+        const results = [];
+        let invited = 0;
+        let failed = 0;
+        let skipped = preview.data.rows.length - invitable.length;
+
+        for (const previewRow of preview.data.rows) {
+            if (previewRow.status !== 'valid' && previewRow.status !== 'reinvite') {
+                results.push({
+                    rowNumber: previewRow.rowNumber,
+                    email: previewRow.email,
+                    status: 'skipped',
+                    code: previewRow.code,
+                    message: previewRow.message
+                });
+                continue;
+            }
+
+            const body = userBulkInviteService.buildInviteBodyFromRow(previewRow, {
+                businessHourSetId,
+                defaultRoleId: previewRow.roleId || defaultRoleId,
+                sendEmail
+            });
+
+            const { res: captureRes, getResult } = userBulkInviteService.createCaptureRes();
+            const inviteReq = {
+                user: req.user,
+                organization,
+                body
+            };
+
+            await runInviteUser(inviteReq, captureRes);
+            const inviteResult = getResult();
+            const ok = inviteResult.statusCode >= 200 && inviteResult.statusCode < 300
+                && inviteResult.body?.success === true;
+
+            if (ok) {
+                invited += 1;
+                results.push({
+                    rowNumber: previewRow.rowNumber,
+                    email: previewRow.email,
+                    status: 'invited',
+                    userId: inviteResult.body?.data?._id || null,
+                    emailSent: inviteResult.body?.data?.emailSent === true,
+                    message: inviteResult.body?.message || 'Invited'
+                });
+            } else {
+                failed += 1;
+                results.push({
+                    rowNumber: previewRow.rowNumber,
+                    email: previewRow.email,
+                    status: 'failed',
+                    code: inviteResult.body?.code || 'INVITE_FAILED',
+                    message: inviteResult.body?.message || 'Invite failed'
+                });
+            }
+        }
+
+        const { attachSettingsAuditDiff, cloneForAudit } = require('../utils/settingsAuditSnapshot');
+        attachSettingsAuditDiff(
+            res,
+            {},
+            cloneForAudit({
+                invited,
+                failed,
+                skipped,
+                total: results.length
+            }),
+            { keys: ['invited', 'failed', 'skipped', 'total'] }
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                results,
+                summary: {
+                    total: results.length,
+                    invited,
+                    failed,
+                    skipped
+                }
+            },
+            message: `Invited ${invited} of ${results.length} users`
+        });
+    } catch (error) {
+        console.error('Commit bulk invite error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error committing bulk invite',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
@@ -1662,7 +2020,7 @@ exports.updateUser = async (req, res) => {
                     });
                 }
                 if (nextStatus === 'inactive' && user.status !== 'inactive') {
-                    await applyUserDeactivation(user, organization, ScopedUser);
+                    await applyUserDeactivation(user, organization, ScopedUser, req.user?._id);
                     const ownership = await userRecordTransferService.getOwnershipSummary(
                         organization._id,
                         user._id
@@ -1740,6 +2098,24 @@ exports.updateUser = async (req, res) => {
             user.roleId = roleId;
             user.role = roleDoc.name.toLowerCase(); // Update legacy role field
             user.isOwner = roleDoc.name === 'Owner';
+            {
+              const { normalizePlatformUserType, PLATFORM_USER_TYPES } = require('../constants/platformUserTypes');
+              const { isPrivilegedSystemRoleName } = require('../utils/tenantPrivilegedAccess');
+              const roleType = normalizePlatformUserType(roleDoc.userType, {
+                isOwner: user.isOwner,
+                roleName: roleDoc.name,
+              });
+              if (
+                roleType === PLATFORM_USER_TYPES.ADMIN ||
+                isPrivilegedSystemRoleName(roleDoc.name)
+              ) {
+                user.userType = PLATFORM_USER_TYPES.ADMIN;
+              } else if (roleType === PLATFORM_USER_TYPES.EXTERNAL) {
+                user.userType = PLATFORM_USER_TYPES.EXTERNAL;
+              } else {
+                user.userType = PLATFORM_USER_TYPES.STANDARD;
+              }
+            }
             
             // Increment new role's user count
             await ScopedRole.findByIdAndUpdate(roleId, { $inc: { userCount: 1 } });
@@ -1871,11 +2247,38 @@ exports.updateUser = async (req, res) => {
                     await incrementSeat(organization._id, appKey);
                 }
             }
+
+            try {
+                const {
+                    syncCommercialBillingAfterAppAccessChange,
+                } = require('../services/commercial/userLifecycleBillingSync');
+                await syncCommercialBillingAfterAppAccessChange({
+                    organizationId: organization._id,
+                    userId: user._id,
+                    previousActiveAppKeys: [...previousActiveApps],
+                    nextActiveAppKeys: [...nextActiveApps],
+                    initiatedByUserId: req.user._id,
+                });
+            } catch (commercialErr) {
+                console.warn('[updateUser] commercial appAccess sync failed:', commercialErr.message);
+            }
         }
 
         await materializeEffectiveCRMEnvelopeOnUser(user);
 
         await user.save();
+
+        try {
+            const {
+                reconcileCommercialBillingAfterMutation,
+            } = require('../services/commercial/reconcileCommercialSubscription');
+            await reconcileCommercialBillingAfterMutation({
+                organizationId: organization._id,
+                initiatedByUserId: req.user._id,
+            });
+        } catch (reconcileErr) {
+            console.warn('[updateUser] commercial reconcile failed:', reconcileErr.message);
+        }
 
         // Populate role details (Role model may not be registered on tenant connection)
         try {
@@ -2001,7 +2404,7 @@ exports.deactivateUser = async (req, res) => {
             status: user.status
         });
 
-        await applyUserDeactivation(user, organization, ScopedUser);
+        await applyUserDeactivation(user, organization, ScopedUser, req.user?._id);
 
         const ownership = await userRecordTransferService.getOwnershipSummary(
             organization._id,
@@ -2700,6 +3103,32 @@ exports.resendUserInvite = async (req, res) => {
                     await incrementSeat(organization._id, appAccessEntry.appKey);
                 }
             }
+        }
+
+        try {
+            const { syncCommercialBillingAfterInvite } = require('../services/commercial/inviteBillingSync');
+            await syncCommercialBillingAfterInvite({
+                organizationId: organization._id,
+                userId: user._id,
+                userType: user.userType,
+                appAccess: Array.isArray(user.appAccess) ? user.appAccess : [],
+                initiatedByUserId: req.user._id,
+                isNewBillableSeat: wasInactive,
+            });
+        } catch (commercialErr) {
+            console.warn('[resendUserInvite] commercial billing sync failed:', commercialErr.message);
+        }
+
+        try {
+            const {
+                reconcileCommercialBillingAfterMutation,
+            } = require('../services/commercial/reconcileCommercialSubscription');
+            await reconcileCommercialBillingAfterMutation({
+                organizationId: organization._id,
+                initiatedByUserId: req.user._id,
+            });
+        } catch (reconcileErr) {
+            console.warn('[resendUserInvite] commercial reconcile failed:', reconcileErr.message);
         }
 
         const inviteEmailResult = await userInviteService.sendInviteForUser({

@@ -39,8 +39,10 @@ export interface StatisticsConfig {
     formatter?: 'number' | 'currency' | 'percentage';
   }>;
   /**
-   * `view` (default): refresh cards only for saved-view scope.
-   * `query`: always recompute from the current list query (search/filters/views).
+   * `view` (default): KPIs follow Filters/search/saved-view working set; selected
+   *   stat-card overlays (Open, Due Today, …) filter the list only and do not
+   *   re-scope sibling card values.
+   * `query`: always recompute from the full list query including stat overlays.
    */
   scope?: 'view' | 'query';
   /** Optional dynamic card set from active view + filters */
@@ -745,6 +747,58 @@ function resolveInvoicesStatsConfig(
   ];
 }
 
+const OPEN_CASE_STATUSES = ['New', 'Assigned', 'In Progress', 'On Hold', 'Waiting for Customer'] as const;
+
+/** Cases: queue triage strip — Total/My, Open, Unassigned, SLA Breached. */
+function resolveCasesStatsConfig(
+  filters: Record<string, any> = {},
+  activeViewId?: string | null
+): StatisticsConfig['stats'] {
+  const isMy = isMyAssigneeScope(filters, activeViewId, ['my-cases']);
+  return [
+    isMy
+      ? { name: 'My Cases', key: 'myCases', formatter: 'number' as const }
+      : { name: 'Total Cases', key: 'totalCases', formatter: 'number' as const },
+    { name: 'Open', key: 'open', formatter: 'number' as const },
+    ...(isMy
+      ? []
+      : [{ name: 'Unassigned', key: 'unassigned', formatter: 'number' as const }]),
+    { name: 'SLA Breached', key: 'slaBreached', formatter: 'number' as const }
+  ];
+}
+
+function computeCasesStatistics(
+  data: any[],
+  _currentUserId?: string,
+  context?: ModuleListStatisticsContext
+): Record<string, number> {
+  const openStatusSet = new Set<string>(OPEN_CASE_STATUSES);
+  const stats = {
+    totalCases: context?.totalRecords ?? data.length,
+    myCases: context?.totalRecords ?? data.length,
+    open: 0,
+    unassigned: 0,
+    slaBreached: 0
+  };
+
+  data.forEach((row) => {
+    const status = String(row?.status || '');
+    const isOpen = openStatusSet.has(status);
+    if (isOpen) stats.open += 1;
+
+    const assignee = row?.assignedTo;
+    const hasAssignee = assignee != null && assignee !== ''
+      && !(typeof assignee === 'object' && !assignee._id && !assignee.id);
+    if (!hasAssignee) stats.unassigned += 1;
+
+    if (row?.slaBreached === true || row?.slaBreached === 'true') {
+      if (isOpen) stats.slaBreached += 1;
+    }
+  });
+
+  return stats;
+}
+
 function computeTasksStatistics(
   data: any[],
   _currentUserId?: string,
@@ -1402,7 +1456,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolvePeopleStatsConfig({}, 'all'),
       resolveStats: resolvePeopleStatsConfig,
       computeFunction: computePeopleStatistics
@@ -1466,7 +1520,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       ]
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveOrganizationsStatsConfig({}, 'all'),
       resolveStats: resolveOrganizationsStatsConfig,
       computeFunction: computeOrganizationsStatistics
@@ -1521,7 +1575,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveTasksStatsConfig({}, 'all'),
       resolveStats: resolveTasksStatsConfig,
       computeFunction: computeTasksStatistics
@@ -1562,7 +1616,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       'appointmentMeetingLink'
     ],
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveEventsStatsConfig({}, 'all'),
       resolveStats: resolveEventsStatsConfig,
       computeFunction: computeEventsStatistics
@@ -1623,7 +1677,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveDealsStatsConfig(),
       resolveStats: resolveDealsStatsConfig,
       computeFunction: computeDealsStatistics
@@ -1656,7 +1710,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields', 'sourceRef']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveQuotesStatsConfig({}, 'all'),
       resolveStats: resolveQuotesStatsConfig,
       computeFunction: computeQuotesStatistics
@@ -1690,7 +1744,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveSalesOrdersStatsConfig({}, 'all'),
       resolveStats: resolveSalesOrdersStatsConfig,
       computeFunction: computeSalesOrdersStatistics
@@ -1728,7 +1782,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total POs', key: 'totalPurchaseOrders', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -1793,7 +1847,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total Notes', key: 'totalNotes', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -1857,7 +1911,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total Returns', key: 'totalReturns', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -1915,7 +1969,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total Notes', key: 'totalNotes', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -1980,7 +2034,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total Returns', key: 'totalReturns', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -2043,7 +2097,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
         excludedFromDefault: ['customFields']
       },
       statistics: {
-        scope: 'query',
+        scope: 'view',
         stats: [
           { name: 'Total Returns', key: 'totalReturns', formatter: 'number' },
           { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -2104,7 +2158,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total', key: 'totalStockrooms', formatter: 'number' },
         { name: 'Active', key: 'active', formatter: 'number' },
@@ -2156,7 +2210,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields', 'lines', 'inventoryAdjustmentId']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total', key: 'totalAdjustments', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -2207,7 +2261,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields', 'lines', 'inventoryTransferId']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: [
         { name: 'Total', key: 'totalTransfers', formatter: 'number' },
         { name: 'Draft', key: 'draft', formatter: 'number' },
@@ -2255,7 +2309,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveCampaignsStatsConfig(),
       resolveStats: resolveCampaignsStatsConfig,
       computeFunction: computeCampaignsStatistics
@@ -2281,7 +2335,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolvePublishableStatsConfig('totalReports', 'Total Reports'),
       resolveStats: () => resolvePublishableStatsConfig('totalReports', 'Total Reports'),
       computeFunction: computeReportsStatistics
@@ -2307,7 +2361,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolvePublishableStatsConfig('totalWidgets', 'Total Widgets'),
       resolveStats: () => resolvePublishableStatsConfig('totalWidgets', 'Total Widgets'),
       computeFunction: computeWidgetsStatistics
@@ -2330,7 +2384,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolvePublishableStatsConfig('totalDashboards', 'Total Dashboards'),
       resolveStats: () => resolvePublishableStatsConfig('totalDashboards', 'Total Dashboards'),
       computeFunction: computeDashboardsStatistics
@@ -2361,7 +2415,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: ['customFields']
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveInvoicesStatsConfig({}, 'all'),
       resolveStats: resolveInvoicesStatsConfig,
       computeFunction: computeInvoicesStatistics
@@ -2421,6 +2475,12 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       { id: 'resolved', name: 'Resolved', filters: { status: 'Resolved' } },
       { id: 'closed', name: 'Closed', filters: { status: 'Closed' } }
     ],
+    statistics: {
+      scope: 'view',
+      stats: resolveCasesStatsConfig({}, 'all'),
+      resolveStats: resolveCasesStatsConfig,
+      computeFunction: computeCasesStatistics
+    },
     apiEndpoint: '/helpdesk/cases'
   },
 
@@ -2452,7 +2512,7 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       excludedFromDefault: []
     },
     statistics: {
-      scope: 'query',
+      scope: 'view',
       stats: resolveItemsStatsConfig(),
       resolveStats: resolveItemsStatsConfig,
       computeFunction: computeItemsStatistics

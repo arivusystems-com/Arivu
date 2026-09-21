@@ -29,6 +29,9 @@ const CASE_CREATE = /\b((create|open|file|raise|new)\b[\s\S]{0,30}\b(case|ticket
 
 const DEAL_UPDATE = /\b((update|move|mark|set)\b[\s\S]{0,40}\b(deal|stage|won|lost)\b|\bmark\s+(as\s+)?(won|lost)\b)/i;
 
+/** Generic field/status update on any module (after deal_update / create intents). */
+const RECORD_UPDATE = /\b((update|change|set|edit|modify|rename|patch)\b[\s\S]{0,80}\b(to|as|=|:)\b|\b(mark|make)\b[\s\S]{0,50}\b(as\s+)?(completed?|done|cancelled?|canceled|planned|open|closed|todo|in[\s_-]?progress)\b|\b(update|change|set|edit|modify)\b[\s\S]{0,50}\b(status|priority|stage|owner|title|name|amount|due|field|eventName)\b)/i;
+
 const QUOTE_DRAFT = /\b((draft|create|prepare|make)\b[\s\S]{0,30}\b(quote|quotation|proposal)\b)/i;
 
 const RESEARCH = /\b(research|enrich|look\s*up)\b[\s\S]{0,40}\b(company|organization|account|contact|lead|person)\b/i;
@@ -46,6 +49,7 @@ const INTENT_AGENT = {
   activity_log: 'task-activity',
   case_create: 'case-intelligence',
   deal_update: 'deal-intelligence',
+  record_update: 'record-update',
   quote_draft: 'deal-intelligence',
   research: 'customer-360',
   meeting_prep: 'meeting-intelligence',
@@ -98,6 +102,15 @@ function classifyIntentDetailed(query, request = {}) {
 
   if (DEAL_UPDATE.test(q)) {
     return pack('deal_update', 0.88, 'deal_update');
+  }
+
+  // Status/field updates beat create heuristics ("make this event as completed")
+  if (
+    RECORD_UPDATE.test(q)
+    && !TASK_CREATE.test(q)
+    && !CASE_CREATE.test(q)
+  ) {
+    return pack('record_update', 0.9, 'record_update');
   }
 
   if (TASK_CREATE.test(q) && !/\b(list|show|overdue|due|open)\b[\s\S]{0,20}\b(task|tasks|todo)/i.test(q)) {
@@ -323,6 +336,148 @@ function extractCaseTitle(query) {
   return title.slice(0, 255);
 }
 
+/**
+ * Normalize status values per module conventions.
+ */
+function normalizeUpdateStatus(moduleKey, raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  const lower = value.toLowerCase();
+  const mod = String(moduleKey || '').toLowerCase();
+
+  if (mod === 'events') {
+    if (/^complet/.test(lower) || lower === 'done') return 'Completed';
+    if (/^cancel/.test(lower)) return 'Cancelled';
+    if (/^plan/.test(lower)) return 'Planned';
+    return value;
+  }
+  if (mod === 'tasks') {
+    if (/^complet/.test(lower) || lower === 'done') return 'completed';
+    if (/^cancel/.test(lower)) return 'cancelled';
+    if (/^(todo|open|pending)$/.test(lower)) return 'todo';
+    if (/progress|doing|in[\s_-]?progress/.test(lower)) return 'in_progress';
+    return lower;
+  }
+  if (mod === 'deals') {
+    if (/^won$/.test(lower)) return 'Won';
+    if (/^lost$/.test(lower)) return 'Lost';
+    if (/^open$/.test(lower)) return 'Open';
+    return value;
+  }
+  if (mod === 'cases') {
+    if (/resolv|clos/.test(lower)) return 'resolved';
+    if (/^open$/.test(lower)) return 'open';
+    return lower;
+  }
+  return value;
+}
+
+/**
+ * Prefer explicit entity words in the ask over incidental words inside a title
+ * (e.g. "deal" inside "July 19th deal Followup" when user said "event").
+ */
+function detectUpdateModuleKey(query, focus = null) {
+  const q = String(query || '');
+  const lower = q.toLowerCase();
+  const focusModule = String(focus?.moduleKey || focus?.kind || '').trim().toLowerCase() || null;
+
+  if (/\bevents?\b|\bmeetings?\b|\bappointments?\b/i.test(q)) return 'events';
+  if (/\btasks?\b|\btodos?\b|\bto-dos?\b/i.test(q)) return 'tasks';
+  if (/\bcases?\b|\btickets?\b/i.test(q)) return 'cases';
+  if (/\bpeople\b|\bcontacts?\b|\bleads?\b/i.test(q)) return 'people';
+  if (/\borganizations?\b|\baccounts?\b|\bcompan(y|ies)\b/i.test(q)) return 'organizations';
+  if (/\bdeals?\b|\bpipeline\b|\bopportunit/i.test(q) && !/\bevents?\b|\btasks?\b/i.test(q)) return 'deals';
+  if (/\binvoices?\b/i.test(q)) return 'invoices';
+  if (/\bquotes?\b/i.test(q)) return 'quotes';
+
+  if (focusModule) return focusModule;
+
+  const { detectModuleKey } = require('../tools/moduleCatalog');
+  return detectModuleKey(lower, null) || null;
+}
+
+/**
+ * Extract a title/name the user named for the target record.
+ */
+function extractUpdateRecordTitle(query) {
+  const q = String(query || '').trim();
+  const titled = q.match(
+    /\b(?:title|name)\s+of\s+(?:the\s+)?(?:event|task|deal|case|meeting|record|contact|organization|company)?\s*(?:is\s*:|is|:)\s*["']?(.+?)["']?\s*(?=\s+(?:make|mark|update|change|set|edit)\b|[?.!]|$)/i,
+  );
+  if (titled?.[1]) {
+    return titled[1].replace(/^[:\s]+/, '').trim().slice(0, 255);
+  }
+
+  const named = q.match(
+    /\b(?:named|called|titled)\s+["']([^"']{2,120})["']/i,
+  )
+    || q.match(/\b(?:named|called|titled)\s+([A-Za-z0-9][\w\s.'-]{1,120}?)(?=\s+(?:make|mark|update|change|set|as|to)\b|[?.!]|$)/i);
+  if (named?.[1]) return named[1].trim().slice(0, 255);
+
+  const quoted = q.match(/["“]([^"”]{2,120})["”]/);
+  if (quoted?.[1]) return quoted[1].trim().slice(0, 255);
+
+  return null;
+}
+
+/**
+ * Heuristic field patch from natural language update asks.
+ * @returns {{ moduleKey: string|null, recordTitle: string|null, fields: Record<string, unknown> }}
+ */
+function extractRecordUpdatePatch(query, focus = null) {
+  const q = String(query || '').trim();
+  const moduleKey = detectUpdateModuleKey(q, focus);
+  const fields = {};
+  const recordTitle = extractUpdateRecordTitle(q) || (focus?.name ? String(focus.name).trim() : null);
+
+  const statusMatch = q.match(
+    /\b(?:mark|make|set|change|update)\b[\s\S]{0,60}\b(?:status\s+)?(?:to\s+|as\s+)?(completed?|done|cancelled?|canceled|planned|open|closed|won|lost|todo|in[\s_-]?progress|resolved)\b/i,
+  )
+    || q.match(/\bas\s+(completed?|done|cancelled?|canceled|planned|open|closed|won|lost)\b/i);
+  if (statusMatch?.[1]) {
+    const status = normalizeUpdateStatus(moduleKey, statusMatch[1]);
+    if (status) fields.status = status;
+  }
+
+  const priorityMatch = q.match(/\bpriority\b[\s\S]{0,40}\b(high|medium|low|urgent|critical)\b/i);
+  if (priorityMatch?.[1]) fields.priority = priorityMatch[1].toLowerCase();
+
+  const stageMatch = q.match(/\bstage\s+(?:to\s+)?([A-Za-z0-9 _-]{2,40})/i);
+  if (stageMatch?.[1]) fields.stage = stageMatch[1].trim();
+
+  const amountMatch = q.match(/\bamount\s+(?:to\s+)?\$?\s*([\d,]+(?:\.\d+)?)\b/i);
+  if (amountMatch?.[1]) {
+    const n = Number(String(amountMatch[1]).replace(/,/g, ''));
+    if (Number.isFinite(n)) fields.amount = n;
+  }
+
+  const fieldTo = q.match(
+    /\b(?:set|change|update|edit|rename)\s+([a-zA-Z][\w.]{1,40})\s+(?:to|as|=)\s+["']?([^"'?\n,]{1,200})["']?/i,
+  );
+  if (fieldTo?.[1] && fieldTo?.[2]) {
+    const key = fieldTo[1].trim();
+    const skip = new Set(['status', 'priority', 'stage', 'amount', 'this', 'the', 'a', 'an', 'of']);
+    if (!skip.has(key.toLowerCase())) {
+      fields[key] = fieldTo[2].trim();
+    }
+  }
+
+  const rename = q.match(
+    /\b(?:rename|retitle)\s+(?:(?:the\s+)?(?:event|task|deal|case|record)\s+)?(?:to\s+)?["']?([^"'?\n]{2,200})["']?/i,
+  );
+  if (rename?.[1] && !fields.title && !fields.name && !fields.eventName) {
+    if (moduleKey === 'events') fields.eventName = rename[1].trim();
+    else if (moduleKey === 'tasks') fields.title = rename[1].trim();
+    else fields.name = rename[1].trim();
+  }
+
+  return {
+    moduleKey: moduleKey || null,
+    recordTitle: recordTitle || null,
+    fields,
+  };
+}
+
 module.exports = {
   classifyIntent,
   classifyIntentDetailed,
@@ -331,8 +486,12 @@ module.exports = {
   extractEventTitle,
   extractEventSchedule,
   extractCaseTitle,
+  extractRecordUpdatePatch,
+  extractUpdateRecordTitle,
+  normalizeUpdateStatus,
   INTENT_AGENT,
   CRM_WORDS,
   CALENDAR_CREATE,
   LIST_CALENDAR,
+  RECORD_UPDATE,
 };

@@ -72,7 +72,7 @@
                     <button
                       type="button"
                       class="relative z-20 ml-auto shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 cursor-pointer"
-                      @click="closeDrawer"
+                      @click="requestClose"
                     >
                       <span class="absolute -inset-2.5" />
                       <span class="sr-only">{{ t('forms.previewClosePanelSr') }}</span>
@@ -213,7 +213,7 @@
                       <button
                         type="button"
                         class="rounded-lg px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                        @click="closeDrawer"
+                        @click="requestClose"
                       >{{ t('actions.cancel') }}</button>
                       <button
                         type="submit"
@@ -248,6 +248,7 @@ import { getFieldDisplayLabel } from '@/utils/fieldDisplay';
 import AppSection, { type AppSectionModelValue } from '@/components/people/AppSection.vue';
 import apiClient from '@/utils/apiClient';
 import { useTabs } from '@/composables/useTabs';
+import { confirmAction } from '@/composables/useConfirmAction';
 import { useCreationContext } from '@/utils/creationContext';
 import { getPeopleQuickCreateFields, getAppFields, getParticipationFields } from '@/platform/fields/peopleFieldModel';
 import { ensureModuleCreateLayout } from '@/platform/fields/createSurface';
@@ -913,6 +914,21 @@ function validateForm() {
   }
 }
 
+const requestClose = async () => {
+  if (saving.value) return;
+  if (
+    hasUnsavedChanges.value &&
+    !(await confirmAction({
+      message: t('common.drawerCloseConfirm'),
+      confirmLabel: t('common.drawerDiscardClose'),
+      tone: 'warning',
+    }))
+  ) {
+    return;
+  }
+  closeDrawer();
+};
+
 const closeDrawer = () => {
   if (!saving.value) {
     emit('close');
@@ -932,8 +948,7 @@ const closeDrawer = () => {
 };
 
 const handleDialogClose = () => {
-  if (userHasEdited.value) return;
-  closeDrawer();
+  requestClose();
 };
 
 const updateFormData = (data: Record<string, any>) => {
