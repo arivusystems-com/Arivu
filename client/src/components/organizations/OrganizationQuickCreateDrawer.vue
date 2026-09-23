@@ -128,13 +128,21 @@
                                   />
                                 </template>
                                 <template #vendor_catalog>
-                                  <VendorCatalogSection
+                                  <CreateDrawerCollapsibleSection
                                     v-if="mode === 'full' && showVendorCatalog"
-                                    ref="vendorCatalogSectionRef"
-                                    v-model="vendorCatalogLines"
-                                    :disabled="saving || (loading && isEditMode)"
-                                    :vendor-id="organizationId || null"
-                                  />
+                                    :title="t('organizations.vendorCatalogTitle')"
+                                    storage-key="create-drawer-section:organizations:composite-vendor_catalog"
+                                    :default-open="true"
+                                    content-class="space-y-3"
+                                  >
+                                    <VendorCatalogSection
+                                      ref="vendorCatalogSectionRef"
+                                      v-model="vendorCatalogLines"
+                                      hide-header
+                                      :disabled="saving || (loading && isEditMode)"
+                                      :vendor-id="organizationId || null"
+                                    />
+                                  </CreateDrawerCollapsibleSection>
                                 </template>
                               </DynamicForm>
 
@@ -224,6 +232,7 @@ import { useI18n } from 'vue-i18n';
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import DynamicForm from '@/components/common/DynamicForm.vue';
+import CreateDrawerCollapsibleSection from '@/components/common/CreateDrawerCollapsibleSection.vue';
 import WorkspaceScopedDrawerShell from '@/components/common/WorkspaceScopedDrawerShell.vue';
 import OrganizationParticipationSection from '@/components/organizations/OrganizationParticipationSection.vue';
 import VendorCatalogSection from '@/components/organizations/VendorCatalogSection.vue';

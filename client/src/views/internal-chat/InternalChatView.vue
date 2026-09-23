@@ -1318,19 +1318,32 @@
                   :placeholder="composerPlaceholder"
                   :disabled="!selectedSpaceId"
                   :mention-labels="composerMentionLabels"
+                  :mention-menu-open="mentionMenuOpen"
                   @submit="submitMessage"
                   @input="onComposerInput"
                   @update:text="onComposerPlainText"
+                  @mention-keydown="onMentionKeydown"
                 />
                 <ul
-                  v-if="mentionSuggestions.length || showMentionAllOption"
+                  v-if="mentionMenuOpen"
+                  ref="mentionListEl"
                   class="absolute bottom-full left-2 z-30 mb-1 max-h-40 w-64 overflow-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+                  role="listbox"
                 >
-                  <li v-if="showMentionAllOption">
+                  <li
+                    v-if="showMentionAllOption"
+                    role="option"
+                    data-mention-index="0"
+                    :aria-selected="mentionHighlightIndex === 0"
+                  >
                     <button
                       type="button"
-                      class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      :class="[
+                        'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                        mentionHighlightIndex === 0 ? 'bg-neutral-100 dark:bg-neutral-800' : '',
+                      ]"
                       @mousedown.prevent="insertMentionAll"
+                      @mouseenter="mentionHighlightIndex = 0"
                     >
                       <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
                         @
@@ -1344,11 +1357,20 @@
                     </button>
                   </li>
                   <li
-                    v-for="u in mentionSuggestions"
+                    v-for="(u, idx) in mentionSuggestions"
                     :key="u._id"
+                    role="option"
+                    :data-mention-index="mentionUserHighlightOffset + idx"
+                    :aria-selected="mentionHighlightIndex === mentionUserHighlightOffset + idx"
                   >
                     <div
-                      class="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      :class="[
+                        'flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                        mentionHighlightIndex === mentionUserHighlightOffset + idx
+                          ? 'bg-neutral-100 dark:bg-neutral-800'
+                          : '',
+                      ]"
+                      @mouseenter="mentionHighlightIndex = mentionUserHighlightOffset + idx"
                     >
                       <button
                         type="button"
@@ -2628,6 +2650,9 @@ const seenZoneAnchorId = computed(() => (
 const mentionSuggestions = ref([]);
 const mentionQuery = ref('');
 const mentionMenuActive = ref(false);
+const mentionMenuSuppressed = ref(false);
+const mentionHighlightIndex = ref(0);
+const mentionListEl = ref(null);
 const addingMentionUserId = ref('');
 
 const showMentionAllOption = computed(() => {
@@ -2635,6 +2660,16 @@ const showMentionAllOption = computed(() => {
   const q = String(mentionQuery.value || '').toLowerCase();
   return q === '' || 'all'.startsWith(q);
 });
+
+const mentionUserHighlightOffset = computed(() => (showMentionAllOption.value ? 1 : 0));
+
+const mentionOptionCount = computed(
+  () => mentionUserHighlightOffset.value + mentionSuggestions.value.length
+);
+
+const mentionMenuOpen = computed(
+  () => mentionMenuActive.value && mentionOptionCount.value > 0
+);
 const pinnedIds = ref([]);
 const pinnedMessages = ref([]);
 const pinnedStripExpanded = ref(false);
@@ -3965,6 +4000,8 @@ function updateMentionSuggestions() {
       mentionSuggestions.value = [];
       mentionQuery.value = '';
       mentionMenuActive.value = false;
+      mentionMenuSuppressed.value = false;
+      mentionHighlightIndex.value = 0;
       return;
     }
     q = String(fromEditor).toLowerCase();
@@ -3975,10 +4012,18 @@ function updateMentionSuggestions() {
       mentionSuggestions.value = [];
       mentionQuery.value = '';
       mentionMenuActive.value = false;
+      mentionMenuSuppressed.value = false;
+      mentionHighlightIndex.value = 0;
       return;
     }
     q = match[1].toLowerCase();
   }
+  if (mentionMenuSuppressed.value && q === mentionQuery.value) {
+    mentionSuggestions.value = [];
+    mentionMenuActive.value = false;
+    return;
+  }
+  mentionMenuSuppressed.value = false;
   mentionQuery.value = q;
   mentionMenuActive.value = true;
   if (!orgUsers.value.length) loadOrgUsers();
@@ -3991,6 +4036,56 @@ function updateMentionSuggestions() {
       return !q || label.includes(q);
     })
     .slice(0, 6);
+  mentionHighlightIndex.value = 0;
+}
+
+function closeMentionMenu() {
+  mentionMenuSuppressed.value = true;
+  mentionSuggestions.value = [];
+  mentionMenuActive.value = false;
+  mentionHighlightIndex.value = 0;
+}
+
+function scrollMentionHighlightIntoView() {
+  nextTick(() => {
+    const list = mentionListEl.value;
+    if (!list) return;
+    const item = list.querySelector(`[data-mention-index="${mentionHighlightIndex.value}"]`);
+    item?.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+function selectHighlightedMention() {
+  if (!mentionMenuOpen.value) return;
+  const idx = mentionHighlightIndex.value;
+  if (showMentionAllOption.value && idx === 0) {
+    insertMentionAll();
+    return;
+  }
+  const user = mentionSuggestions.value[idx - mentionUserHighlightOffset.value];
+  if (user) insertMention(user);
+}
+
+function onMentionKeydown(event) {
+  if (!mentionMenuOpen.value) return;
+  const max = mentionOptionCount.value - 1;
+  if (event.key === 'ArrowDown') {
+    mentionHighlightIndex.value = Math.min(mentionHighlightIndex.value + 1, max);
+    scrollMentionHighlightIntoView();
+    return;
+  }
+  if (event.key === 'ArrowUp') {
+    mentionHighlightIndex.value = Math.max(mentionHighlightIndex.value - 1, 0);
+    scrollMentionHighlightIntoView();
+    return;
+  }
+  if (event.key === 'Enter' || event.key === 'Tab') {
+    selectHighlightedMention();
+    return;
+  }
+  if (event.key === 'Escape') {
+    closeMentionMenu();
+  }
 }
 
 function replaceActiveMentionToken(label) {
@@ -3998,6 +4093,8 @@ function replaceActiveMentionToken(label) {
   mentionSuggestions.value = [];
   mentionQuery.value = '';
   mentionMenuActive.value = false;
+  mentionMenuSuppressed.value = false;
+  mentionHighlightIndex.value = 0;
   nextTick(() => {
     composerEditorRef.value?.focus();
     onComposerPlainText(composerEditorRef.value?.getPlainText?.() || plainTextFromInternalChatHtml(draft.value));

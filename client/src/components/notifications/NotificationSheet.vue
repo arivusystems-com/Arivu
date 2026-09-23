@@ -124,13 +124,21 @@
                         </div>
                         <div class="flex-1 min-w-0">
                           <div class="flex items-start justify-between gap-2">
-                            <p class="text-sm font-semibold text-neutral-900 dark:text-white">
+                            <p
+                              class="text-sm leading-snug"
+                              :class="entry.unreadCount > 0
+                                ? 'font-semibold text-neutral-900 dark:text-white'
+                                : 'font-medium text-neutral-600 dark:text-neutral-300'"
+                            >
                               {{ entry.groupLabel }}
                             </p>
                             <span
-                              class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-neutral-200 dark:bg-neutral-700 text-[11px] font-semibold text-neutral-700 dark:text-neutral-200"
+                              class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-semibold"
+                              :class="entry.unreadCount > 0
+                                ? 'bg-primary-500 text-white'
+                                : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200'"
                             >
-                              {{ entry.count }}
+                              {{ entry.unreadCount > 0 ? entry.unreadCount : entry.count }}
                             </span>
                           </div>
                           <p class="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 truncate">
@@ -284,7 +292,7 @@ function isNoUpdatesPlaceholder(item) {
   return t === 'no updates';
 }
 
-function getEventTypeGroupLabel(eventType, count) {
+function getEventTypeGroupLabel(eventType, count, unreadCount) {
   const t = String(eventType || '').toUpperCase();
   const map = {
     TASK_ASSIGNED: 'tasks assigned to you',
@@ -303,10 +311,14 @@ function getEventTypeGroupLabel(eventType, count) {
     PORTAL_ACCOUNT_CREATED: 'portal accounts created',
     USER_ADDED_TO_APP: 'access updates',
     SYSTEM_TRIAL_EXPIRING: 'trial expiring',
-    SYSTEM_SUBSCRIPTION_SUSPENDED: 'subscription updates'
+    SYSTEM_SUBSCRIPTION_SUSPENDED: 'subscription updates',
+    RECORD_COMMENT_MENTION: 'comment mentions',
+    TASK_COMMENT_MENTION: 'comment mentions'
   };
   const label = map[t] || (t ? formatEntityType(t.replace(/_/g, ' ')) : 'notifications');
-  return `${count} new ${label}`;
+  const unread = Number(unreadCount || 0);
+  if (unread <= 0) return `${count} ${label}`;
+  return `${unread} new ${label}`;
 }
 
 function buildSectionEntries(list) {
@@ -353,7 +365,7 @@ function buildSectionEntries(list) {
     return {
       kind: 'group',
       key: g.key,
-      groupLabel: getEventTypeGroupLabel(g.eventType, g.items.length),
+      groupLabel: getEventTypeGroupLabel(g.eventType, g.items.length, unreadCount),
       latestTitle,
       latest,
       count: g.items.length,

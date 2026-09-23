@@ -55,6 +55,9 @@ function looksLikeChatHtml(value) {
 
 function stripHtmlToPlain(html) {
   return String(html || '')
+    // Mention tokens look like tags (`<@id>`); convert before `/<[^>]+>/` strip.
+    .replace(/<@all>/gi, '@all')
+    .replace(/<@([a-f0-9]{24})>/gi, '@$1')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<[^>]+>/g, '')

@@ -164,6 +164,7 @@
             v-for="(item, idx) in filteredMentions"
             :key="`${item.type}:${item.id}`"
             type="button"
+            :data-mention-index="idx"
             :class="[
               'w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700',
               idx === mentionHighlightIndex ? 'bg-gray-100 dark:bg-gray-700' : ''
@@ -383,6 +384,17 @@ const filteredMentions = computed(() => {
     .slice(0, 10);
 });
 
+watch(
+  () => [showMentionDropdown.value, filteredMentions.value.length, mentionLoading.value],
+  () => {
+    if (!showMentionDropdown.value) return;
+    nextTick(() => {
+      updateDropdownPosition();
+      requestAnimationFrame(() => updateDropdownPosition());
+    });
+  }
+);
+
 const dropdownStyle = computed(() => ({
   top: `${dropdownPosition.value.top}px`,
   left: `${dropdownPosition.value.left}px`
@@ -547,7 +559,8 @@ const getMentionStartViewportRect = () => {
 
   const range = document.createRange();
   try {
-    const rawOffset = mentionStartOffset.value + 1;
+    // Anchor at the `@` itself (not after it) so left stays pinned while typing.
+    const rawOffset = mentionStartOffset.value;
     const maxOffset = startContainer.nodeType === Node.TEXT_NODE
       ? (startContainer.textContent?.length ?? 0)
       : startContainer.childNodes.length;
@@ -575,36 +588,66 @@ const getMentionStartViewportRect = () => {
   }
 };
 
+/** Keep mentionStart* pointed at the active `@` in the current text node. */
+const refreshMentionStartFromCaret = () => {
+  const editor = editorRef.value;
+  const sel = window.getSelection();
+  if (!editor || !sel?.rangeCount || !editor.contains(sel.anchorNode)) return;
+  const node = sel.anchorNode;
+  if (node.nodeType !== Node.TEXT_NODE) return;
+  const text = node.textContent || '';
+  const before = text.slice(0, sel.anchorOffset);
+  const atInNode = before.lastIndexOf('@');
+  if (atInNode === -1) return;
+  if (/\s/.test(before.slice(atInNode + 1))) return;
+  mentionStartContainer.value = node;
+  mentionStartOffset.value = atInNode;
+};
+
 const updateDropdownPosition = () => {
-  const anchorRect = mentionAnchorMode.value === 'caret'
-    ? (getCaretViewportRect() || getMentionStartViewportRect())
-    : null;
-  const anchor = mentionAnchorMode.value === 'button'
-    ? (mentionButtonRef.value || editorRef.value)
-    : editorRef.value;
-  if (!anchorRect && !anchor) return;
-  const rect = anchorRect || anchor.getBoundingClientRect();
+  const editorRect = editorRef.value?.getBoundingClientRect() || null;
+  let useRect = null;
+
+  if (mentionAnchorMode.value === 'caret') {
+    // Always pin to `@` horizontally; fall back to caret/editor only if needed.
+    const atRect = getMentionStartViewportRect();
+    const caretRect = getCaretViewportRect();
+    useRect = atRect || caretRect;
+  } else {
+    const anchor = mentionButtonRef.value || editorRef.value;
+    useRect = anchor?.getBoundingClientRect() || null;
+  }
+
+  if (!useRect && !editorRect) return;
+  if (!useRect) useRect = editorRect;
+
+  if (editorRect) {
+    const above = useRect.bottom < editorRect.top - 4;
+    const below = useRect.top > editorRect.bottom + 4;
+    if (above || below) useRect = editorRect;
+  }
+
   const measuredHeight = dropdownRef.value?.offsetHeight || 0;
   const measuredWidth = dropdownRef.value?.offsetWidth || 0;
   const estimatedHeight = measuredHeight > 0 ? measuredHeight : 0;
   const estimatedWidth = measuredWidth > 0 ? measuredWidth : 220;
-  const spaceAbove = rect.top;
-  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = useRect.top;
+  const spaceBelow = window.innerHeight - useRect.bottom;
 
   const preferAbove = true;
   let top;
   if (!measuredHeight) {
-    // First pass before dropdown is measurable: keep it close to anchor.
-    top = Math.max(8, rect.top - 8);
+    top = Math.max(8, useRect.top - 8);
   } else if (preferAbove && spaceAbove >= estimatedHeight + 8) {
-    top = rect.top - estimatedHeight - 6;
+    top = useRect.top - estimatedHeight - 6;
   } else if (spaceBelow >= estimatedHeight + 8) {
-    top = rect.bottom + 6;
+    top = useRect.bottom + 6;
   } else {
-    top = Math.max(8, rect.bottom + 6);
+    top = Math.max(8, Math.min(useRect.top - estimatedHeight - 6, window.innerHeight - estimatedHeight - 8));
   }
 
-  let left = rect.left;
+  // Left edge always aligned to the `@` (or button/editor fallback).
+  let left = useRect.left;
   left = Math.max(8, Math.min(left, window.innerWidth - estimatedWidth - 8));
 
   dropdownPosition.value = {
@@ -764,11 +807,32 @@ const handleInput = () => {
   }
   mentionQuery.value = query;
   mentionHighlightIndex.value = 0;
-  updateDropdownPosition();
+  refreshMentionStartFromCaret();
+  // Wait for filtered list height to settle before measuring.
+  nextTick(() => {
+    updateDropdownPosition();
+    requestAnimationFrame(() => updateDropdownPosition());
+  });
 };
 
 const handleFocus = () => {
   isEditorFocused.value = true;
+};
+
+const scrollMentionHighlightIntoView = () => {
+  nextTick(() => {
+    const list = dropdownRef.value;
+    if (!list) return;
+    const item = list.querySelector(`[data-mention-index="${mentionHighlightIndex.value}"]`);
+    if (!(item instanceof HTMLElement)) return;
+    const listRect = list.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    if (itemRect.bottom > listRect.bottom) {
+      list.scrollTop += itemRect.bottom - listRect.bottom;
+    } else if (itemRect.top < listRect.top) {
+      list.scrollTop -= listRect.top - itemRect.top;
+    }
+  });
 };
 
 const handleKeydown = (e) => {
@@ -785,11 +849,13 @@ const handleKeydown = (e) => {
         mentionHighlightIndex.value + 1,
         filteredMentions.value.length - 1
       );
+      scrollMentionHighlightIntoView();
       return;
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       mentionHighlightIndex.value = Math.max(mentionHighlightIndex.value - 1, 0);
+      scrollMentionHighlightIntoView();
       return;
     }
     if (e.key === 'Enter' || e.key === 'Tab') {
