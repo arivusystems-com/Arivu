@@ -129,12 +129,14 @@
                             >
                               <!-- DynamicForm is JS; static #slot names are typed as {}. -->
                               <template #[appParticipationSlot]>
-                                <section
+                                <CreateDrawerCollapsibleSection
                                   v-if="hasAppParticipationSection && !fieldSearch.trim()"
-                                  class="flex flex-col gap-4"
+                                  :title="t('records.genericAppParticipation')"
+                                  storage-key="create-drawer-section:people:composite-app_participation"
+                                  :default-open="true"
+                                  content-class="flex flex-col gap-4"
                                 >
-                                  <PeopleDrawerSectionHeading :label="t('records.genericAppParticipation')" />
-                                  <p class="text-sm text-gray-500 dark:text-gray-400 -mt-1">
+                                  <p class="text-sm text-gray-500 dark:text-gray-400">
                                     {{ t('people.peopleQuickCreateDrawerSelectAppsHint') }}
                                   </p>
                                   <PeopleCreateParticipationBody
@@ -155,7 +157,7 @@
                                     @set-app-form="({ appKey, value }) => setAppForm(appKey, value)"
                                     @update:single-app-form="(v) => (singleAppForm = v)"
                                   />
-                                </section>
+                                </CreateDrawerCollapsibleSection>
                               </template>
                             </DynamicForm>
 
@@ -238,9 +240,10 @@ declare const process: {
   };
 };
 
-import { ref, computed, watch, toRef, nextTick, onUnmounted, defineComponent, h, type PropType, type Component } from 'vue';
+import { ref, computed, watch, toRef, nextTick, onUnmounted, type PropType, type Component } from 'vue';
 import { XMarkIcon, BriefcaseIcon, LifebuoyIcon, CheckCircleIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 import DynamicForm from '@/components/common/DynamicForm.vue';
+import CreateDrawerCollapsibleSection from '@/components/common/CreateDrawerCollapsibleSection.vue';
 import PeopleCreateParticipationBody from '@/components/people/PeopleCreateParticipationBody.vue';
 import WorkspaceScopedDrawerShell from '@/components/common/WorkspaceScopedDrawerShell.vue';
 import { FORM_FIELD_SEARCH_CONTROL_CLASS } from '@/utils/formFieldControlClasses';
@@ -271,24 +274,6 @@ import {
   applyCreateOwnerDefaultsToPayload,
   resolveCurrentUserId
 } from '@/utils/recordCreateOwnerDefaults';
-
-const PeopleDrawerSectionHeading = defineComponent({
-  name: 'PeopleDrawerSectionHeading',
-  props: {
-    label: { type: String, required: true }
-  },
-  setup(props) {
-    return () =>
-      h(
-        'h3',
-        {
-          class:
-            'text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-white'
-        },
-        props.label
-      );
-  }
-});
 
 const props = defineProps({
   isOpen: {

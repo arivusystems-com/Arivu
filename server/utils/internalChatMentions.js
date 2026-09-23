@@ -53,8 +53,10 @@ async function humanizeInternalChatMentions(organizationId, text) {
     });
   }
 
-  if (/<\/?[a-z][\s\S]*>/i.test(raw)) {
+  if (/<\/?[a-z][\s\S]*>/i.test(raw) || /<@(?:all|[a-f0-9]{24})>/i.test(raw)) {
     raw = raw
+      .replace(/<@all>/gi, '@all')
+      .replace(/<@([a-f0-9]{24})>/gi, '@$1')
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/p>/gi, '\n')
       .replace(/<[^>]+>/g, '')

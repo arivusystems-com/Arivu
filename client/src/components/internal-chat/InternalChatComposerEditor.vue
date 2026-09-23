@@ -205,11 +205,13 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   /** Display names used to highlight `@Name` / `@all` in the composer. */
   mentionLabels: { type: Array, default: () => [] },
+  /** When true, Enter selects a mention instead of submitting. */
+  mentionMenuOpen: { type: Boolean, default: false },
   /** Unique when multiple composers are mounted (channel + thread). */
   bubblePluginKey: { type: String, default: 'internalChatComposerBubble' },
 });
 
-const emit = defineEmits(['update:modelValue', 'update:text', 'submit', 'input']);
+const emit = defineEmits(['update:modelValue', 'update:text', 'submit', 'input', 'mention-keydown']);
 
 const { t } = useI18n();
 const linkUrl = ref('https://');
@@ -326,6 +328,18 @@ function isSlashMenuBlockingEnter() {
   return list.querySelectorAll('.slash-command-item').length > 0;
 }
 
+const MENTION_NAV_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab']);
+
+function handleMentionMenuKeyDown(event) {
+  if (!props.mentionMenuOpen || !MENTION_NAV_KEYS.has(event.key)) return false;
+  if (event.key === 'Enter' && (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey)) {
+    return false;
+  }
+  event.preventDefault();
+  emit('mention-keydown', event);
+  return true;
+}
+
 const editor = useEditor({
   content: props.modelValue || '',
   editable: !props.disabled,
@@ -358,8 +372,10 @@ const editor = useEditor({
       'aria-label': props.placeholder || 'Message',
     },
     handleKeyDown: (_view, event) => {
+      if (event.isComposing) return false;
+      if (handleMentionMenuKeyDown(event)) return true;
       if (event.key === 'Enter' && !event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey) {
-        if (event.isComposing || isSlashMenuBlockingEnter()) return false;
+        if (isSlashMenuBlockingEnter()) return false;
         event.preventDefault();
         emit('submit');
         return true;

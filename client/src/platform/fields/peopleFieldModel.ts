@@ -167,6 +167,31 @@ export const PEOPLE_FIELD_METADATA: Record<string, FieldMetadata> = {
     isSystem: true,
     isVisibleInConfig: false,
   },
+  // Duplicate merge — set by mergeService only (Type A infrastructure)
+  mergedInto: {
+    owner: 'system',
+    intent: 'system',
+    fieldScope: 'CORE',
+    editable: false,
+    isSystem: true,
+    isVisibleInConfig: false,
+  },
+  mergedAt: {
+    owner: 'system',
+    intent: 'system',
+    fieldScope: 'CORE',
+    editable: false,
+    isSystem: true,
+    isVisibleInConfig: false,
+  },
+  mergedBy: {
+    owner: 'system',
+    intent: 'system',
+    fieldScope: 'CORE',
+    editable: false,
+    isSystem: true,
+    isVisibleInConfig: false,
+  },
   createdAt: {
     owner: 'system',
     intent: 'system',

@@ -6,9 +6,9 @@
   <section class="space-y-3" data-field-key="vendorCatalog">
     <div
       class="flex flex-wrap items-start justify-between gap-3"
-      :class="hideHeader ? 'items-center' : ''"
+      :class="effectiveHideHeader ? 'items-center' : ''"
     >
-      <div v-if="!hideHeader" class="min-w-0">
+      <div v-if="!effectiveHideHeader" class="min-w-0">
         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
           {{ t('organizations.vendorCatalogTitle') }}
         </h3>
@@ -347,6 +347,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'import-done']);
 
 const { t, d } = useI18n();
+const effectiveHideHeader = computed(() => props.hideHeader);
 
 const statusClass = computed(() => {
   switch (props.statusTone) {

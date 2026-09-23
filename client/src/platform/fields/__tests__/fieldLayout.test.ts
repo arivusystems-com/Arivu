@@ -108,6 +108,86 @@ describe('fieldLayout', () => {
     ]);
   });
 
+  it('collapses organizations contact into basic and pulls address/primaryContact', () => {
+    const { layout, fields } = applyFieldLayoutToModuleState(
+      'organizations',
+      [
+        { key: 'name', sectionId: 'basic', order: 0 },
+        { key: 'industry', sectionId: 'basic', order: 1 },
+        { key: 'website', sectionId: 'basic', order: 2 },
+        { key: 'phone', sectionId: 'contact', order: 3 },
+        { key: 'assignedTo', sectionId: 'contact', order: 4 },
+        { key: 'address', sectionId: 'additional', order: 5 },
+        { key: 'primaryContact', sectionId: 'additional', order: 6 },
+        { key: 'tags', sectionId: 'additional', order: 7 },
+        { key: 'createdAt', sectionId: 'additional', order: 8 }
+      ],
+      {
+        version: 1,
+        sections: [
+          { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
+          { id: 'contact', labelKey: 'settings.modFieldsSectionContact', order: 1, protected: true },
+          { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 2, protected: true }
+        ]
+      }
+    );
+
+    expect(layout.sections.map((s) => s.id)).toEqual(['basic', 'additional']);
+    expect(layout.orgBasicSeedOrder).toBe(2);
+    expect(fields.find((f) => f.key === 'phone')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'assignedTo')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'address')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'primaryContact')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'tags')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'createdAt')?.sectionId).toBe('additional');
+    expect(
+      fields.filter((f) => f.sectionId === 'basic').map((f) => f.key)
+    ).toEqual([
+      'name',
+      'industry',
+      'website',
+      'phone',
+      'assignedTo',
+      'address',
+      'primaryContact',
+      'tags'
+    ]);
+  });
+
+  it('collapses tasks scheduling into basic and pulls core fields', () => {
+    const { layout, fields } = applyFieldLayoutToModuleState(
+      'tasks',
+      [
+        { key: 'title', sectionId: 'general', order: 0, owner: 'core' },
+        { key: 'status', sectionId: 'general', order: 1, owner: 'core' },
+        { key: 'startDate', sectionId: 'scheduling', order: 2, owner: 'core' },
+        { key: 'dueDate', sectionId: 'scheduling', order: 3, owner: 'core' },
+        { key: 'estimatedHours', sectionId: 'additional', order: 4, owner: 'core' },
+        { key: 'taskType', sectionId: 'additional', order: 5, owner: 'core' },
+        { key: 'description', sectionId: 'additional', order: 6, owner: 'core' },
+        { key: 'createdAt', sectionId: 'additional', order: 7, owner: 'system' }
+      ],
+      {
+        version: 1,
+        sections: [
+          { id: 'general', labelKey: 'settings.modFieldsSectionGeneral', order: 0, protected: true },
+          { id: 'scheduling', labelKey: 'settings.modFieldsSectionScheduling', order: 1, protected: true },
+          { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 2, protected: true }
+        ]
+      }
+    );
+
+    expect(layout.sections.map((s) => s.id)).toEqual(['basic', 'additional']);
+    expect(layout.taskBasicSeedOrder).toBe(2);
+    expect(fields.find((f) => f.key === 'title')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'startDate')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'dueDate')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'estimatedHours')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'taskType')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'description')?.sectionId).toBe('basic');
+    expect(fields.find((f) => f.key === 'createdAt')?.sectionId).toBe('additional');
+  });
+
   it('allows moving core fields across layout sections', () => {
     const { layout, fields } = applyFieldLayoutToModuleState('people', [
       { key: 'first_name', order: 0 },

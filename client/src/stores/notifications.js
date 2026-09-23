@@ -638,17 +638,17 @@ export const useNotificationStore = defineStore('notifications', () => {
     if (!hasUnread.value) return;
     if (!authStore.isAuthenticated) return;
     const appKey = currentAppKey();
+    const readAt = new Date().toISOString();
 
-    // Optimistic update
+    // Optimistic update (replace array so list/group computeds re-render)
     const previous = items.value.map(n => ({ id: n.id, readAt: n.readAt }));
-    items.value.forEach(n => {
-      if (!n.readAt) n.readAt = new Date().toISOString();
-    });
     const previousUnread = unreadCount.value;
+    items.value = items.value.map(n => (n.readAt ? n : { ...n, readAt }));
     unreadCount.value = 0;
+    writeCachedUnreadPreview(appKey, 0);
 
     try {
-      const res = await fetch('/api/notifications/read-all', {
+      const res = await fetch(`/api/notifications/read-all?appKey=${encodeURIComponent(appKey)}`, {
         method: 'POST',
         headers: buildHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ appKey })
@@ -656,12 +656,13 @@ export const useNotificationStore = defineStore('notifications', () => {
       if (!res.ok) throw new Error('Failed to mark all as read');
     } catch (err) {
       console.error('[notifications] markAllRead error:', err);
-      // Roll back optimistic update
-      previous.forEach(old => {
-        const current = items.value.find(n => n.id === old.id);
-        if (current) current.readAt = old.readAt || null;
+      items.value = items.value.map(n => {
+        const old = previous.find(p => p.id === n.id);
+        if (!old) return n;
+        return { ...n, readAt: old.readAt || null };
       });
       unreadCount.value = previousUnread;
+      writeCachedUnreadPreview(appKey, previousUnread);
     }
   }
 

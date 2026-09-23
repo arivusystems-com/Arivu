@@ -1151,6 +1151,10 @@ function getBaseFieldsForKey(key) {
             'deletedAt',
             'deletedBy',
             'deletionReason',
+            // Duplicate merge - set by mergeService only; never create/edit UI
+            'mergedInto',
+            'mergedAt',
+            'mergedBy',
             'calendarSync',
             'playbookState',
             // Connector sync metadata — set by integrations only; never create/edit UI

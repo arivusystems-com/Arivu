@@ -9,6 +9,10 @@ const GLOBAL_SYSTEM_FIELD_KEYS = new Set([
   'deletedat',
   'deletedby',
   'deletionreason',
+  // Duplicate merge — set by mergeService only; never create/edit UI
+  'mergedinto',
+  'mergedat',
+  'mergedby',
   'source',
   'appointment',
   'calendarsync',

@@ -3,26 +3,129 @@
   Replaces flat OrganizationTypesSection multi-select.
 -->
 <template>
-  <section :class="sectionClass">
-    <div v-if="fullMode" class="flex items-center gap-3">
-      <h3 class="shrink-0 text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-white">
-        {{ t('records.genericAppParticipation') }}
-      </h3>
-      <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700" aria-hidden="true" />
-    </div>
-    <template v-else>
-      <div class="space-y-1">
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
-          {{ t('records.genericAppParticipation') }}
-        </h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ t('organizations.organizationQuickCreateSelectAppsHint') }}
-        </p>
-      </div>
-    </template>
-    <p v-if="fullMode" class="text-sm text-gray-500 dark:text-gray-400 -mt-1">
+  <CreateDrawerCollapsibleSection
+    v-if="fullMode"
+    :title="t('records.genericAppParticipation')"
+    storage-key="create-drawer-section:organizations:composite-app_participation"
+    :default-open="true"
+    :content-class="typeof sectionClass === 'string' ? `flex flex-col gap-4 ${sectionClass}` : 'flex flex-col gap-4'"
+  >
+    <p class="text-sm text-gray-500 dark:text-gray-400">
       {{ t('organizations.organizationQuickCreateSelectAppsHint') }}
     </p>
+    <template v-if="availableApps.length === 0">
+      <div class="text-sm text-gray-500 dark:text-gray-400">
+        {{ t('organizations.organizationQuickCreateNoParticipationApps') }}
+      </div>
+    </template>
+    <template v-else>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          v-for="appKey in availableApps"
+          :key="appKey"
+          type="button"
+          class="relative flex items-center gap-3 rounded-lg border p-3.5 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          :class="
+            isAppSelected(appKey)
+              ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-500/20 dark:border-indigo-500 dark:bg-indigo-950/25'
+              : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600'
+          "
+          :aria-pressed="isAppSelected(appKey)"
+          @click="toggleApp(appKey)"
+        >
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+            :class="meta(appKey).iconBg"
+          >
+            <component
+              :is="meta(appKey).icon"
+              class="h-5 w-5"
+              :class="meta(appKey).iconColor"
+              aria-hidden="true"
+            />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-sm font-semibold text-gray-900 dark:text-white">
+              {{ getAppLabel(appKey) }}
+            </div>
+            <div
+              v-if="isAppSelected(appKey) && appForms[appKey]?.participationType"
+              class="truncate text-xs text-indigo-600 dark:text-indigo-400"
+            >
+              {{ appForms[appKey].participationType }}
+            </div>
+            <div v-else-if="!isAppSelected(appKey)" class="text-xs text-gray-500 dark:text-gray-400">
+              {{ t('people.peopleQuickCreateDrawerTapToAdd') }}
+            </div>
+          </div>
+          <CheckCircleIcon
+            v-if="isAppSelected(appKey)"
+            class="absolute right-2 top-2 h-5 w-5 text-indigo-600 dark:text-indigo-400"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+    </template>
+
+    <p v-if="errors.types || errors.participation" class="text-sm text-red-600 dark:text-red-400">
+      {{ errors.types || errors.participation }}
+    </p>
+
+    <div v-if="selectedApps.length > 0" class="space-y-4">
+      <div
+        v-for="appKey in selectedApps"
+        :key="`config-${appKey}`"
+        class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/40"
+      >
+        <div class="flex items-center gap-2.5 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+          <div
+            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+            :class="meta(appKey).iconBg"
+          >
+            <component
+              :is="meta(appKey).icon"
+              class="h-4 w-4"
+              :class="meta(appKey).iconColor"
+              aria-hidden="true"
+            />
+          </div>
+          <span class="text-sm font-medium text-gray-900 dark:text-white">
+            {{ getAppLabel(appKey) }}
+          </span>
+          <button
+            type="button"
+            class="ml-auto text-xs font-medium text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+            @click="toggleApp(appKey)"
+          >
+            {{ t('actions.remove') }}
+          </button>
+        </div>
+        <div class="p-4">
+          <OrganizationAppSection
+            :app-key="appKey"
+            :model-value="appForms[appKey] || { participationType: null }"
+            embedded
+            collapsible-dependent-fields
+            hide-section-title
+            :single-column="singleColumn"
+            :module-override="moduleOverride"
+            :errors="appErrors[appKey] || {}"
+            @update:model-value="(v) => setAppForm(appKey, v)"
+          />
+        </div>
+      </div>
+    </div>
+  </CreateDrawerCollapsibleSection>
+
+  <section v-else :class="sectionClass">
+    <div class="space-y-1">
+      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+        {{ t('records.genericAppParticipation') }}
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        {{ t('organizations.organizationQuickCreateSelectAppsHint') }}
+      </p>
+    </div>
 
     <div v-if="availableApps.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
       {{ t('organizations.organizationQuickCreateNoParticipationApps') }}
@@ -136,6 +239,7 @@ import {
   GlobeAltIcon,
   CheckCircleIcon,
 } from '@heroicons/vue/24/outline';
+import CreateDrawerCollapsibleSection from '@/components/common/CreateDrawerCollapsibleSection.vue';
 import OrganizationAppSection from '@/components/organizations/OrganizationAppSection.vue';
 import { getAppLabel } from '@/utils/getRoleDisplay';
 import { useAuthStore } from '@/stores/authRegistry';

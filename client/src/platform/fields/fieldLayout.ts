@@ -26,6 +26,16 @@ export type FieldLayout = {
    * When missing/older, core fields are reordered to PEOPLE_BASIC_SEED_ORDER once.
    */
   peopleBasicSeedOrder?: number;
+  /**
+   * One-shot repair marker for organizations Basic Information seed.
+   * Collapses Contact Details and pulls address/primaryContact into basic once.
+   */
+  orgBasicSeedOrder?: number;
+  /**
+   * One-shot repair marker for tasks Basic Information seed.
+   * Collapses Scheduling/General and pulls all core fields into basic once.
+   */
+  taskBasicSeedOrder?: number;
 };
 
 export type LayoutField = {
@@ -49,13 +59,11 @@ const MODULE_DEFAULT_SECTIONS: Record<string, FieldLayoutSection[]> = {
   ],
   organizations: [
     { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
-    { id: 'contact', labelKey: 'settings.modFieldsSectionContact', order: 1, protected: true },
-    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 2, protected: true }
+    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 1, protected: true }
   ],
   tasks: [
-    { id: 'general', labelKey: 'settings.modFieldsSectionGeneral', order: 0, protected: true },
-    { id: 'scheduling', labelKey: 'settings.modFieldsSectionScheduling', order: 1, protected: true },
-    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 2, protected: true }
+    { id: 'basic', labelKey: 'settings.modFieldsSectionBasic', order: 0, protected: true },
+    { id: 'additional', labelKey: 'settings.modFieldsSectionAdditional', order: 1, protected: true }
   ],
   events: [
     { id: 'general', labelKey: 'settings.modFieldsSectionGeneral', order: 0, protected: true },
@@ -179,27 +187,85 @@ const PEOPLE_BASIC_SEED_ORDER_VERSION = 1;
 /** Legacy people sections collapsed into Basic Information. */
 const PEOPLE_LEGACY_SECTION_IDS = new Set(['contact', 'assignment']);
 
+/** Legacy organizations Contact Details collapsed into Basic Information. */
+const ORG_LEGACY_SECTION_IDS = new Set(['contact']);
+
 const ORG_SEED_SECTION: Record<string, string> = {
   name: 'basic',
   industry: 'basic',
   website: 'basic',
-  description: 'basic',
-  phone: 'contact',
-  email: 'contact',
-  assignedto: 'contact'
+  phone: 'basic',
+  email: 'basic',
+  assignedto: 'basic',
+  address: 'basic',
+  primarycontact: 'basic',
+  tags: 'basic',
+  description: 'basic'
 };
 
+/**
+ * Canonical organizations Basic Information order.
+ * Keep in sync with server/utils/fieldLayout.js ORG_BASIC_SEED_ORDER.
+ */
+const ORG_BASIC_SEED_ORDER = [
+  'name',
+  'industry',
+  'website',
+  'phone',
+  'email',
+  'assignedto',
+  'address',
+  'primarycontact',
+  'tags',
+  'description'
+] as const;
+
+const ORG_BASIC_SEED_ORDER_VERSION = 2;
+
 const TASK_SEED_SECTION: Record<string, string> = {
-  title: 'general',
-  name: 'general',
-  status: 'general',
-  priority: 'general',
-  relatedto: 'general',
-  assignedto: 'general',
-  duedate: 'scheduling',
-  startdate: 'scheduling',
-  enddate: 'scheduling'
+  title: 'basic',
+  name: 'basic',
+  status: 'basic',
+  priority: 'basic',
+  assignedto: 'basic',
+  relatedto: 'basic',
+  startdate: 'basic',
+  duedate: 'basic',
+  enddate: 'basic',
+  tasktype: 'basic',
+  description: 'basic',
+  estimatedhours: 'basic',
+  actualhours: 'basic',
+  projectid: 'basic',
+  tags: 'basic',
+  subtasks: 'basic'
 };
+
+/**
+ * Canonical tasks Basic Information order.
+ * Keep in sync with server/utils/fieldLayout.js TASK_BASIC_SEED_ORDER.
+ */
+const TASK_BASIC_SEED_ORDER = [
+  'title',
+  'status',
+  'priority',
+  'assignedto',
+  'relatedto',
+  'startdate',
+  'duedate',
+  'tasktype',
+  'description',
+  'estimatedhours',
+  'actualhours',
+  'projectid',
+  'tags',
+  'subtasks'
+] as const;
+
+const TASK_BASIC_SEED_ORDER_VERSION = 2;
+
+/** Legacy tasks Scheduling collapsed into Basic Information. */
+const TASK_LEGACY_SECTION_IDS = new Set(['scheduling']);
 
 /** Commercial + inventory header fields → Basic Information (system/meta stay additional via default). */
 const COMMERCIAL_BASIC_SEED: Record<string, string> = {
@@ -340,6 +406,10 @@ export function normalizeFieldLayout(
     }
     // People: Contact Details + Assignment collapsed into Basic Information
     if (mod === 'people' && PEOPLE_LEGACY_SECTION_IDS.has(id)) continue;
+    // Organizations: Contact Details collapsed into Basic Information
+    if (mod === 'organizations' && ORG_LEGACY_SECTION_IDS.has(id)) continue;
+    // Tasks: Scheduling collapsed into General
+    if (mod === 'tasks' && TASK_LEGACY_SECTION_IDS.has(id)) continue;
     if (byId.has(id)) continue;
     byId.set(id, {
       id,
@@ -364,6 +434,18 @@ export function normalizeFieldLayout(
   const next: FieldLayout = { version: 1, sections };
   if (mod === 'people' && typeof existing.peopleBasicSeedOrder === 'number') {
     next.peopleBasicSeedOrder = existing.peopleBasicSeedOrder;
+  }
+  if (mod === 'organizations' && typeof existing.orgBasicSeedOrder === 'number') {
+    next.orgBasicSeedOrder = existing.orgBasicSeedOrder;
+  }
+  if (mod === 'tasks') {
+    const prior =
+      typeof existing.taskBasicSeedOrder === 'number'
+        ? existing.taskBasicSeedOrder
+        : typeof (existing as { taskGeneralSeedOrder?: number }).taskGeneralSeedOrder === 'number'
+          ? (existing as { taskGeneralSeedOrder?: number }).taskGeneralSeedOrder
+          : undefined;
+    if (typeof prior === 'number') next.taskBasicSeedOrder = prior;
   }
   return next;
 }
@@ -422,6 +504,123 @@ function reorderPeopleBasicSeedFields(fields: LayoutField[], layout: FieldLayout
 }
 
 /**
+ * One-shot: move org seed keys into Basic Information and reorder.
+ */
+function repairOrgBasicSeedFields(fields: LayoutField[], layout: FieldLayout): LayoutField[] {
+  const basicId = layout.sections.find((s) => s.id === 'basic')?.id;
+  if (!basicId) return fields;
+
+  const remapped = fields.map((field) => {
+    const nk = normalizeKey(String(field.key || ''));
+    if (ORG_SEED_SECTION[nk] === 'basic') {
+      return field.sectionId === basicId ? field : { ...field, sectionId: basicId };
+    }
+    return field;
+  });
+
+  const seedRank = new Map<string, number>(ORG_BASIC_SEED_ORDER.map((k, i) => [k, i]));
+
+  const basicSeeded: LayoutField[] = [];
+  const basicOther: LayoutField[] = [];
+  const nonBasic: LayoutField[] = [];
+
+  for (const field of remapped) {
+    if (String(field.sectionId) !== basicId) {
+      nonBasic.push(field);
+      continue;
+    }
+    const nk = normalizeKey(String(field.key || ''));
+    if (seedRank.has(nk)) basicSeeded.push(field);
+    else basicOther.push(field);
+  }
+
+  basicSeeded.sort(
+    (a, b) =>
+      (seedRank.get(normalizeKey(String(a.key || ''))) ?? 0) -
+      (seedRank.get(normalizeKey(String(b.key || ''))) ?? 0)
+  );
+
+  const bySection = new Map<string, LayoutField[]>();
+  for (const s of layout.sections) bySection.set(s.id, []);
+  for (const f of [...basicSeeded, ...basicOther]) {
+    bySection.get(basicId)!.push(f);
+  }
+  for (const f of nonBasic) {
+    const sid = String(f.sectionId || '');
+    if (bySection.has(sid)) bySection.get(sid)!.push(f);
+    else bySection.get(layout.sections[layout.sections.length - 1]!.id)!.push(f);
+  }
+
+  const out: LayoutField[] = [];
+  let order = 0;
+  for (const s of sortSections(layout.sections)) {
+    for (const f of bySection.get(s.id) || []) {
+      out.push({ ...f, sectionId: s.id, order: order++ });
+    }
+  }
+  return out;
+}
+
+/**
+ * One-shot: collapse Scheduling + move all core task fields into Basic Information and reorder.
+ */
+function repairTaskBasicSeedFields(fields: LayoutField[], layout: FieldLayout): LayoutField[] {
+  const basicId = layout.sections.find((s) => s.id === 'basic')?.id;
+  if (!basicId) return fields;
+
+  const remapped = fields.map((field) => {
+    const nk = normalizeKey(String(field.key || ''));
+    const owner = String(field.owner || field.metadata?.owner || '').toLowerCase();
+    if (TASK_SEED_SECTION[nk] === 'basic' || owner === 'core') {
+      return field.sectionId === basicId ? field : { ...field, sectionId: basicId };
+    }
+    return field;
+  });
+
+  const seedRank = new Map<string, number>(TASK_BASIC_SEED_ORDER.map((k, i) => [k, i]));
+
+  const basicSeeded: LayoutField[] = [];
+  const basicOther: LayoutField[] = [];
+  const nonBasic: LayoutField[] = [];
+
+  for (const field of remapped) {
+    if (String(field.sectionId) !== basicId) {
+      nonBasic.push(field);
+      continue;
+    }
+    const nk = normalizeKey(String(field.key || ''));
+    if (seedRank.has(nk)) basicSeeded.push(field);
+    else basicOther.push(field);
+  }
+
+  basicSeeded.sort(
+    (a, b) =>
+      (seedRank.get(normalizeKey(String(a.key || ''))) ?? 0) -
+      (seedRank.get(normalizeKey(String(b.key || ''))) ?? 0)
+  );
+
+  const bySection = new Map<string, LayoutField[]>();
+  for (const s of layout.sections) bySection.set(s.id, []);
+  for (const f of [...basicSeeded, ...basicOther]) {
+    bySection.get(basicId)!.push(f);
+  }
+  for (const f of nonBasic) {
+    const sid = String(f.sectionId || '');
+    if (bySection.has(sid)) bySection.get(sid)!.push(f);
+    else bySection.get(layout.sections[layout.sections.length - 1]!.id)!.push(f);
+  }
+
+  const out: LayoutField[] = [];
+  let order = 0;
+  for (const s of sortSections(layout.sections)) {
+    for (const f of bySection.get(s.id) || []) {
+      out.push({ ...f, sectionId: s.id, order: order++ });
+    }
+  }
+  return out;
+}
+
+/**
  * Ensure every field has a sectionId; return layout + fields with sectionIds filled.
  * Does not mutate ownership / context / dataType.
  */
@@ -443,6 +642,14 @@ export function ensureFieldsHaveSectionIds(
     if (mod === 'people' && PEOPLE_LEGACY_SECTION_IDS.has(sid) && validIds.has('basic')) {
       sid = 'basic';
     }
+    // Organizations: Contact Details → Basic Information
+    if (mod === 'organizations' && ORG_LEGACY_SECTION_IDS.has(sid) && validIds.has('basic')) {
+      sid = 'basic';
+    }
+    // Tasks: Scheduling → Basic Information
+    if (mod === 'tasks' && TASK_LEGACY_SECTION_IDS.has(sid) && validIds.has('basic')) {
+      sid = 'basic';
+    }
     if (sid && validIds.has(sid)) {
       return field.sectionId === sid ? field : { ...field, sectionId: sid };
     }
@@ -455,7 +662,10 @@ export function ensureFieldsHaveSectionIds(
   // Bootstrap repair: primary section empty but seeded keys dumped into additional
   if (
     primaryId &&
-    (COMMERCIAL_LAYOUT_MODULES.has(mod) || mod === 'people')
+    (COMMERCIAL_LAYOUT_MODULES.has(mod) ||
+      mod === 'people' ||
+      mod === 'organizations' ||
+      mod === 'tasks')
   ) {
     const primaryOccupied = mapped.some((f) => String(f.sectionId) === primaryId);
     if (!primaryOccupied) {
@@ -492,6 +702,27 @@ export function applyFieldLayoutToModuleState(
     }
   }
 
+  if (mod === 'organizations') {
+    const currentVersion = Number(layout.orgBasicSeedOrder || 0);
+    if (currentVersion < ORG_BASIC_SEED_ORDER_VERSION) {
+      ordered = repairOrgBasicSeedFields(ordered, layout);
+      layout = { ...layout, orgBasicSeedOrder: ORG_BASIC_SEED_ORDER_VERSION };
+    }
+  }
+
+  if (mod === 'tasks') {
+    const currentVersion = Number(
+      layout.taskBasicSeedOrder ||
+        (layout as { taskGeneralSeedOrder?: number }).taskGeneralSeedOrder ||
+        0
+    );
+    if (currentVersion < TASK_BASIC_SEED_ORDER_VERSION) {
+      ordered = repairTaskBasicSeedFields(ordered, layout);
+      layout = { ...layout, taskBasicSeedOrder: TASK_BASIC_SEED_ORDER_VERSION };
+      delete (layout as { taskGeneralSeedOrder?: number }).taskGeneralSeedOrder;
+    }
+  }
+
   return { layout, fields: ordered };
 }
 
@@ -505,6 +736,12 @@ export function flattenFieldsByLayout(fields: LayoutField[], layout: FieldLayout
     let sid = String(f.sectionId || '');
     if (sid === 'general' && bySection.has('basic')) sid = 'basic';
     if (PEOPLE_LEGACY_SECTION_IDS.has(sid) && bySection.has('basic') && !bySection.has(sid)) {
+      sid = 'basic';
+    }
+    if (ORG_LEGACY_SECTION_IDS.has(sid) && bySection.has('basic') && !bySection.has(sid)) {
+      sid = 'basic';
+    }
+    if (TASK_LEGACY_SECTION_IDS.has(sid) && bySection.has('basic') && !bySection.has(sid)) {
       sid = 'basic';
     }
     if (bySection.has(sid)) bySection.get(sid)!.push(sid === f.sectionId ? f : { ...f, sectionId: sid });

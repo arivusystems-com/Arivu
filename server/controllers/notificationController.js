@@ -85,7 +85,7 @@ async function enrichWithEntityTitles(items, organizationId) {
 function normalizeAppKey(req) {
   const fromQuery = req.query.appKey;
   const fromBody = req.body?.appKey;
-  const fromContext = req.appContext?.appKey;
+  const fromContext = req.appKey || req.appContext?.appKey;
   const appKey = fromQuery || fromBody || fromContext;
   if (!appKey || !APP_KEYS.includes(appKey)) {
     return null;
@@ -216,6 +216,7 @@ exports.markAllRead = async (req, res) => {
         userId: req.user._id,
         organizationId: req.user.organizationId,
         appKey,
+        channel: 'IN_APP',
         readAt: null
       },
       { $set: { readAt: new Date() } }

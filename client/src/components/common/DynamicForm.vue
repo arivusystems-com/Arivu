@@ -63,13 +63,13 @@
       <template v-if="useFieldLayoutFullForm">
         <div class="flex flex-col gap-8">
           <template v-for="(block, blockIdx) in createSurfaceBlocks" :key="block.type === 'fields' ? `fields-${block.sectionId}` : `composite-${block.id}`">
-            <section
+            <CreateDrawerCollapsibleSection
               v-if="block.type === 'fields'"
-              class="space-y-3"
+              :title="block.label"
+              :storage-key="createSectionStorageKey(block.sectionId)"
+              :default-open="true"
+              content-class="space-y-3"
             >
-              <h3 class="text-sm font-semibold tracking-wide text-gray-900 dark:text-white uppercase">
-                {{ block.label }}
-              </h3>
               <div :class="['grid gap-4', props.singleColumn ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2']">
                 <div
                   v-for="field in block.fields"
@@ -127,7 +127,7 @@
                   />
                 </div>
               </div>
-            </section>
+            </CreateDrawerCollapsibleSection>
             <div v-else-if="block.type === 'composite'">
               <slot v-if="block.id === 'lines'" name="lines">
                 <slot name="after-quick-create" />
@@ -345,6 +345,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 import DynamicFormField from './DynamicFormField.vue';
+import CreateDrawerCollapsibleSection from './CreateDrawerCollapsibleSection.vue';
 
 // Lazy-load to avoid circular chunk-settings ↔ record-activity init (production TDZ on _export_sfc).
 const TaskDescriptionEditor = defineAsyncComponent(
@@ -1123,6 +1124,12 @@ function fieldGridCellClass(field) {
     (field.dataType === 'Text-Area' || field.dataType === 'RichText' || field.dataType === 'Image' || (props.moduleKey === 'tasks' && field.key === 'description')) && !props.singleColumn ? 'md:col-span-2' : '',
     props.moduleKey === 'tasks' && field.key === 'description' ? 'w-full' : ''
   ];
+}
+
+function createSectionStorageKey(sectionId) {
+  const moduleKey = String(props.moduleKey || 'module').toLowerCase();
+  const id = String(sectionId || 'section');
+  return `create-drawer-section:${moduleKey}:${id}`;
 }
 
 const filterQuoteFullFormFields = (fields) => {

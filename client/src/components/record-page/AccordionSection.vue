@@ -12,7 +12,7 @@
         ]"
         aria-hidden="true"
       />
-      <span class="flex-1 font-semibold text-gray-900 dark:text-white">{{ title }}</span>
+      <span :class="['flex-1 font-semibold text-gray-900 dark:text-white', titleClass]">{{ title }}</span>
       <slot name="badge" />
       <slot name="actions" />
     </summary>
@@ -41,6 +41,10 @@ const props = defineProps({
     default: true
   },
   contentClass: {
+    type: String,
+    default: ''
+  },
+  titleClass: {
     type: String,
     default: ''
   }

@@ -24,8 +24,8 @@ router.use(resolveAppContext);
 router.use(organizationIsolation);
 
 router.get('/', listNotifications);
-router.post('/:id/read', markRead);
 router.post('/read-all', markAllRead);
+router.post('/:id/read', markRead);
 
 // Dev-only helpdesk notification simulation (see notificationDevSimulator.js)
 router.get('/dev/simulate/meta', notificationDevController.simulateHelpdeskMeta);

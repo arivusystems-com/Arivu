@@ -144,12 +144,25 @@ See `docs/architecture/notifications-hardening.md`.
 
                         <div class="flex-1 min-w-0 pr-8">
                           <div class="flex items-start justify-between gap-2">
-                            <p class="text-[13px] font-semibold leading-snug tracking-[-0.01em] text-neutral-900 dark:text-white">
+                            <p
+                              class="text-[13px] leading-snug tracking-[-0.01em]"
+                              :class="entry.unreadCount > 0
+                                ? 'font-semibold text-neutral-900 dark:text-white'
+                                : 'font-medium text-neutral-600 dark:text-neutral-300'"
+                            >
                               {{ entry.groupLabel }}
                             </p>
                             <div class="flex items-center gap-1.5 flex-shrink-0">
                               <span
+                                v-if="entry.unreadCount > 0"
                                 class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary-500 text-[10px] font-bold text-white shadow-sm"
+                                :aria-label="t('notifications.countInGroupAria', { count: entry.unreadCount })"
+                              >
+                                {{ entry.unreadCount }}
+                              </span>
+                              <span
+                                v-else
+                                class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-[10px] font-semibold text-neutral-500 dark:text-neutral-400"
                                 :aria-label="t('notifications.countInGroupAria', { count: entry.count })"
                               >
                                 {{ entry.count }}
@@ -325,7 +338,7 @@ function isNoUpdatesPlaceholder(item) {
 }
 
 /** Human-readable labels for event-type groups (e.g. "3 new tasks assigned to you") */
-function getEventTypeGroupLabel(eventType, count) {
+function getEventTypeGroupLabel(eventType, count, unreadCount) {
   const t = String(eventType || '').toUpperCase();
   const map = {
     TASK_ASSIGNED: 'tasks assigned to you',
@@ -349,7 +362,9 @@ function getEventTypeGroupLabel(eventType, count) {
     TASK_COMMENT_MENTION: 'comment mentions'
   };
   const label = map[t] || (t ? formatEntityType(t.replace(/_/g, ' ')) : 'notifications');
-  return `${count} new ${label}`;
+  const unread = Number(unreadCount || 0);
+  if (unread <= 0) return `${count} ${label}`;
+  return `${unread} new ${label}`;
 }
 
 function buildSectionEntries(list) {
@@ -400,7 +415,7 @@ function buildSectionEntries(list) {
     return {
       kind: 'group',
       key: g.key,
-      groupLabel: getEventTypeGroupLabel(g.eventType, g.items.length),
+      groupLabel: getEventTypeGroupLabel(g.eventType, g.items.length, unreadCount),
       latestTitle,
       latest,
       count: g.items.length,
