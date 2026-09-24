@@ -131,6 +131,7 @@
         :is="currentSalesTabComponent"
         ref="salesTabContentRef"
         class="min-h-0 flex-1"
+        v-bind="currentSalesTabProps"
         @selected-module-change="salesSelectedModule = $event"
         :on-navigate-to-pipelines="() => { activeSalesTab = 'pipelines'; }"
       />
@@ -140,6 +141,7 @@
         ref="appTabContentRef"
         :app-key="String(selectedApp || '').toUpperCase()"
         class="min-h-0 flex-1"
+        v-bind="currentAppTabProps"
         @selected-module-change="appSelectedModule = $event"
       />
     </div>
@@ -332,6 +334,11 @@ const currentSalesTabComponent = computed(() => {
   return tab?.component || null;
 });
 
+const currentSalesTabProps = computed(() => {
+  const tab = salesTabs.find(t => t.id === activeSalesTab.value);
+  return tab?.props || {};
+});
+
 const navigateToOption = (optionId) => {
   activeSalesTab.value = optionId;
 };
@@ -506,6 +513,8 @@ const currentAppTabComponent = computed(() => {
   const appKey = String(selectedApp.value || '').toLowerCase();
   return appSettingsComponents[appKey]?.[activeAppTab.value] || null;
 });
+
+const currentAppTabProps = computed(() => ({}));
 
 const openAppOption = (option) => {
   if (!option?.available) return;

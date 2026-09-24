@@ -44,6 +44,8 @@ const { getSlaScheduleContext, resolveSlaScheduleForOrganization } = require('..
 const { computeCycleSlaProgress } = require('../services/helpdeskSlaClockService');
 const { applyCaseActivitySideEffects } = require('../services/caseAutoStatusService');
 const caseExecutionService = require('../services/caseExecutionService');
+const closedRecordsService = require('../services/closedRecordsService');
+const { assertRecordWritable } = require('../services/closedRecordsWriteGuard');
 
 function getActorDisplayName(user) {
   if (!user) return 'System';
@@ -698,11 +700,20 @@ exports.updateCase = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Case not found' });
     }
 
-    if (row.status === 'Closed') {
-      return res.status(403).json({
-        success: false,
-        message: 'Closed cases cannot be edited. Reopen the case to make changes.'
+    try {
+      await assertRecordWritable('cases', row, {
+        organizationId: req.user.organizationId,
+        changedKeys: Object.keys(req.body || {})
       });
+    } catch (guardErr) {
+      if (guardErr.code === 'RECORD_CLOSED_READONLY') {
+        return res.status(403).json({
+          success: false,
+          message: guardErr.message,
+          code: guardErr.code
+        });
+      }
+      throw guardErr;
     }
 
     const previousSnapshot = row.toObject ? row.toObject() : { ...row };
@@ -1032,6 +1043,13 @@ exports.updateCaseStatus = async (req, res) => {
     }
     row.updatedBy = req.user._id;
 
+    await closedRecordsService.applyLifecycleOnStatusChange('cases', row, {
+      previousStatusValue: fromStatus,
+      organizationId: req.user.organizationId,
+      userId: req.user._id,
+      appKey: 'HELPDESK'
+    });
+
     row.activities.push({
       activityType: 'status_changed',
       message: `Status changed from ${fromStatus} to ${status}`,
@@ -1202,12 +1220,26 @@ exports.reopenCase = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Case not found' });
     }
 
-    if (row.status !== 'Resolved' && row.status !== 'Closed') {
+    const config = await closedRecordsService.getConfig('cases', {
+      organizationId: req.user.organizationId
+    });
+    const isClosed = closedRecordsService.isLifecycleClosedSync(config, row);
+    if (!isClosed) {
       return res.status(400).json({
         success: false,
-        message: 'Only Resolved or Closed cases can be reopened'
+        message: 'Only closed cases can be reopened'
       });
     }
+
+    if (!config.reopenEnabled) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reopening is disabled for cases'
+      });
+    }
+
+    const reopenTarget =
+      closedRecordsService.getReopenStatusForValue(config, row.status) || 'In Progress';
 
     const reopenReasonValidation = normalizeOptionalText(req.body?.reopenReason, 1000);
     if (!reopenReasonValidation.valid) {
@@ -1223,7 +1255,11 @@ exports.reopenCase = async (req, res) => {
       });
     }
 
-    const { previousCycle, nextCycle } = createReopenedSlaState(row.currentSlaCycle?.toObject?.() || row.currentSlaCycle, new Date());
+    const previousStatus = row.status;
+    const { previousCycle, nextCycle } = createReopenedSlaState(
+      row.currentSlaCycle?.toObject?.() || row.currentSlaCycle,
+      new Date()
+    );
     row.slaCycles.push(previousCycle);
     row.currentSlaCycle = await reopenCaseSla({
       organizationId: req.user.organizationId,
@@ -1232,19 +1268,23 @@ exports.reopenCase = async (req, res) => {
       nextCycle,
       actorId: req.user._id
     });
-    row.status = 'In Progress';
+    row.status = reopenTarget;
+    row.lifecycleState = 'active';
+    row.reopenedAt = new Date();
     row.reopenReason = reopenReasonValidation.value;
     row.reopenCount = (Number(row.reopenCount) || 0) + 1;
     row.updatedBy = req.user._id;
 
     row.activities.push({
       activityType: 'case_reopened',
-      message: 'Case reopened and moved to In Progress',
+      message: `Case reopened and moved to ${reopenTarget}`,
       internal: true,
       metadata: {
         previousCycleNo: previousCycle.cycleNo,
         newCycleNo: row.currentSlaCycle.cycleNo,
-        reopenReason: reopenReasonValidation.value
+        reopenReason: reopenReasonValidation.value,
+        previousStatus,
+        reopenStatus: reopenTarget
       },
       actorId: req.user._id,
       actorName: getActorDisplayName(req.user),
@@ -1252,6 +1292,21 @@ exports.reopenCase = async (req, res) => {
     });
 
     await row.save();
+
+    const { emit } = require('../services/domainEvents');
+    emit({
+      entityType: 'cases',
+      entityId: row._id,
+      eventType: 'cases.reopened',
+      previousState: { status: previousStatus, lifecycleState: 'closed' },
+      currentState: { status: reopenTarget, lifecycleState: 'active' },
+      changedFields: ['status', 'lifecycleState'],
+      appKey: 'HELPDESK',
+      triggeredBy: req.user._id,
+      organizationId: req.user.organizationId,
+      assignedTo: row.assignedTo
+    });
+
     await caseExecutionService.onCaseReopened({
       caseRecord: row,
       actorId: req.user._id,

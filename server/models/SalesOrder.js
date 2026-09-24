@@ -51,6 +51,15 @@ const SalesOrderSchema = new Schema(
       index: true
     },
 
+    lifecycleState: {
+      type: String,
+      enum: ['active', 'closed'],
+      default: 'active',
+      index: true
+    },
+    closedAt: { type: Date, default: null },
+    reopenedAt: { type: Date, default: null },
+
     fulfillmentMode: {
       type: String,
       enum: SALES_ORDER_FULFILLMENT_MODES,

@@ -27,6 +27,8 @@ const {
   touchDealLastActivity,
   attachDealLastActivity,
 } = require('../utils/dealLastActivity');
+const closedRecordsService = require('../services/closedRecordsService');
+const { assertRecordWritable } = require('../services/closedRecordsWriteGuard');
 
 const DESCRIPTION_VERSION_RETENTION_DAYS = 365;
 const CLOSED_TASK_STATUSES = ['completed', 'done', 'closed', 'cancelled'];
@@ -792,6 +794,29 @@ exports.updateDeal = async (req, res) => {
         delete req.body.organizationId;
         delete req.body.source;
         req.body.modifiedBy = req.user._id;
+
+        const existingForGuard = await Deal.findOne({
+            _id: req.params.id,
+            organizationId: req.user.organizationId,
+            deletedAt: null
+        }).lean();
+        if (existingForGuard) {
+            try {
+                await assertRecordWritable('deals', existingForGuard, {
+                    organizationId: req.user.organizationId,
+                    changedKeys: Object.keys(req.body || {})
+                });
+            } catch (guardErr) {
+                if (guardErr.code === 'RECORD_CLOSED_READONLY') {
+                    return res.status(403).json({
+                        success: false,
+                        message: guardErr.message,
+                        code: guardErr.code
+                    });
+                }
+                throw guardErr;
+            }
+        }
         
         // Validate field-level write access
         const ModuleDefinition = require('../models/ModuleDefinition');
@@ -838,7 +863,7 @@ exports.updateDeal = async (req, res) => {
             }
 
             const { validatePicklistDependencyValues } = require('../utils/dependencyEvaluation');
-            const previousForPicklist = await Deal.findOne(
+            const previousForPicklist = existingForGuard || await Deal.findOne(
                 { _id: req.params.id, organizationId: req.user.organizationId, deletedAt: null }
             ).lean();
             const mergedForPicklist = {
@@ -2644,6 +2669,22 @@ exports.updateStage = async (req, res) => {
             });
         }
 
+        try {
+            await assertRecordWritable('deals', deal, {
+                organizationId: req.user.organizationId,
+                changedKeys: ['stage']
+            });
+        } catch (guardErr) {
+            if (guardErr.code === 'RECORD_CLOSED_READONLY') {
+                return res.status(403).json({
+                    success: false,
+                    message: guardErr.message,
+                    code: guardErr.code
+                });
+            }
+            throw guardErr;
+        }
+
         const stagePipelineResult = await validateStageInPipeline({
             moduleKey: 'deals',
             recordId: req.params.id,
@@ -2661,6 +2702,7 @@ exports.updateStage = async (req, res) => {
         }
 
         const previousSnapshot = deal.toObject ? deal.toObject() : { ...deal };
+        const previousStage = deal.stage;
         const stageChanged = deal.stage !== stage;
 
         deal.stage = stage;
@@ -2700,6 +2742,12 @@ exports.updateStage = async (req, res) => {
         }
 
         if (stageChanged) {
+            await closedRecordsService.applyLifecycleOnStatusChange('deals', deal, {
+                previousStatusValue: previousStage,
+                organizationId: req.user.organizationId,
+                userId: req.user._id,
+                appKey
+            });
             try {
                 const { executePlaybookForDeal } = require('../services/playbookExecutionService');
                 await executePlaybookForDeal(deal, {
@@ -2766,6 +2814,56 @@ exports.updateStage = async (req, res) => {
             success: false,
             message: 'Error updating stage',
             error: error.message
+        });
+    }
+};
+
+/**
+ * Reopen a closed deal using Closed Records reopen mapping for the current stage.
+ */
+exports.reopenDeal = async (req, res) => {
+    try {
+        const appKey = req.appKey || req.query.appKey || 'SALES';
+        const deal = await closedRecordsService.reopenRecord('deals', {
+            recordId: req.params.id,
+            reason: req.body?.reason || req.body?.reopenReason || null,
+            organizationId: req.user.organizationId,
+            userId: req.user._id,
+            appKey,
+            Model: Deal
+        });
+
+        // Re-derive platform Status from new Stage
+        const { normalizeDealStatus, DEAL_STATUS } = require('../constants/dealStatus');
+        const computedDerivedStatus = await computeAndSetDerivedStatus('deal', deal, appKey);
+        if (computedDerivedStatus) {
+            deal.status = normalizeDealStatus(computedDerivedStatus);
+        } else {
+            deal.status = DEAL_STATUS.OPEN;
+        }
+        deal.modifiedBy = req.user._id;
+        await deal.save();
+
+        const updatedDeal = await Deal.findById(deal._id)
+            .populate('contactId', 'first_name last_name email')
+            .populate('assignedTo', 'firstName lastName email')
+            .populate('dealPeople.personId', 'first_name last_name email')
+            .populate('dealOrganizations.organizationId', 'name');
+
+        return res.json({ success: true, data: attachDealLastActivity(updatedDeal) });
+    } catch (error) {
+        console.error('[dealController] reopenDeal error:', error);
+        const map = {
+            NOT_FOUND: 404,
+            NOT_CLOSED: 400,
+            REOPEN_DISABLED: 400,
+            REOPEN_STATUS_MISSING: 400,
+            REOPEN_CANNOT_BE_CLOSED: 400
+        };
+        return res.status(map[error.code] || 500).json({
+            success: false,
+            message: error.message,
+            code: error.code
         });
     }
 };

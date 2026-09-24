@@ -59,6 +59,29 @@ router.put(
   requireAdmin(),
   eventStatusLifecycleController.updateEventStatusLifecycle
 );
+
+// Closed Records (Core Platform lifecycle configuration)
+const closedRecordsController = require('../controllers/closedRecordsController');
+router.get('/closed-records/modules', sessionBootstrapLimiter, closedRecordsController.listModules);
+router.get(
+  '/closed-records/:moduleKey',
+  sessionBootstrapLimiter,
+  closedRecordsController.getConfig
+);
+router.get(
+  '/closed-records/:moduleKey/picklist',
+  sessionBootstrapLimiter,
+  closedRecordsController.getPicklist
+);
+router.put(
+  '/closed-records/:moduleKey',
+  requireAdmin(),
+  closedRecordsController.saveConfig
+);
+router.post(
+  '/closed-records/:moduleKey/:id/reopen',
+  closedRecordsController.reopenRecord
+);
 router.get('/core-modules/organizations/participation-types/usage', sessionBootstrapLimiter, controller.getOrganizationParticipationTypesUsage);
 router.get('/core-modules/organizations/participation-types', sessionBootstrapLimiter, controller.getOrganizationParticipationTypes);
 router.put('/core-modules/organizations/participation-types', controller.updateOrganizationParticipationTypes);

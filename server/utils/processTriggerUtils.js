@@ -8,6 +8,8 @@ const CORE_TRIGGER_TYPES = [
   'record_created',
   'record_updated',
   'record_created_or_updated',
+  'record_closed',
+  'record_reopened',
   'schedule',
   'webhook',
   'manual'
@@ -31,7 +33,9 @@ const LEGACY_EVENT_TO_CORE = {
   'deal.deal.lost': { core: 'record_updated', fields: ['stage'] },
   'form.submitted': { core: 'manual' },
   'record.created': { core: 'record_created' },
-  'record.updated': { core: 'record_updated' }
+  'record.updated': { core: 'record_updated' },
+  'record.closed': { core: 'record_closed' },
+  'record.reopened': { core: 'record_reopened' }
 };
 
 function createdEventType(entityType) {
@@ -116,6 +120,8 @@ function resolveCoreTriggerFromProcess(process) {
     if (legacy) return legacy.core;
     if (t.eventType.endsWith('.created')) return 'record_created';
     if (t.eventType.endsWith('.updated')) return 'record_updated';
+    if (t.eventType.endsWith('.closed')) return 'record_closed';
+    if (t.eventType.endsWith('.reopened')) return 'record_reopened';
   }
   return 'manual';
 }
@@ -154,13 +160,41 @@ function resolveScheduleFromProcess(process) {
 
 /**
  * Heuristic: whether currentState / loaded doc represents a closed / terminal record.
+ * Prefers Closed Records config when module is eligible.
  */
+async function isClosedRecordStateAsync(entityType, state, organizationId = null) {
+  if (!state || typeof state !== 'object') return false;
+  if (state.deletedAt) return true;
+  if (state.isClosed === true || state.isClosedWon === true || state.isClosedLost === true) {
+    return true;
+  }
+  const type = String(entityType || '').toLowerCase();
+  if (type === 'people' || type === 'person') {
+    return false;
+  }
+  try {
+    const {
+      resolveModuleKeyFromEntityType,
+      isEligibleModule
+    } = require('../constants/closedRecordsModules');
+    const closedRecordsService = require('../services/closedRecordsService');
+    const moduleKey = resolveModuleKeyFromEntityType(type) || (isEligibleModule(type) ? type : null);
+    if (moduleKey) {
+      return closedRecordsService.isLifecycleClosed(moduleKey, state, { organizationId });
+    }
+  } catch {
+    /* fall through to heuristic */
+  }
+  return isClosedRecordState(entityType, state);
+}
+
 function isClosedRecordState(entityType, state) {
   if (!state || typeof state !== 'object') return false;
   if (state.deletedAt) return true;
   if (state.isClosed === true || state.isClosedWon === true || state.isClosedLost === true) {
     return true;
   }
+  if (state.lifecycleState === 'closed') return true;
   const type = String(entityType || '').toLowerCase();
   // People: only treat deleted / explicit closed flags as terminal — lifecycle labels
   // like "Inactive" / "Lost" are common CRM values and must not block process triggers.
@@ -289,7 +323,7 @@ async function shouldSkipClosedRecord(process, event, fallback = {}) {
 
   if (!state) return { skip: false };
 
-  if (isClosedRecordState(entityType, state)) {
+  if (await isClosedRecordStateAsync(entityType, state, organizationId)) {
     return { skip: true, reason: 'closed_record_excluded' };
   }
   return { skip: false };
@@ -341,6 +375,7 @@ module.exports = {
   resolveTriggerBehaviour,
   buildFirstTimeKey,
   isClosedRecordState,
+  isClosedRecordStateAsync,
   loadEntitySnapshotForClosedCheck,
   shouldSkipClosedRecord
 };

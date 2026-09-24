@@ -66,6 +66,15 @@ const QuoteSchema = new Schema(
       index: true
     },
 
+    lifecycleState: {
+      type: String,
+      enum: ['active', 'closed'],
+      default: 'active',
+      index: true
+    },
+    closedAt: { type: Date, default: null },
+    reopenedAt: { type: Date, default: null },
+
     // Multi-currency snapshot fields (MVP: store; FX service can fill later)
     currency: { type: String, trim: true, default: 'USD', index: true },
     exchangeRateSnapshot: { type: Number, default: 1 },

@@ -54,6 +54,10 @@ function buildBaseRecordQuery(moduleKey, organizationId, ids) {
   if (mk === 'cases') {
     query.status = { $ne: 'Closed' };
   }
+  // Prefer Closed Records lifecycle exclusion when field exists on the model
+  if (Model?.schema?.paths?.lifecycleState) {
+    query.lifecycleState = { $ne: 'closed' };
+  }
   if (mk === 'organizations') {
     query.isTenant = false;
   }

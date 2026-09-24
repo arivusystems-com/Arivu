@@ -230,6 +230,16 @@ const DealSchema = new Schema({
         enum: DEAL_STATUS_VALUES,
         default: DEAL_STATUS.OPEN
     },
+
+    /** Closed Records lifecycle (Active/Closed) — orthogonal to platform Status Open/Won/Lost */
+    lifecycleState: {
+        type: String,
+        enum: ['active', 'closed'],
+        default: 'active',
+        index: true
+    },
+    closedAt: { type: Date, default: null },
+    reopenedAt: { type: Date, default: null },
     
     // Derived Status (computed from Configuration Registry / stage outcome)
     // Kept in sync with status for deals; nullable if computation fails
