@@ -480,6 +480,23 @@ const UserSchema = new mongoose.Schema({
         idpConnectionId: { type: mongoose.Schema.Types.ObjectId, default: null },
         lastSsoLoginAt: { type: Date, default: null }
     },
+    /**
+     * Additive social/login identities (e.g. Google Sign-In).
+     * Does not replace password or enterprise authProvider (OIDC/SAML).
+     */
+    authIdentities: [{
+        provider: {
+            type: String,
+            enum: ['google'],
+            required: true
+        },
+        subject: {
+            type: String,
+            required: true
+        },
+        linkedAt: { type: Date, default: Date.now },
+        emailAtLink: { type: String, default: null }
+    }],
 
     // User onboarding (invited member + founder wizard state)
     onboarding: {
@@ -549,6 +566,17 @@ UserSchema.index(
   { unique: true, sparse: true, partialFilterExpression: { peopleId: { $type: 'objectId' } } }
 );
 UserSchema.index({ organizationId: 1, userType: 1, status: 1 });
+// Google (and future) login subjects must be unique across users
+UserSchema.index(
+  { 'authIdentities.provider': 1, 'authIdentities.subject': 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      'authIdentities.provider': { $exists: true },
+      'authIdentities.subject': { $exists: true, $type: 'string' }
+    }
+  }
+);
 
 // Helper method to set default permissions based on role
 UserSchema.methods.setPermissionsByRole = function(role) {

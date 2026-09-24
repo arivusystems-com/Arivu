@@ -236,6 +236,7 @@ Arivu/
 |-------|-------|
 | `organizationId` | Tenant FK (required) |
 | `email`, `password` (bcrypt), `firstName`, `lastName` | Identity |
+| `authIdentities[]` | Additive login providers (`google` + `subject`); does not replace password |
 | `roleId` → `Role` | Preferred RBAC |
 | `role` | Legacy enum: owner/admin/manager/user/viewer |
 | `permissions` | **Legacy CRM-shaped**; synced from role on login — prefer `Role.appPermissions` / Profiles |
@@ -285,7 +286,7 @@ Lifecycle per tenant: `status`, `organizationId` (unique), `demoRequestId`, `isI
 
 **Deal amount:** `Deal.amount` canonical; `MANUAL` user-owned; `AUTO` from DealLines via `DealPricingService`; Quote generation through **`CommercialConversionService`** (Quote must not read DealLines directly).
 
-**Stage vs Status:** Stage = tenant pipeline; Status = platform execution state (`Open`/`Won`/`Lost`), read-only (`STATUS_WRITE_PROTECTED`); Lost Reason for loss nuance. Reporting keys off Status.
+**Stage vs Status:** Stage = tenant pipeline; Status = platform execution state (`Open`/`Won`/`Lost`), read-only (`STATUS_WRITE_PROTECTED`); Lost Reason for loss nuance. Reporting keys off Status. **Closed Records** adds orthogonal `lifecycleState` (`active`|`closed`) on Stage values — see [`docs/architecture/closed-records.md`](docs/architecture/closed-records.md).
 
 #### Task / Event / Scheduling
 
@@ -476,7 +477,12 @@ HTTP Request
 | Endpoint | Method | Response |
 |----------|--------|----------|
 | `/api/auth/login` | POST | `{ user, organization, token }` — includes legacy `permissions`, `allowedApps` |
+| `/api/auth/google/status` | GET | `{ enabled }` — true when `GOOGLE_LOGIN_*` env is configured |
+| `/api/auth/google` | GET | Redirects to Google OAuth (`openid email profile` only) |
+| `/api/auth/google/callback` | GET | Verifies Google identity → links `User.authIdentities` → redirects to client `/login` with session transfer hash (same session shape as password login) |
 | `/api/users/profile` | GET | Refreshes user + org; Pinia + localStorage |
+
+**Google Sign-In (CRM web, login only):** Authentication method for existing admin-provisioned users. Requires Google `email_verified`. Matches by linked `authIdentities` (`provider: google`, `subject`) then by verified email. Does **not** create users, orgs, seats, roles, or tenants. Password login unchanged. Dedicated env: `GOOGLE_LOGIN_CLIENT_ID`, `GOOGLE_LOGIN_CLIENT_SECRET`, `GOOGLE_LOGIN_REDIRECT_URI` — never reuse Calendar/Gmail OAuth clients or tokens (CASA-safe: no Gmail/restricted scopes on the login client).
 
 **Client:** `Authorization: Bearer <token>` via `apiClient`. Token on `auth.user.token`.  
 **Store access:** Prefer `authRegistry` `useAuthStore` — no static import cycles.

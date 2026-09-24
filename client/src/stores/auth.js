@@ -525,21 +525,17 @@ export const useAuthStore = defineStore('auth', {
                 const payload = JSON.parse(decoded);
                 if (!payload?.user?.token || !payload?.user?._id) return false;
 
-                this.user = payload.user;
-                this.organization = payload.organization || null;
-                localStorage.setItem('user', JSON.stringify(this.user));
-                if (this.organization) {
-                    localStorage.setItem('organization', JSON.stringify(this.organization));
-                } else {
-                    localStorage.removeItem('organization');
-                }
-
-                identifyProductUser({
-                    _id: this.user?._id,
-                    email: this.user?.email,
-                    organizationId: this.organization?._id ? String(this.organization._id) : undefined,
-                });
-                void this.syncI18nFromOrganization();
+                const authMethod = payload.authMethod === 'google' ? 'google' : 'password';
+                // Rebuild login-shaped payload for setUser / lastLoginResult
+                const sessionData = {
+                    ...payload.user,
+                    organization: payload.organization || null,
+                    trial: payload.trial || null,
+                    instance: payload.instance || null,
+                    onboarding: payload.onboarding || payload.user.onboarding || null,
+                    authMethod
+                };
+                this._applyAuthenticatedSession(sessionData, 'login', { authMethod });
                 return true;
             } catch (_error) {
                 return false;
@@ -574,7 +570,32 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-    _applyAuthenticatedSession(data, endpoint) {
+        applyGoogleSessionLimitFromLocationHash() {
+            if (typeof window === 'undefined') return false;
+            const raw = window.location.hash.startsWith('#')
+                ? window.location.hash.slice(1)
+                : window.location.hash;
+            if (!raw || !raw.includes('google_challenge=')) return false;
+            try {
+                const hashParams = new URLSearchParams(raw);
+                const encoded = hashParams.get('google_challenge');
+                if (!encoded) return false;
+                const decoded = decodeURIComponent(atob(encoded));
+                const data = JSON.parse(decoded);
+                if (data?.code !== 'SESSION_LIMIT' || !data?.challengeId) return false;
+                this._captureSessionLimit(data);
+                window.history.replaceState(
+                    {},
+                    '',
+                    `${window.location.pathname}${window.location.search}`
+                );
+                return true;
+            } catch (_error) {
+                return false;
+            }
+        },
+
+    _applyAuthenticatedSession(data, endpoint, options = {}) {
             this.sessionLimit = null;
             this.setUser(data);
             if (endpoint === 'login' || endpoint === 'login/continue') {
@@ -590,7 +611,8 @@ export const useAuthStore = defineStore('auth', {
                 }
             }
             try {
-                captureUserLoggedIn({ method: 'password' });
+                const method = options.authMethod || data.authMethod || 'password';
+                captureUserLoggedIn({ method });
                 if (data.userType === 'EXTERNAL') {
                     capturePortalLogin({
                         requires_portal_selection: data.requiresPortalSelection === true,

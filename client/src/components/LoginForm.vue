@@ -10,6 +10,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/authRegistry';
 import { isOrganizationTrialExpired } from '@/utils/trialStatus';
+import { getApiUrlForFetch } from '@/config/apiBase';
 
 const emit = defineEmits(['settling']);
 
@@ -26,6 +27,8 @@ const loginNotice = ref('');
 const redirecting = ref(false);
 const confirmSessionId = ref(null);
 const autoContinuing = ref(false);
+const googleEnabled = ref(false);
+const googleStarting = ref(false);
 
 watch(redirecting, (value) => {
   emit('settling', value);
@@ -142,7 +145,30 @@ const applyTransferredSessionFromHash = async () => {
 
   await authStore.syncI18nFromOrganization();
   await syncTrialBeforeRoute();
-  await router.replace(resolvePostLoginRoute());
+  await completeSuccessfulLogin();
+};
+
+const applyGoogleAuthQuery = () => {
+  const googleAuth = String(route.query.google_auth || '').trim();
+  if (!googleAuth) return;
+
+  if (googleAuth === 'session_limit') {
+    authStore.applyGoogleSessionLimitFromLocationHash();
+  } else if (googleAuth === 'error') {
+    const code = String(route.query.google_code || '').trim();
+    if (code === 'INVITE_PENDING') {
+      authStore.error = t('auth.googleInvitePending');
+    } else if (code === 'ACCOUNT_SUSPENDED') {
+      authStore.error = t('auth.googleAccountSuspended');
+    } else {
+      authStore.error = t('auth.googleNotProvisioned');
+    }
+  }
+
+  const nextQuery = { ...route.query };
+  delete nextQuery.google_auth;
+  delete nextQuery.google_code;
+  router.replace({ name: 'login', query: nextQuery, hash: route.hash || undefined });
 };
 
 const resolvePostLoginRoute = () => {
@@ -199,6 +225,29 @@ const handleLogin = async () => {
   }
 };
 
+const handleContinueWithGoogle = () => {
+  if (!googleEnabled.value || googleStarting.value) return;
+  googleStarting.value = true;
+  window.location.assign(getApiUrlForFetch('/api/auth/google'));
+};
+
+const loadGoogleLoginStatus = async () => {
+  try {
+    const response = await fetch(getApiUrlForFetch('/api/auth/google/status'), {
+      method: 'GET',
+      headers: { Accept: 'application/json' }
+    });
+    if (!response.ok) {
+      googleEnabled.value = false;
+      return;
+    }
+    const data = await response.json();
+    googleEnabled.value = data?.enabled === true;
+  } catch (_err) {
+    googleEnabled.value = false;
+  }
+};
+
 const doRevoke = async (sessionId) => {
   confirmSessionId.value = null;
   const ok = await authStore.revokeLoginSession(sessionId);
@@ -248,6 +297,8 @@ onMounted(() => {
   if (String(route.query.verified || '') === '1') {
     loginNotice.value = t('auth.verifyEmailLoginNotice');
   }
+  applyGoogleAuthQuery();
+  void loadGoogleLoginStatus();
   void applyTransferredSessionFromHash();
 });
 </script>
@@ -370,55 +421,86 @@ onMounted(() => {
     </div>
   </div>
 
-  <form v-else class="space-y-6" @submit.prevent="handleLogin">
+  <div v-else class="space-y-6">
     <div
       v-if="loginNotice"
       class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200"
     >
       {{ loginNotice }}
     </div>
-    <div>
-      <label for="email" class="block text-sm/6 font-medium text-gray-900 dark:text-white">{{ t('auth.emailLabel') }}</label>
-      <div class="mt-2">
-        <input type="email" id="email" v-model="email" autocomplete="email" required :placeholder="t('auth.emailPlaceholder')"
-          class="block w-full rounded-md bg-gray-100 px-3 py-1.5 text-gray-900 text-base outline-1 -outline-offset-1 outline-gray-300/20 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6
-            dark:text-white dark:bg-gray-700 dark:focus:bg-gray-800 dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"/>
-      </div>
-    </div>
 
-    <div>
-      <div class="flex items-center justify-between">
-        <label for="password" class="block text-sm/6 font-medium text-gray-900 dark:text-white">{{ t('auth.passwordLabel') }}</label>
-        <div class="text-sm">
-          <router-link to="/forgot-password" class="font-semibold text-indigo-400 hover:text-indigo-300">{{ t('auth.forgotPassword') }}</router-link>
+    <div v-if="googleEnabled" class="space-y-4">
+      <button
+        type="button"
+        class="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline outline-1 outline-gray-300 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:outline-white/20 dark:hover:bg-gray-100"
+        :disabled="authStore.loading || googleStarting"
+        @click="handleContinueWithGoogle"
+      >
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#EA4335" d="M12 10.2v3.6h5.1c-.2 1.2-1.5 3.6-5.1 3.6-3.1 0-5.6-2.5-5.6-5.6S8.9 6.2 12 6.2c1.8 0 2.9.7 3.6 1.4l2.4-2.4C16.5 3.8 14.5 3 12 3 6.9 3 2.8 7.1 2.8 12.2S6.9 21.4 12 21.4c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.6H12z" />
+          <path fill="#34A853" d="M3.9 7.5l3 2.2C7.7 7.5 9.7 6.2 12 6.2c1.8 0 2.9.7 3.6 1.4l2.4-2.4C16.5 3.8 14.5 3 12 3 8.3 3 5.1 5.1 3.9 7.5z" />
+          <path fill="#4A90E2" d="M12 21.4c2.4 0 4.4-.8 5.8-2.1l-2.8-2.2c-.7.5-1.7.9-3 .9-3.5 0-6.5-2.4-7.5-5.6l-3 2.3C3.9 18.9 7.6 21.4 12 21.4z" />
+          <path fill="#FBBC05" d="M4.5 14.4c-.2-.6-.3-1.2-.3-1.9s.1-1.3.3-1.9l-3-2.3C1.1 9.7.8 10.9.8 12.5s.3 2.8.9 4l2.8-2.1z" />
+        </svg>
+        {{ googleStarting ? t('auth.signingIn') : t('auth.continueWithGoogle') }}
+      </button>
+
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="w-full border-t border-gray-200 dark:border-white/10" />
+        </div>
+        <div class="relative flex justify-center text-xs">
+          <span class="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+            {{ t('auth.orContinueWithEmail') }}
+          </span>
         </div>
       </div>
-      <div class="relative mt-2">
-        <input
-          :type="showPassword ? 'text' : 'password'"
-          id="password"
-          v-model="password"
-          autocomplete="current-password"
-          required
-          :placeholder="t('auth.passwordPlaceholder')"
-          class="block w-full rounded-md bg-gray-100 px-3 py-1.5 pr-10 text-gray-900 text-base outline-1 -outline-offset-1 outline-gray-300/20 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6 dark:text-white dark:bg-gray-700 dark:focus:bg-gray-800 dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
-        />
-        <button
-          type="button"
-          class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          @click="showPassword = !showPassword"
-        >
-          <EyeSlashIcon v-if="showPassword" class="h-4 w-4" aria-hidden="true" />
-          <EyeIcon v-else class="h-4 w-4" aria-hidden="true" />
-        </button>
-      </div>
     </div>
 
-    <div>
-      <button type="submit" :disabled="authStore.loading" class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-2.5 text-md/0 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-        {{ authStore.loading ? t('auth.signingIn') : t('auth.signIn') }}
-      </button>
-      <p v-if="authStore.error" class="error">{{ authStore.error }}</p>
-    </div>
-  </form>
+    <form class="space-y-6" @submit.prevent="handleLogin">
+      <div>
+        <label for="email" class="block text-sm/6 font-medium text-gray-900 dark:text-white">{{ t('auth.emailLabel') }}</label>
+        <div class="mt-2">
+          <input type="email" id="email" v-model="email" autocomplete="email" required :placeholder="t('auth.emailPlaceholder')"
+            class="block w-full rounded-md bg-gray-100 px-3 py-1.5 text-gray-900 text-base outline-1 -outline-offset-1 outline-gray-300/20 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6
+              dark:text-white dark:bg-gray-700 dark:focus:bg-gray-800 dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"/>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label for="password" class="block text-sm/6 font-medium text-gray-900 dark:text-white">{{ t('auth.passwordLabel') }}</label>
+          <div class="text-sm">
+            <router-link to="/forgot-password" class="font-semibold text-indigo-400 hover:text-indigo-300">{{ t('auth.forgotPassword') }}</router-link>
+          </div>
+        </div>
+        <div class="relative mt-2">
+          <input
+            :type="showPassword ? 'text' : 'password'"
+            id="password"
+            v-model="password"
+            autocomplete="current-password"
+            required
+            :placeholder="t('auth.passwordPlaceholder')"
+            class="block w-full rounded-md bg-gray-100 px-3 py-1.5 pr-10 text-gray-900 text-base outline-1 -outline-offset-1 outline-gray-300/20 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6 dark:text-white dark:bg-gray-700 dark:focus:bg-gray-800 dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            @click="showPassword = !showPassword"
+          >
+            <EyeSlashIcon v-if="showPassword" class="h-4 w-4" aria-hidden="true" />
+            <EyeIcon v-else class="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <button type="submit" :disabled="authStore.loading" class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-2.5 text-md/0 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+          {{ authStore.loading ? t('auth.signingIn') : t('auth.signIn') }}
+        </button>
+        <p v-if="authStore.error" class="error">{{ authStore.error }}</p>
+      </div>
+    </form>
+  </div>
 </template>
