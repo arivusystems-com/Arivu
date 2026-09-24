@@ -63,16 +63,19 @@ function sessionMetaFromRequest(req) {
     };
 }
 
-function buildSessionLimitResponse(orgUser, organization, admission) {
+function buildSessionLimitResponse(orgUser, organization, admission, authMethod = 'password') {
     const challengeId = createLoginChallenge({
         userId: orgUser._id,
         organizationId: organization._id,
         deviceClass: admission.deviceClass,
         email: orgUser.email
     });
+    const verifiedCue = authMethod === 'google'
+        ? 'Google sign-in verified. Free a session slot to continue on this device.'
+        : 'Password verified. Free a session slot to continue on this device.';
     return {
         code: 'SESSION_LIMIT',
-        message: 'Password verified. Free a session slot to continue on this device.',
+        message: verifiedCue,
         challengeId,
         deviceClass: admission.deviceClass,
         limits: admission.limits || { ...DEVICE_CLASS_LIMITS },
@@ -80,6 +83,191 @@ function buildSessionLimitResponse(orgUser, organization, admission) {
         sessions: admission.sessions || []
     };
 }
+
+/**
+ * Shared post-credential login completion (password or Google identity).
+ * @returns {{ ok: true, sessionPayload } | { ok: false, status: number, body: object }}
+ */
+async function finalizeLoginForResolvedUser(req, {
+    orgUser,
+    masterUser = null,
+    organizationForLogin,
+    normalizedEmail = null,
+    authMethod = 'password'
+}) {
+    const emailForLogs = normalizedEmail || String(orgUser?.email || '').toLowerCase().trim();
+
+    if (orgUser.status === 'invited') {
+        return {
+            ok: false,
+            status: 403,
+            body: {
+                message: 'Please accept your invitation email before signing in.',
+                code: 'INVITE_PENDING'
+            }
+        };
+    }
+
+    if (orgUser.status !== 'active') {
+        return {
+            ok: false,
+            status: 403,
+            body: {
+                message: 'Your account has been suspended. Please contact your administrator.',
+                code: 'ACCOUNT_SUSPENDED'
+            }
+        };
+    }
+
+    if (!orgUser.emailVerifiedAt && orgUser.status === 'active') {
+        const pendingManualInvite = orgUser.invitedAt && !orgUser.inviteAcceptedAt && !orgUser.inviteTokenHash;
+        const legacyUser = !orgUser.invitedAt;
+        const acceptedViaInvite = Boolean(orgUser.inviteAcceptedAt);
+
+        if (legacyUser || acceptedViaInvite) {
+            orgUser.emailVerifiedAt = orgUser.lastLogin || orgUser.createdAt || new Date();
+        }
+    }
+
+    if (!organizationForLogin) {
+        return {
+            ok: false,
+            status: 500,
+            body: {
+                message: 'Organization data not found. Please contact support.',
+                code: 'ORG_NOT_FOUND'
+            }
+        };
+    }
+
+    if (!organizationForLogin.isActive) {
+        return {
+            ok: false,
+            status: 403,
+            body: {
+                message: 'Your organization account is inactive. Please contact support.',
+                code: 'ORG_INACTIVE'
+            }
+        };
+    }
+
+    orgUser.lastLogin = new Date();
+
+    let portalSession = null;
+
+    if (isExternalUser(orgUser) && isPortalFrameworkV1Enabled(organizationForLogin)) {
+        portalSession = await resolveExternalLoginSession(orgUser, organizationForLogin);
+        if (!portalSession.ok) {
+            securityLogger.logAuthEvent('LOGIN_FAILED', {
+                email: emailForLogs,
+                userId: orgUser._id,
+                organizationId: organizationForLogin._id,
+                reason: portalSession.code,
+                authMethod,
+                ip: req.ip,
+                userAgent: req.get('user-agent')
+            });
+            return {
+                ok: false,
+                status: portalSession.status || 403,
+                body: {
+                    message: portalSession.message,
+                    code: portalSession.code
+                }
+            };
+        }
+    } else {
+        await materializeEffectiveCRMEnvelopeOnUser(orgUser);
+    }
+
+    const {
+        ensureOnboardingStarted,
+        syncAutomaticCompletions
+    } = require('../services/onboardingService');
+    await ensureOnboardingStarted(orgUser);
+    await syncAutomaticCompletions(orgUser, organizationForLogin);
+    await orgUser.save();
+
+    if (masterUser && orgUser !== masterUser) {
+        masterUser.lastLogin = new Date();
+        await masterUser.save();
+    }
+
+    const activePortal = portalSession?.portals?.find(
+        (p) => portalSession.activeExternalRoleId
+            && String(p.roleId) === String(portalSession.activeExternalRoleId)
+    ) || null;
+
+    const admission = await admitOrBlockAuthSession(
+        orgUser,
+        organizationForLogin,
+        sessionMetaFromRequest(req)
+    );
+    if (!admission.ok) {
+        securityLogger.logAuthEvent('LOGIN_SESSION_LIMIT', {
+            email: emailForLogs,
+            userId: orgUser._id,
+            organizationId: organizationForLogin._id,
+            deviceClass: admission.deviceClass,
+            authMethod,
+            ip: req.ip,
+            userAgent: req.get('user-agent')
+        });
+        return {
+            ok: false,
+            status: 409,
+            body: buildSessionLimitResponse(orgUser, organizationForLogin, admission, authMethod)
+        };
+    }
+
+    securityLogger.logAuthEvent('LOGIN_SUCCESS', {
+        email: emailForLogs,
+        userId: orgUser._id,
+        organizationId: organizationForLogin._id,
+        authMethod,
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        success: true
+    });
+
+    if (isExternalUser(orgUser) && portalSession?.ok) {
+        await recordPortalEvent({
+            organizationId: organizationForLogin._id,
+            type: 'portal_login',
+            description: 'External user login',
+            userId: orgUser._id,
+            peopleId: orgUser.peopleId || null,
+            actorUserId: orgUser._id,
+            ipAddress: req.ip || null,
+            userAgent: req.get('user-agent') || null,
+            metadata: {
+                requiresPortalSelection: portalSession.requiresPortalSelection,
+                activeExternalRoleId: portalSession.activeExternalRoleId,
+                authMethod
+            }
+        });
+    }
+
+    const { buildTrialStatusSnapshot } = require('../services/trialExtensionService');
+    const sessionPayload = await buildAuthenticatedSessionResponse(orgUser, organizationForLogin, {
+        activeExternalRoleId: portalSession?.activeExternalRoleId || null,
+        requiresPortalSelection: portalSession?.requiresPortalSelection === true,
+        portals: portalSession?.portals || [],
+        activePortal,
+        markLogin: false,
+        issueSession: false,
+        sessionIds: {
+            jti: admission.jti,
+            sessionVersion: admission.sessionVersion
+        }
+    });
+    sessionPayload.trial = buildTrialStatusSnapshot(organizationForLogin);
+    sessionPayload.authMethod = authMethod;
+
+    return { ok: true, sessionPayload };
+}
+
+exports.finalizeLoginForResolvedUser = finalizeLoginForResolvedUser;
 
 async function resolveOrgUserForSessionChallenge(challenge) {
     const organization = await Organization.findById(challenge.organizationId)
@@ -660,160 +848,20 @@ exports.loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
-        // 3. Check if user is active (invited users must accept invitation first)
-        if (orgUser.status === 'invited') {
-            console.log('❌ User has pending invitation:', orgUser.status);
-            return res.status(403).json({
-                message: 'Please accept your invitation email before signing in.',
-                code: 'INVITE_PENDING'
-            });
-        }
-
-        if (orgUser.status !== 'active') {
-            console.log('❌ User status not active:', orgUser.status);
-            return res.status(403).json({ 
-                message: 'Your account has been suspended. Please contact your administrator.',
-                code: 'ACCOUNT_SUSPENDED'
-            });
-        }
-        console.log('✅ User status: active');
-
-        // Grandfather legacy users; keep manual-invite users unverified until they confirm email
-        if (!orgUser.emailVerifiedAt && orgUser.status === 'active') {
-            const pendingManualInvite = orgUser.invitedAt && !orgUser.inviteAcceptedAt && !orgUser.inviteTokenHash;
-            const legacyUser = !orgUser.invitedAt;
-            const acceptedViaInvite = Boolean(orgUser.inviteAcceptedAt);
-
-            if (legacyUser || acceptedViaInvite) {
-                orgUser.emailVerifiedAt = orgUser.lastLogin || orgUser.createdAt || new Date();
-            }
-        }
-
-        // 4. Check if organization exists and is populated
-        if (!organizationForLogin) {
-            console.log('❌ Organization not found for user');
-            return res.status(500).json({ 
-                message: 'Organization data not found. Please contact support.',
-                code: 'ORG_NOT_FOUND'
-            });
-        }
-        console.log('✅ Organization found:', organizationForLogin.name);
-        
-        // 5. Check if organization is active
-        if (!organizationForLogin.isActive) {
-            console.log('❌ Organization not active:', organizationForLogin.isActive);
-            return res.status(403).json({ 
-                message: 'Your organization account is inactive. Please contact support.',
-                code: 'ORG_INACTIVE'
-            });
-        }
-        console.log('✅ Organization is active');
-
-        // 6. Last login + session payload
-        orgUser.lastLogin = new Date();
-
-        const userType = String(orgUser.userType || 'INTERNAL').toUpperCase();
-        let portalSession = null;
-
-        if (isExternalUser(orgUser) && isPortalFrameworkV1Enabled(organizationForLogin)) {
-            portalSession = await resolveExternalLoginSession(orgUser, organizationForLogin);
-            if (!portalSession.ok) {
-                securityLogger.logAuthEvent('LOGIN_FAILED', {
-                    email: normalizedEmail,
-                    userId: orgUser._id,
-                    organizationId: organizationForLogin._id,
-                    reason: portalSession.code,
-                    ip: req.ip,
-                    userAgent: req.get('user-agent')
-                });
-                return res.status(portalSession.status || 403).json({
-                    message: portalSession.message,
-                    code: portalSession.code
-                });
-            }
-        } else {
-            await materializeEffectiveCRMEnvelopeOnUser(orgUser);
-        }
-
-        const {
-          ensureOnboardingStarted,
-          syncAutomaticCompletions
-        } = require('../services/onboardingService');
-        await ensureOnboardingStarted(orgUser);
-        await syncAutomaticCompletions(orgUser, organizationForLogin);
-        await orgUser.save();
-
-        if (user && orgUser !== user) {
-            user.lastLogin = new Date();
-            await user.save();
-        }
-
-        const activePortal = portalSession?.portals?.find(
-            (p) => portalSession.activeExternalRoleId
-                && String(p.roleId) === String(portalSession.activeExternalRoleId)
-        ) || null;
-
-        const admission = await admitOrBlockAuthSession(
+        const finalized = await finalizeLoginForResolvedUser(req, {
             orgUser,
+            masterUser: user,
             organizationForLogin,
-            sessionMetaFromRequest(req)
-        );
-        if (!admission.ok) {
-            securityLogger.logAuthEvent('LOGIN_SESSION_LIMIT', {
-                email: normalizedEmail,
-                userId: orgUser._id,
-                organizationId: organizationForLogin._id,
-                deviceClass: admission.deviceClass,
-                ip: req.ip,
-                userAgent: req.get('user-agent')
-            });
-            return res.status(409).json(buildSessionLimitResponse(orgUser, organizationForLogin, admission));
+            normalizedEmail,
+            authMethod: 'password'
+        });
+
+        if (!finalized.ok) {
+            return res.status(finalized.status).json(finalized.body);
         }
 
         console.log('✅ Login successful for:', email);
-
-        securityLogger.logAuthEvent('LOGIN_SUCCESS', {
-            email: normalizedEmail,
-            userId: orgUser._id,
-            organizationId: organizationForLogin._id,
-            ip: req.ip,
-            userAgent: req.get('user-agent'),
-            success: true
-        });
-
-        if (isExternalUser(orgUser) && portalSession?.ok) {
-            await recordPortalEvent({
-                organizationId: organizationForLogin._id,
-                type: 'portal_login',
-                description: 'External user login',
-                userId: orgUser._id,
-                peopleId: orgUser.peopleId || null,
-                actorUserId: orgUser._id,
-                ipAddress: req.ip || null,
-                userAgent: req.get('user-agent') || null,
-                metadata: {
-                    requiresPortalSelection: portalSession.requiresPortalSelection,
-                    activeExternalRoleId: portalSession.activeExternalRoleId
-                }
-            });
-        }
-
-        const { buildTrialStatusSnapshot } = require('../services/trialExtensionService');
-        const sessionPayload = await buildAuthenticatedSessionResponse(orgUser, organizationForLogin, {
-            activeExternalRoleId: portalSession?.activeExternalRoleId || null,
-            requiresPortalSelection: portalSession?.requiresPortalSelection === true,
-            portals: portalSession?.portals || [],
-            activePortal,
-            markLogin: false,
-            issueSession: false,
-            sessionIds: {
-                jti: admission.jti,
-                sessionVersion: admission.sessionVersion
-            }
-        });
-        sessionPayload.trial = buildTrialStatusSnapshot(organizationForLogin);
-
-        res.json(sessionPayload);
+        res.json(finalized.sessionPayload);
         
     } catch (error) {
         console.error('❌ Login error:', error);

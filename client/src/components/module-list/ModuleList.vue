@@ -56,7 +56,7 @@
       :sort-order="sortOrder"
       :sorts="sorts"
       :pagination="pagination"
-      :external-filters="filters"
+      :external-filters="listViewExternalFilters"
       :parent-search-query="searchQuery"
       :boost-visible-column-keys="boostVisibleColumnKeys"
       :table-id="`${listDefinition.moduleKey}-table`"
@@ -1492,6 +1492,15 @@ function stripFilterKeys(source, keys) {
   }
   return out;
 }
+
+/**
+ * ListView must not see API-only stat overlays (open/dueToday/overdue/…).
+ * Merging them into externalFilters makes the filterQuery+overlay payload look
+ * like a flat sync and wipes the Filters-panel / column filter UI.
+ */
+const listViewExternalFilters = computed(() =>
+  stripFilterKeys(filters.value, apiOnlyStatOverlayKeys(props.moduleKey))
+);
 
 /** Merge a stat overlay onto current Filters without wiping unrelated conditions. */
 function buildFiltersWithStatOverlay(nextStatKey, overlayPatch = {}, previousStatKey = selectedStatKey.value) {

@@ -8,6 +8,11 @@ const {
     logoutUser
 } = require('../controllers/authController');
 const {
+    getGoogleLoginStatus,
+    startGoogleLogin,
+    handleGoogleLoginCallback
+} = require('../controllers/googleLoginAuthController');
+const {
     validateInvite,
     acceptInvite,
     confirmEmailVerification
@@ -47,6 +52,10 @@ router.get('/test-version', (req, res) => {
 router.post('/register', registrationLimiter, registerUser);
 router.post('/login', progressiveAuthThrottle, authLimiter, loginUser);
 router.post('/login/continue', progressiveAuthThrottle, authLimiter, continueLogin);
+
+router.get('/google/status', authLimiter, getGoogleLoginStatus);
+router.get('/google', progressiveAuthThrottle, authLimiter, startGoogleLogin);
+router.get('/google/callback', progressiveAuthThrottle, authLimiter, handleGoogleLoginCallback);
 
 router.get('/sessions', optionalAuth, authLimiter, listAuthSessions);
 router.delete('/sessions/:sessionId', optionalAuth, authLimiter, revokeAuthSession);

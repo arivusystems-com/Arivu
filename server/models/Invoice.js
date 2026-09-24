@@ -51,6 +51,15 @@ const InvoiceSchema = new Schema(
       index: true
     },
 
+    lifecycleState: {
+      type: String,
+      enum: ['active', 'closed'],
+      default: 'active',
+      index: true
+    },
+    closedAt: { type: Date, default: null },
+    reopenedAt: { type: Date, default: null },
+
     invoiceDate: { type: Date, default: Date.now, index: true },
     dueDate: { type: Date, default: null },
     postedAt: { type: Date, default: null, index: true },

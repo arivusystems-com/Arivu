@@ -16,6 +16,7 @@ const RESERVED_KEYS = new Set([
   '_id', '__v', 'organizationId', 'createdAt', 'updatedAt', 'createdBy',
   'modifiedBy', 'createdTime', 'modifiedTime',
   'deletedAt', 'deletedBy', 'deletionReason',
+  'lifecycleState', 'closedAt', 'reopenedAt',
   'mergedInto', 'mergedAt', 'mergedBy',
   'calendarSync',
   'source', // System-managed creation channel; set only via sourceResolver on the server

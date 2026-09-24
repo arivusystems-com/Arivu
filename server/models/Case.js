@@ -210,6 +210,15 @@ const CaseSchema = new Schema(
     businessHoursCalendarId: { type: Schema.Types.ObjectId, ref: 'BusinessHourSet', default: null },
     reopenCount: { type: Number, default: 0, min: 0 },
     reopenReason: { type: String, trim: true, default: null, maxlength: 1000 },
+    /** Closed Records lifecycle — Active/Closed (status value unchanged) */
+    lifecycleState: {
+      type: String,
+      enum: ['active', 'closed'],
+      default: 'active',
+      index: true
+    },
+    closedAt: { type: Date, default: null },
+    reopenedAt: { type: Date, default: null },
     lastSlaEventAt: { type: Date, default: null },
     lastCustomerReplyAt: { type: Date, default: null },
     lastAgentReplyAt: { type: Date, default: null },

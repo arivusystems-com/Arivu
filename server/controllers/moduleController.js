@@ -1151,6 +1151,10 @@ function getBaseFieldsForKey(key) {
             'deletedAt',
             'deletedBy',
             'deletionReason',
+            // Closed Records lifecycle — platform-managed
+            'lifecycleState',
+            'closedAt',
+            'reopenedAt',
             // Duplicate merge - set by mergeService only; never create/edit UI
             'mergedInto',
             'mergedAt',

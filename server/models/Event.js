@@ -83,6 +83,15 @@ const eventSchema = new Schema({
     default: 'OPEN',
     index: true,
   },
+
+  lifecycleState: {
+    type: String,
+    enum: ['active', 'closed'],
+    default: 'active',
+    index: true
+  },
+  closedAt: { type: Date, default: null },
+  reopenedAt: { type: Date, default: null },
   
   // Timestamps for status transitions
   completedAt: {

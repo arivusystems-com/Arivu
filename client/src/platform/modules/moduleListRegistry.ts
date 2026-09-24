@@ -1687,7 +1687,8 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       { id: 'my-deals', name: 'My Deals', filters: { assignedTo: 'me' } },
       { id: 'open', name: 'Open', filters: { status: 'Open' } },
       { id: 'won', name: 'Won', filters: { status: 'Won' } },
-      { id: 'lost', name: 'Lost', filters: { status: 'Lost' } }
+      { id: 'lost', name: 'Lost', filters: { status: 'Lost' } },
+      { id: 'closed-lifecycle', name: 'Closed Deals', filters: { lifecycleState: 'closed' } }
     ],
     apiEndpoint: '/deals',
     normalizeFilters: normalizeDealsFilters,
@@ -2473,7 +2474,8 @@ export const MODULE_LIST_REGISTRY: Record<string, ModuleListConfig> = {
       { id: 'sla-at-risk', name: 'SLA at risk', filters: { slaBreached: true, status: ['New', 'Assigned', 'In Progress', 'On Hold', 'Waiting for Customer'] } },
       { id: 'recently-updated', name: 'Recently updated', filters: { updatedWithinDays: 7 } },
       { id: 'resolved', name: 'Resolved', filters: { status: 'Resolved' } },
-      { id: 'closed', name: 'Closed', filters: { status: 'Closed' } }
+      { id: 'closed', name: 'Closed', filters: { status: 'Closed' } },
+      { id: 'closed-lifecycle', name: 'Closed (lifecycle)', filters: { lifecycleState: 'closed' } }
     ],
     statistics: {
       scope: 'view',

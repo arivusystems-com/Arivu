@@ -16,6 +16,7 @@ const {
     getPipelineSummary,
     getPlaybookAnalytics,
     updateStage,
+    reopenDeal,
     updatePlaybookActionStatus,
     getDescriptionVersions,
     restoreDescriptionVersion,
@@ -87,6 +88,7 @@ router.patch('/:id/amount-mode', checkPermission('deals', 'edit'), patchDealAmou
 
 // Update deal stage
 router.patch('/:id/stage', checkPermission('deals', 'edit'), updateStage);
+router.post('/:id/reopen', checkPermission('deals', 'edit'), reopenDeal);
 
 // Update playbook action completion
 router.patch('/:id/playbook-state/actions/:actionKey', checkPermission('deals', 'edit'), updatePlaybookActionStatus);

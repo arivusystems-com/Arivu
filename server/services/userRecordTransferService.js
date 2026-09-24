@@ -33,10 +33,50 @@ function notDeleted() {
   };
 }
 
-function buildModuleDefs(organizationId, fromUserId) {
+async function buildModuleDefs(organizationId, fromUserId) {
   const orgId = toObjectId(organizationId);
   const userId = toObjectId(fromUserId);
   const base = { organizationId: orgId, assignedTo: userId, ...notDeleted() };
+
+  const closedRecordsService = require('./closedRecordsService');
+  const { isEligibleModule } = require('../constants/closedRecordsModules');
+
+  async function openClosedFor(moduleKey, fallbackOpen, fallbackClosed) {
+    if (!isEligibleModule(moduleKey)) {
+      return { openQuery: fallbackOpen, closedQuery: fallbackClosed };
+    }
+    try {
+      const config = await closedRecordsService.getConfig(moduleKey, { organizationId });
+      const { openQuery, closedQuery } = closedRecordsService.buildLifecycleQueries(config);
+      return {
+        openQuery: { ...base, ...openQuery },
+        closedQuery: { ...base, ...closedQuery }
+      };
+    } catch {
+      return { openQuery: fallbackOpen, closedQuery: fallbackClosed };
+    }
+  }
+
+  const dealsOc = await openClosedFor(
+    'deals',
+    { ...base, status: { $in: [DEAL_STATUS.OPEN, 'Active', 'Open'] } },
+    { ...base, status: { $in: [DEAL_STATUS.WON, DEAL_STATUS.LOST, 'Won', 'Lost', 'Abandoned'] } }
+  );
+  const tasksOc = await openClosedFor(
+    'tasks',
+    { ...base, status: { $nin: [...TASK_CLOSED] } },
+    { ...base, status: { $in: [...TASK_CLOSED] } }
+  );
+  const casesOc = await openClosedFor(
+    'cases',
+    { ...base, status: { $nin: [...CASE_CLOSED] } },
+    { ...base, status: { $in: [...CASE_CLOSED] } }
+  );
+  const eventsOc = await openClosedFor(
+    'events',
+    { ...base, status: { $nin: [...EVENT_CLOSED] } },
+    { ...base, status: { $in: [...EVENT_CLOSED] } }
+  );
 
   return [
     {
@@ -52,7 +92,6 @@ function buildModuleDefs(organizationId, fromUserId) {
       labelKey: 'organizations',
       Model: Organization,
       ownerField: 'assignedTo',
-      // CRM company records only (not tenant workspaces)
       openQuery: {
         organizationId: orgId,
         assignedTo: userId,
@@ -73,56 +112,28 @@ function buildModuleDefs(organizationId, fromUserId) {
       labelKey: 'deals',
       Model: Deal,
       ownerField: 'assignedTo',
-      openQuery: {
-        ...base,
-        status: { $in: [DEAL_STATUS.OPEN, 'Active', 'Open'] }
-      },
-      closedQuery: {
-        ...base,
-        status: { $in: [DEAL_STATUS.WON, DEAL_STATUS.LOST, 'Won', 'Lost', 'Abandoned'] }
-      }
+      ...dealsOc
     },
     {
       key: 'tasks',
       labelKey: 'tasks',
       Model: Task,
       ownerField: 'assignedTo',
-      openQuery: {
-        ...base,
-        status: { $nin: [...TASK_CLOSED] }
-      },
-      closedQuery: {
-        ...base,
-        status: { $in: [...TASK_CLOSED] }
-      }
+      ...tasksOc
     },
     {
       key: 'cases',
       labelKey: 'cases',
       Model: Case,
       ownerField: 'assignedTo',
-      openQuery: {
-        ...base,
-        status: { $nin: [...CASE_CLOSED] }
-      },
-      closedQuery: {
-        ...base,
-        status: { $in: [...CASE_CLOSED] }
-      }
+      ...casesOc
     },
     {
       key: 'events',
       labelKey: 'events',
       Model: Event,
       ownerField: 'assignedTo',
-      openQuery: {
-        ...base,
-        status: { $nin: [...EVENT_CLOSED] }
-      },
-      closedQuery: {
-        ...base,
-        status: { $in: [...EVENT_CLOSED] }
-      }
+      ...eventsOc
     },
     {
       key: 'items',
@@ -156,7 +167,7 @@ async function safeCount(Model, query) {
  * @returns {{ modules: Array<{key, open, closed}>, openTotal: number, closedTotal: number }}
  */
 async function getOwnershipSummary(organizationId, fromUserId) {
-  const defs = buildModuleDefs(organizationId, fromUserId);
+  const defs = await buildModuleDefs(organizationId, fromUserId);
   const modules = [];
   let openTotal = 0;
   let closedTotal = 0;
@@ -202,7 +213,7 @@ async function transferOwnership({
     return { ok: false, code: 'SAME_USER', message: 'Cannot transfer records to the same user' };
   }
 
-  const defs = buildModuleDefs(organizationId, fromUserId);
+  const defs = await buildModuleDefs(organizationId, fromUserId);
   const allowed = moduleKeys && moduleKeys.length
     ? new Set(moduleKeys.map(String))
     : null;

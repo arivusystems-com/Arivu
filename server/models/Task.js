@@ -122,6 +122,15 @@ const TaskSchema = new Schema({
     trim: true
   }],
 
+  lifecycleState: {
+    type: String,
+    enum: ['active', 'closed'],
+    default: 'active',
+    index: true
+  },
+  closedAt: { type: Date, default: null },
+  reopenedAt: { type: Date, default: null },
+
   /** System-managed creation channel (set server-side only) */
   source: {
     type: String,

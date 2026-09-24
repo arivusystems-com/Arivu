@@ -23389,5 +23389,69 @@
   "modFieldsTabDuplicatePrevention": {
     "message": "Duplicate Prevention",
     "description": "Top tab for duplicate rules"
+  },
+  "appsClosedRecords": {
+    "message": "Closed Records",
+    "description": "Closed Records config card title"
+  },
+  "appsClosedRecordsDesc": {
+    "message": "Define which status values close a record and where each closed state reopens",
+    "description": "Closed Records config card description"
+  },
+  "closedRecordsSelectModule": {
+    "message": "Select Module",
+    "description": "Closed Records settings module selector"
+  },
+  "closedRecordsSelectPicklist": {
+    "message": "Status Picklist",
+    "description": "Closed Records status picklist label"
+  },
+  "closedRecordsStatusCol": {
+    "message": "Status",
+    "description": "Closed Records table status column"
+  },
+  "closedRecordsStageCol": {
+    "message": "Sales Stage",
+    "description": "Closed Records table stage column for deals"
+  },
+  "closedRecordsClosedCol": {
+    "message": "Closed",
+    "description": "Closed Records table closed checkbox column"
+  },
+  "closedRecordsReopenCol": {
+    "message": "Reopen Status",
+    "description": "Closed Records table reopen column"
+  },
+  "closedRecordsReopenPlaceholder": {
+    "message": "Select reopen status",
+    "description": "Closed Records reopen dropdown placeholder"
+  },
+  "closedRecordsReopenEnabled": {
+    "message": "Allow reopening closed records",
+    "description": "Closed Records reopen enabled toggle"
+  },
+  "closedRecordsAllowLinking": {
+    "message": "Allow linking to closed {module}",
+    "description": "Closed Records allow linking toggle"
+  },
+  "closedRecordsEnabled": {
+    "message": "Enable Closed Records for this module",
+    "description": "Closed Records enabled toggle"
+  },
+  "closedRecordsSaved": {
+    "message": "Closed Records configuration saved",
+    "description": "Closed Records save success"
+  },
+  "closedRecordsSaveFailed": {
+    "message": "Failed to save Closed Records configuration",
+    "description": "Closed Records save error"
+  },
+  "closedRecordsLoadFailed": {
+    "message": "Failed to load Closed Records configuration",
+    "description": "Closed Records load error"
+  },
+  "modFieldsTabClosedStates": {
+    "message": "Closed States",
+    "description": "Top tab for Closed Records configuration"
   }
 }

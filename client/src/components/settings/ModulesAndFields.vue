@@ -1924,6 +1924,18 @@
           />
         </div>
 
+        <!-- Closed States (Closed Records–eligible modules) -->
+        <div
+          class="flex-1 overflow-y-auto p-6"
+          v-else-if="activeTopTab === 'closed-states' && isClosedRecordsModule"
+        >
+          <ClosedRecordsSettings
+            :initial-module="selectedModule?.key || ''"
+            app-group="all"
+            :hide-module-selector="true"
+          />
+        </div>
+
         <!-- Status & Priority Tab (Tasks module only) - Summary view, edit in Field Configurations -->
         <div class="flex-1 overflow-y-auto" v-else-if="activeTopTab === 'status-priority' && isTasksModule">
           <div class="p-6">
@@ -4116,6 +4128,8 @@ import ModuleFormModal from './ModuleFormModal.vue';
 import PeopleTypesSettings from './PeopleTypesSettings.vue';
 import OrganizationTypesSettings from './OrganizationTypesSettings.vue';
 import DuplicatePreventionSettings from './DuplicatePreventionSettings.vue';
+import ClosedRecordsSettings from './ClosedRecordsSettings.vue';
+import { isClosedRecordsEligibleModule } from '@/constants/closedRecordsModulesClient';
 import EventStatusLifecycleSettings from './EventStatusLifecycleSettings.vue';
 import { invalidateOrganizationTypesCache } from '@/utils/organizationTypesInvalidate';
 import { isRetiredOrganizationTypeValue } from '@/utils/organizationTypeConfig';
@@ -4670,6 +4684,12 @@ function mapTopTab(tab) {
   return { id: tab.id, name: t(tab.nameKey) };
 }
 const TOP_TAB_IDS_BASE = ['details', 'fields', 'relationships', 'quick'];
+function appendClosedStatesTabIfEligible(tabs, moduleKey) {
+  if (isClosedRecordsEligibleModule(moduleKey) && !tabs.includes('closed-states')) {
+    tabs.push('closed-states');
+  }
+  return tabs;
+}
 function getAllowedTopTabs(moduleKey) {
   if (moduleKey === 'forms') {
     // Forms module has custom tabs: details, fields, logic, outcomes, access, relationships
@@ -4677,7 +4697,7 @@ function getAllowedTopTabs(moduleKey) {
     return ['details', 'fields', 'logic', 'outcomes', 'access', 'relationships'];
   }
   if (moduleKey === 'deals') {
-    return [...TOP_TAB_IDS_BASE, 'pipeline', 'duplicate-prevention'];
+    return appendClosedStatesTabIfEligible([...TOP_TAB_IDS_BASE, 'pipeline', 'duplicate-prevention'], moduleKey);
   }
   if (moduleKey === 'people') {
     return [...TOP_TAB_IDS_BASE, 'people-types', 'duplicate-prevention'];
@@ -4688,10 +4708,10 @@ function getAllowedTopTabs(moduleKey) {
   }
   if (moduleKey === 'tasks') {
     // Tasks module has Status & Priority tab (Tasks-specific, unlike People)
-    return [...TOP_TAB_IDS_BASE, 'status-priority', 'duplicate-prevention'];
+    return appendClosedStatesTabIfEligible([...TOP_TAB_IDS_BASE, 'status-priority', 'duplicate-prevention'], moduleKey);
   }
   if (moduleKey === 'cases') {
-    return [...TOP_TAB_IDS_BASE, 'duplicate-prevention'];
+    return appendClosedStatesTabIfEligible([...TOP_TAB_IDS_BASE, 'duplicate-prevention'], moduleKey);
   }
   if (moduleKey === 'events') {
     // Events module has Status tab and Roles & Rules tab (Events-specific)
@@ -4699,7 +4719,7 @@ function getAllowedTopTabs(moduleKey) {
     // Status tab: System-locked event statuses (Planned, Completed, Cancelled)
     // Roles & Rules tab: Role requirements, geo rules, form linking rules per event type
     // See: docs/architecture/event-settings.md Section 2.2, 4.3, 4.4, 4.5
-    return [...TOP_TAB_IDS_BASE, 'status', 'roles-rules'];
+    return appendClosedStatesTabIfEligible([...TOP_TAB_IDS_BASE, 'status', 'roles-rules'], moduleKey);
   }
   if (moduleKey === 'items') {
     // Items module has Status & Types tab (Items-specific, similar to Tasks)
@@ -4708,7 +4728,7 @@ function getAllowedTopTabs(moduleKey) {
   if (moduleKey === 'documents') {
     return [...TOP_TAB_IDS_BASE, 'status-types'];
   }
-  return [...TOP_TAB_IDS_BASE];
+  return appendClosedStatesTabIfEligible([...TOP_TAB_IDS_BASE], moduleKey);
 }
 const topTabs = computed(() => {
   const moduleKey = selectedModule.value?.key;
@@ -4791,6 +4811,9 @@ const topTabs = computed(() => {
       tabs.splice(fieldsTabIndex + 1, 0, { id: 'status-types', nameKey: 'settings.modFieldsTabStatusTypes' });
     }
   }
+  if (isClosedRecordsEligibleModule(moduleKey)) {
+    tabs.push({ id: 'closed-states', nameKey: 'settings.modFieldsTabClosedStates' });
+  }
   return tabs.map(mapTopTab);
 });
 const tabTitleMap = {
@@ -4799,6 +4822,7 @@ const tabTitleMap = {
   'people-types': 'Types',
   'organization-types': 'Types',
   'duplicate-prevention': 'Duplicate Prevention',
+  'closed-states': 'Closed States',
   'status-types': 'Status & Types',
   'status-priority': 'Status & Priority',
   'status': 'Status',
@@ -4816,7 +4840,7 @@ const getInitialTab = () => {
   // First check URL query
   const route = useRoute();
   const modeKey = typeof route.query.mode === 'string' ? route.query.mode : null;
-  if (modeKey && ['details', 'fields', 'people-types', 'organization-types', 'duplicate-prevention', 'status-types', 'status-priority', 'status', 'roles-rules', 'relationships', 'quick', 'logic', 'outcomes', 'access'].includes(modeKey)) {
+  if (modeKey && ['details', 'fields', 'people-types', 'organization-types', 'duplicate-prevention', 'closed-states', 'status-types', 'status-priority', 'status', 'roles-rules', 'relationships', 'quick', 'pipeline', 'logic', 'outcomes', 'access'].includes(modeKey)) {
     return modeKey;
   }
   // If no URL param, we'll check localStorage after module loads
@@ -6016,6 +6040,9 @@ const isDealsModule = computed(() => {
 });
 const isCasesModule = computed(() => {
   return selectedModule.value?.key?.toLowerCase() === 'cases';
+});
+const isClosedRecordsModule = computed(() => {
+  return isClosedRecordsEligibleModule(selectedModule.value?.key);
 });
 const duplicatePreventionModuleKey = computed(() => {
   if (isPeopleModule.value) return 'people';
