@@ -1,6 +1,7 @@
 /**
- * Optional Railway / background worker: processes Bull email jobs only.
- * Run the API with `npm start` and the worker in a second process with `npm run worker`.
+ * Background worker: Bull consumers, cron, and interval schedulers.
+ * Run the API with `npm start` and this process with `npm run worker`.
+ * Every Worker VM runs this same file. Cron ticks take a Redis lock so only one Worker executes each tick.
  */
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -45,6 +46,36 @@ async function run() {
   dbConnectionManager.connectionQuery = mongoQueryString;
   await dbConnectionManager.initializeMasterConnection();
 
+  const automationEngine = require('./services/automationEngine');
+  automationEngine.init();
+  const processExecutor = require('./services/processExecutor');
+  processExecutor.init();
+  const targetContributionEngine = require('./services/targets/targetContributionEngine');
+  targetContributionEngine.init();
+  console.log('[worker] Domain-event listeners initialized');
+
+  const scheduledJobs = require('./services/scheduledJobs');
+  scheduledJobs.startScheduledJobs();
+  console.log('[worker] Scheduled jobs started');
+
+  const { startAnalyticsAlertScheduler } = require('./services/analytics/analyticsAlertScheduler');
+  startAnalyticsAlertScheduler();
+  const { startTallySyncScheduler } = require('./services/connectors/tally/tallySyncScheduler');
+  startTallySyncScheduler();
+  const { startMailroomFailureRetryWorker } = require('./platform/mailroom/workers/processingFailureRetryWorker');
+  startMailroomFailureRetryWorker();
+
+  if (process.env.ENABLE_HEALTH_CHECKER !== 'false') {
+    const healthChecker = require('./services/monitoring/healthChecker');
+    healthChecker.start();
+    console.log('[worker] Health checker started');
+  }
+  if (process.env.ENABLE_METRICS_COLLECTOR !== 'false') {
+    const metricsCollector = require('./services/monitoring/metricsCollector');
+    metricsCollector.start();
+    console.log('[worker] Metrics collector started');
+  }
+
   emailQueueService.startWorker();
   console.log(`[worker] Email queue worker is running (Bull: ${emailQueueService.COMMUNICATION_QUEUE_NAMES.EMAIL_SEND})`);
 
@@ -83,6 +114,46 @@ async function stop(signal) {
   if (exiting) return;
   exiting = true;
   console.log(`[worker] ${signal} received, shutting down...`);
+  try {
+    const scheduledJobs = require('./services/scheduledJobs');
+    scheduledJobs.stopScheduledJobs();
+  } catch (e) {
+    console.error('[worker] scheduled jobs stop', e.message);
+  }
+  try {
+    const { stopAnalyticsAlertScheduler } = require('./services/analytics/analyticsAlertScheduler');
+    stopAnalyticsAlertScheduler();
+  } catch (e) {
+    console.error('[worker] analytics alert scheduler stop', e.message);
+  }
+  try {
+    const { stopTallySyncScheduler } = require('./services/connectors/tally/tallySyncScheduler');
+    stopTallySyncScheduler();
+  } catch (e) {
+    console.error('[worker] tally scheduler stop', e.message);
+  }
+  try {
+    const { stopMailroomFailureRetryWorker } = require('./platform/mailroom/workers/processingFailureRetryWorker');
+    stopMailroomFailureRetryWorker();
+  } catch (e) {
+    console.error('[worker] mailroom retry stop', e.message);
+  }
+  try {
+    if (process.env.ENABLE_HEALTH_CHECKER !== 'false') {
+      const healthChecker = require('./services/monitoring/healthChecker');
+      healthChecker.stop();
+    }
+  } catch (e) {
+    console.error('[worker] health checker stop', e.message);
+  }
+  try {
+    if (process.env.ENABLE_METRICS_COLLECTOR !== 'false') {
+      const metricsCollector = require('./services/monitoring/metricsCollector');
+      metricsCollector.stop();
+    }
+  } catch (e) {
+    console.error('[worker] metrics collector stop', e.message);
+  }
   try {
     await emailQueueService.closeQueue();
   } catch (e) {

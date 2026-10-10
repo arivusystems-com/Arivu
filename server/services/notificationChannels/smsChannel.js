@@ -120,7 +120,8 @@ async function send({ notification, user, context }) {
  * Get deep link URL for app with entity context.
  */
 function getAppDeepLink(appKey, entity) {
-  const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const { resolveClientUrl } = require('../../utils/clientUrl');
+  const baseUrl = resolveClientUrl();
   
   if (!entity || !entity.id) {
     switch (appKey) {

@@ -3,6 +3,7 @@
  * Uses Bull + Redis when available. Falls back to sync send when not.
  */
 
+const crypto = require('crypto');
 const { classifyCommunicationFailure } = require('../platform/communication/domain/failureTaxonomy');
 let emailQueue = null;
 
@@ -270,6 +271,11 @@ async function processSendJob(communicationId, organizationId) {
 }
 
 async function processSendJobInner(communicationId) {
+  // DESIGN NOTE: there is no reconciler for status "sending".
+  // metadata.sendClaimId is set before the provider call and is never cleared on retry.
+  // A crash after the claim (including after the provider accepts and before the status
+  // write) must not send again. Recovering those rows requires a separate operator path
+  // that can prove the provider did not accept the message. Do not clear sendClaimId here.
   const Communication = require('../models/Communication');
   const People = require('../models/People');
   const Organization = require('../models/Organization');
@@ -282,6 +288,16 @@ async function processSendJobInner(communicationId) {
 
   let doc = await Communication.findById(communicationId).lean();
   if (!doc) return;
+  if (doc.status === 'sent' || doc.status === 'delivered' || doc.status === 'opened' || doc.status === 'cancelled') {
+    return;
+  }
+
+  const claimId = crypto.randomBytes(12).toString('hex');
+  const unclaimed = [
+    { 'metadata.sendClaimId': { $exists: false } },
+    { 'metadata.sendClaimId': null },
+    { 'metadata.sendClaimId': '' }
+  ];
 
   if (doc.status === 'scheduled') {
     const dueMs = doc.scheduledAt ? new Date(doc.scheduledAt).getTime() : 0;
@@ -290,14 +306,19 @@ async function processSendJobInner(communicationId) {
       return;
     }
     doc = await Communication.findOneAndUpdate(
-      { _id: communicationId, status: 'scheduled' },
-      { $set: { status: 'sending' } },
+      { _id: communicationId, status: 'scheduled', $or: unclaimed },
+      { $set: { status: 'sending', 'metadata.sendClaimId': claimId } },
       { new: true }
     ).lean();
     if (!doc) return;
-  }
-
-  if (!doc || doc.status !== 'sending') {
+  } else if (doc.status === 'sending') {
+    doc = await Communication.findOneAndUpdate(
+      { _id: communicationId, status: 'sending', $or: unclaimed },
+      { $set: { 'metadata.sendClaimId': claimId } },
+      { new: true }
+    ).lean();
+    if (!doc) return;
+  } else {
     return;
   }
 

@@ -3,7 +3,8 @@ function resolveClientBaseUrl(req) {
   if (origin && /^https?:\/\//i.test(origin)) {
     return String(origin).replace(/\/$/, '');
   }
-  return String(process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const { resolveClientUrl } = require('./clientUrl');
+  return resolveClientUrl();
 }
 
 function buildPublicQuoteUrl(token, req) {

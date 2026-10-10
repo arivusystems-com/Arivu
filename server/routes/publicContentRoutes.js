@@ -3,29 +3,31 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const publicContentController = require('../controllers/publicContentController');
+const {
+  createRateLimitStore,
+  shouldPassOnRateLimitStoreError,
+} = require('../middleware/rateLimitRedisStore');
 
 const router = express.Router();
 
-const publicContentLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+function publicLimiter(name, max) {
+  const windowMs = 60 * 1000;
+  return rateLimit({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: createRateLimitStore({
+      prefix: `arivu:public-content:${name}:`,
+      windowMs,
+    }),
+    passOnStoreError: shouldPassOnRateLimitStoreError(process.env.RATE_LIMIT_REDIS_FAILURE_MODE),
+  });
+}
 
-const publicRenderLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const publicFeedbackLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const publicContentLimiter = publicLimiter('content', 120);
+const publicRenderLimiter = publicLimiter('render', 60);
+const publicFeedbackLimiter = publicLimiter('feedback', 30);
 
 router.post('/render-blocks', publicRenderLimiter, publicContentController.renderPublicBlocks);
 

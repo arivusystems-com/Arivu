@@ -5,6 +5,7 @@ const { runAnalyticsReportWithLogging } = require('./analyticsExecutionService')
 const { materializeRuntimePermissionsOnUser } = require('../runtimePermissionResolver');
 const { runWithOrganizationTenantContext } = require('../../utils/runWithOrganizationTenant');
 const { evaluateAlertsForWidgetExecution } = require('./analyticsAlertEvaluator');
+const { acquireSchedulerLock } = require('../../lib/schedulerLock');
 
 const ALERT_SCHEDULER_INTERVAL_MS = 15 * 60 * 1000;
 let schedulerTimer = null;
@@ -52,6 +53,9 @@ async function evaluateAlertForSchedule(alert) {
 }
 
 async function runScheduledAlertEvaluation() {
+  const acquired = await acquireSchedulerLock('analytics-alert', 14 * 60 * 1000);
+  if (!acquired) return;
+
   const alerts = await AnalyticsAlert.find({ status: 'active' })
     .select('_id organizationId widgetId ownerId')
     .limit(200)

@@ -136,7 +136,8 @@ async function createPaymentLink({
     createdBy: userId || null
   });
 
-  const base = publicBaseUrl || process.env.PUBLIC_APP_URL || 'http://localhost:5173';
+  const { resolveClientUrl } = require('../utils/clientUrl');
+  const base = resolveClientUrl([publicBaseUrl, process.env.PUBLIC_APP_URL, process.env.CLIENT_URL]);
   link.publicUrl = `${String(base).replace(/\/$/, '')}/pay/${link.publicToken}`;
   await link.save();
 

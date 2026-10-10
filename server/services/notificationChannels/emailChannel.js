@@ -154,7 +154,8 @@ function renderRegularEmail(notification, user) {
  * Get deep link URL for app.
  */
 function getAppDeepLink(appKey) {
-  const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const { resolveClientUrl } = require('../../utils/clientUrl');
+  const baseUrl = resolveClientUrl();
   
   switch (appKey) {
     case 'CRM':

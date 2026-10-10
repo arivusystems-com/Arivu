@@ -179,15 +179,14 @@ class InternalChatSSEHub {
     conn.lastHeartbeat = Date.now();
   }
 
-  publishToUser(organizationId, userId, payload) {
+  publishToUser(organizationId, userId, payload, options = {}) {
     if (!organizationId || !userId || !payload) return 0;
     const key = this.getSubscriberKey(userId, organizationId);
     const subscribers = this.subscribersByKey.get(key);
-    if (!subscribers?.size) return 0;
 
     let delivered = 0;
     const dead = [];
-    for (const connectionId of subscribers) {
+    for (const connectionId of subscribers || []) {
       const conn = this.connections.get(connectionId);
       if (!conn) {
         dead.push(connectionId);
@@ -201,6 +200,15 @@ class InternalChatSSEHub {
       }
     }
     dead.forEach((id) => this.unsubscribe(id));
+    if (!options.fromCluster && !options.skipCluster) {
+      const { CHANNELS, publishCluster } = require('./realtimeClusterFanout');
+      void publishCluster(CHANNELS.internalChat, {
+        kind: 'user',
+        organizationId: String(organizationId),
+        userId: String(userId),
+        payload,
+      });
+    }
     return delivered;
   }
 
@@ -209,8 +217,9 @@ class InternalChatSSEHub {
    * @param {string|import('mongoose').Types.ObjectId} organizationId
    * @param {Array<string|import('mongoose').Types.ObjectId>} userIds
    * @param {object} payload
+   * @param {{ fromCluster?: boolean }} [options]
    */
-  publishToUsers(organizationId, userIds, payload) {
+  publishToUsers(organizationId, userIds, payload, options = {}) {
     if (!organizationId || !payload || !Array.isArray(userIds)) return 0;
     let delivered = 0;
     const seen = new Set();
@@ -218,7 +227,16 @@ class InternalChatSSEHub {
       const id = String(userId);
       if (!id || seen.has(id)) continue;
       seen.add(id);
-      delivered += this.publishToUser(organizationId, id, payload);
+      delivered += this.publishToUser(organizationId, id, payload, { skipCluster: true });
+    }
+    if (!options.fromCluster) {
+      const { CHANNELS, publishCluster } = require('./realtimeClusterFanout');
+      void publishCluster(CHANNELS.internalChat, {
+        kind: 'users',
+        organizationId: String(organizationId),
+        userIds: [...seen],
+        payload,
+      });
     }
     return delivered;
   }

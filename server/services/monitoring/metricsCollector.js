@@ -1,4 +1,5 @@
 const InstanceRegistry = require('../../models/InstanceRegistry');
+const { acquireSchedulerLock } = require('../../lib/schedulerLock');
 const mongoose = require('mongoose');
 
 /**
@@ -56,6 +57,9 @@ class MetricsCollector {
      */
     async collectAllMetrics() {
         try {
+            const acquired = await acquireSchedulerLock('metrics-collector', 14 * 60 * 1000);
+            if (!acquired) return;
+
             console.log('📈 Collecting metrics from all active instances...');
 
             const instances = await InstanceRegistry.find({

@@ -14,6 +14,7 @@ const { runWithOrganizationTenantContext } = require('../../../utils/runWithOrga
 const { CONNECTOR_KEYS } = require('../connectorConstants');
 const { getMergedSettings } = require('./tallyModuleMappingService');
 const { triggerBidirectionalSync } = require('./tallySyncOrchestrator');
+const { acquireSchedulerLock } = require('../../../lib/schedulerLock');
 
 const TICK_MS = 60 * 1000;
 const HEARTBEAT_FRESH_MS = 2 * 60 * 1000;
@@ -119,6 +120,8 @@ async function processOrganization(organizationId) {
 
 async function runScheduledTallySyncTick() {
   if (tickInFlight) return { skipped: 'tick_in_flight' };
+  const acquired = await acquireSchedulerLock('tally-sync', 50_000);
+  if (!acquired) return { skipped: 'lock_held' };
   tickInFlight = true;
 
   const summary = {

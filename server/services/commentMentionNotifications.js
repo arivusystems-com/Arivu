@@ -80,7 +80,8 @@ function moduleKeyToEntityType(moduleKey) {
  */
 function buildRecordDeepLink({ moduleKey, entityType, entityId }) {
   if (!entityId) return null;
-  const baseUrl = String(process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const { resolveClientUrl } = require('../utils/clientUrl');
+  const baseUrl = resolveClientUrl();
   const key = String(moduleKey || '').toLowerCase();
   const pathPrefix =
     MODULE_KEY_TO_PATH[key] ||

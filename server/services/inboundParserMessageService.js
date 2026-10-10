@@ -26,13 +26,18 @@ function normalizeAddressList(value) {
   return one ? [one] : [];
 }
 
+/** Prefer HTML for inbox/case display (matches Gmail); fall back to plain text. */
 function pickBody(msg) {
   return (
-    String(msg.textBody || '').trim()
-    || String(msg.htmlBody || '').trim()
+    String(msg.htmlBody || '').trim()
+    || String(msg.textBody || '').trim()
     || String(msg.body || '').trim()
     || ''
   );
+}
+
+function bodyLooksLikeHtml(body) {
+  return /<[a-z][\s\S]*>/i.test(String(body || ''));
 }
 
 function buildParserMessageFetchUrls(parserApiBaseUrl, parserMessageId) {
@@ -179,10 +184,17 @@ async function processParserInboundEventLegacy(
       organizationId,
       providerMessageKey
     })
-      .select('_id relatedTo')
+      .select('_id relatedTo body')
       .lean();
     if (existing) {
       communicationId = existing._id;
+      // Repair plain-text-only bodies when HTML is available (older ingest preferred textBody).
+      if (body && bodyLooksLikeHtml(body) && !bodyLooksLikeHtml(existing.body)) {
+        await Communication.updateOne(
+          { _id: existing._id, organizationId },
+          { $set: { body } }
+        );
+      }
       return;
     }
 

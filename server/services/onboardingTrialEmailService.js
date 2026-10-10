@@ -30,7 +30,8 @@ function displayName(user) {
 }
 
 function buildAppUrl(path) {
-  const base = String(process.env.CLIENT_URL || process.env.APP_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const { resolveClientUrl } = require('../utils/clientUrl');
+  const base = resolveClientUrl([process.env.CLIENT_URL, process.env.APP_URL]);
   return `${base}${path.startsWith('/') ? path : `/${path}`}`;
 }
 

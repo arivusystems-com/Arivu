@@ -1,5 +1,3 @@
-const fs = require('node:fs');
-const path = require('node:path');
 const crypto = require('node:crypto');
 
 const PDFDocument = require('pdfkit');
@@ -10,10 +8,7 @@ const { listInvoiceSections } = require('../services/invoiceSectionService');
 const { writeInvoiceActivity } = require('../services/invoiceActivityService');
 const { getInvoiceBranding, formatCreditReasonLabel } = require('../services/invoiceBrandingService');
 const { safeFilePart } = require('./quoteDocumentController');
-
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
-}
+const fileStorage = require('../services/fileStorageService');
 
 function formatMoney(n) {
   const x = Number(n);
@@ -545,21 +540,14 @@ exports.generateDocument = async (req, res) => {
       .lean();
     const nextVersion = Math.max(0, Number(latest?.[0]?.versionNumber) || 0) + 1;
 
-    const outDir = path.join(
-      __dirname,
-      '..',
-      'public',
-      'invoice-documents',
-      String(organizationId),
-      String(invoice._id)
-    );
-    ensureDir(outDir);
     const filename = `${safeFilePart(invoice.invoiceNumber)}-v${nextVersion}.pdf`;
-    const filePath = path.join(outDir, filename);
-    fs.writeFileSync(filePath, pdf);
-
-    const stat = fs.statSync(filePath);
-    const publicPath = `/api/invoice-documents/${String(organizationId)}/${String(invoice._id)}/${filename}`;
+    const uploaded = await fileStorage.uploadBuffer({
+      buffer: pdf,
+      originalName: filename,
+      mimeType: 'application/pdf',
+      organizationId,
+      category: 'invoices'
+    });
 
     const docRow = await InvoiceDocumentModel.create({
       organizationId,
@@ -573,9 +561,9 @@ exports.generateDocument = async (req, res) => {
       generatedAt: new Date(),
       generatedBy: req.user._id,
       mimeType: 'application/pdf',
-      storageProvider: 'local',
-      filePath: publicPath,
-      fileSizeBytes: stat.size,
+      storageProvider: 'oci',
+      filePath: uploaded.url,
+      fileSizeBytes: pdf.length,
       currency: invoice.currency || 'USD',
       grandTotal: Number(invoice.grandTotal) || 0,
       amountDue: Number(invoice.amountDue) || 0,

@@ -84,7 +84,26 @@ function shouldPassOnRateLimitStoreError(failureMode) {
     return (failureMode || process.env.RATE_LIMIT_REDIS_FAILURE_MODE) === 'fail-open';
 }
 
+/**
+ * Production with Redis configured fails closed. Development, or production
+ * without Redis, stays fail-open so a missing local Redis does not block the API.
+ * @param {{ isProduction?: boolean, redisConfigured?: boolean, explicit?: string }} [opts]
+ */
+function resolveSharedRateLimitFailureMode(opts = {}) {
+    if (opts.explicit) return opts.explicit;
+    const isProduction = opts.isProduction != null
+        ? opts.isProduction
+        : process.env.NODE_ENV === 'production';
+    const redisConfigured = opts.redisConfigured != null
+        ? opts.redisConfigured
+        : isRedisConfigured();
+    if (isProduction && redisConfigured) return 'fail-closed';
+    return 'fail-open';
+}
+
 module.exports = {
+    RedisRateLimitStore,
     createRateLimitStore,
     shouldPassOnRateLimitStoreError,
+    resolveSharedRateLimitFailureMode,
 };

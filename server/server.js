@@ -675,19 +675,7 @@ connectMasterWithRetry(masterUri)
       console.warn('⚠️  Failed to refresh relationship key cache:', cacheErr.message);
     }
 
-    // 2. Start Monitoring Services (if enabled)
-    if (process.env.ENABLE_HEALTH_CHECKER !== 'false') {
-      const healthChecker = require('./services/monitoring/healthChecker');
-      healthChecker.start();
-      console.log('✅ Health checker started');
-    }
-    
-    if (process.env.ENABLE_METRICS_COLLECTOR !== 'false') {
-      const metricsCollector = require('./services/monitoring/metricsCollector');
-      metricsCollector.start();
-      console.log('✅ Metrics collector started');
-    }
-    
+    // Health checks and metrics run on the Worker so every API process stays identical.
     // 3. Start scheduled jobs (digests, escalations, trash retention, Gmail inbox sync, …)
     //    Master switch: ENABLE_SCHEDULED_JOBS=false disables all cron registered here.
     //    Individual toggles (e.g. ENABLE_DIGEST_SCHEDULER) still apply inside scheduledJobs.
@@ -746,6 +734,8 @@ connectMasterWithRetry(masterUri)
     try {
       const { startNotificationSSESubscriber } = require('./services/notificationSSEPubSub');
       await startNotificationSSESubscriber();
+      const { startRealtimeClusterSubscriber } = require('./services/realtimeClusterFanout');
+      await startRealtimeClusterSubscriber();
     } catch (sseSubErr) {
       console.warn('⚠️  Notification SSE cluster subscriber not started:', sseSubErr.message);
     }
@@ -837,6 +827,8 @@ const gracefulShutdown = async (signal) => {
     try {
       const { stopNotificationSSESubscriber } = require('./services/notificationSSEPubSub');
       await stopNotificationSSESubscriber();
+      const { stopRealtimeClusterSubscriber } = require('./services/realtimeClusterFanout');
+      await stopRealtimeClusterSubscriber();
     } catch (_err) {
       // ignore
     }

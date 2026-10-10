@@ -213,7 +213,7 @@ function startWorker() {
         resume: jobPayload.resume === true || (job.attemptsMade || 0) > 1
       });
     } finally {
-      releaseCampaignSendOrgSlot(jobPayload.organizationId);
+      await releaseCampaignSendOrgSlot(jobPayload.organizationId);
     }
   });
 

@@ -4,6 +4,8 @@
  * Platform LLM keys/defaults: prefer Control Plane → Platform AI (DB).
  * Env keys remain a fallback. Legacy ASTRA_* v1 flags are ignored by Astra v2.
  */
+const { productionClientUrlError } = require('../utils/clientUrl');
+
 function validateEnv() {
   const isProd = process.env.NODE_ENV === 'production';
   const defaultProvider = String(
@@ -52,6 +54,11 @@ function validateEnv() {
   if (isProd) {
     if (!process.env.JWT_SECRET || String(process.env.JWT_SECRET).length < 24) {
       console.error('❌ FATAL: production requires JWT_SECRET (use a long random string, e.g. openssl rand -base64 48).');
+      process.exit(1);
+    }
+    const clientUrlError = productionClientUrlError();
+    if (clientUrlError) {
+      console.error(`❌ FATAL: ${clientUrlError}.`);
       process.exit(1);
     }
     if (process.env.DISABLE_SECURITY === 'true') {
