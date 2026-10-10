@@ -7,7 +7,8 @@ function generateManageToken() {
 }
 
 function buildManageUrl(token) {
-  const base = String(process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const { resolveClientUrl } = require('./clientUrl');
+  const base = resolveClientUrl();
   return `${base}/appointments/manage/${token}`;
 }
 

@@ -23,9 +23,8 @@ const MICROSOFT_SCOPES = [
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 
 function oauthClientBaseUrl() {
-  let base = String(process.env.CLIENT_URL || '').replace(/\/$/, '');
-  if (!base) base = 'http://localhost:5173';
-  return base;
+  const { resolveClientUrl } = require('../utils/clientUrl');
+  return resolveClientUrl();
 }
 
 async function getGoogleOAuthClient(organizationId) {

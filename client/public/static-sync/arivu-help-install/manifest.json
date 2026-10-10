@@ -18,7 +18,6 @@
     "lib/mergeConfig.js",
     "lib/mergeConfigCjs.js",
     "lib/uninstall.js",
-    "templates/.DS_Store",
     "templates/app/api/arivu-webhook/route.ts",
     "templates/next/app/help/ArivuHelpAssets.tsx",
     "templates/next/app/help/ArivuHelpContent.tsx",

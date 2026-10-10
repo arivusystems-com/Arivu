@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken');
 const {
     createRateLimitStore,
     shouldPassOnRateLimitStoreError,
+    resolveSharedRateLimitFailureMode,
 } = require('./rateLimitRedisStore');
 
 // 🔓 SECURITY DISABLED: Bypass all rate limiting
@@ -122,9 +123,23 @@ const AUTH_RATE_LIMIT_MAX_REQUESTS = parsePositiveInteger(
     // remains the primary soft block (~8); this is a harder per-account ceiling.
     isProduction ? 20 : 30
 );
-const GENERAL_RATE_LIMIT_REDIS_FAILURE_MODE = process.env.GENERAL_RATE_LIMIT_REDIS_FAILURE_MODE || 'fail-open';
+/**
+ * Shared API/route limits.
+ * Production with REDIS_URL defaults to fail-closed so a Redis error rejects the request.
+ * Development, or production without Redis, stays fail-open so a missing local Redis does not block the API.
+ * Auth and sensitive limiters stay fail-closed.
+ *
+ * Production env (these two match the default when NODE_ENV=production and REDIS_URL is set):
+ *   GENERAL_RATE_LIMIT_REDIS_FAILURE_MODE=fail-closed
+ *   ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE=fail-closed
+ *   RATE_LIMIT_REDIS_REQUIRED=true
+ *   REDIS_URL=redis://...
+ */
+const GENERAL_RATE_LIMIT_REDIS_FAILURE_MODE = process.env.GENERAL_RATE_LIMIT_REDIS_FAILURE_MODE
+    || resolveSharedRateLimitFailureMode();
 const AUTH_RATE_LIMIT_REDIS_FAILURE_MODE = process.env.AUTH_RATE_LIMIT_REDIS_FAILURE_MODE || 'fail-closed';
-const ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE = process.env.ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE || 'fail-open';
+const ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE = process.env.ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE
+    || resolveSharedRateLimitFailureMode();
 const SENSITIVE_RATE_LIMIT_REDIS_FAILURE_MODE = process.env.SENSITIVE_RATE_LIMIT_REDIS_FAILURE_MODE || 'fail-closed';
 
 const isHealthCheckPath = (req) => {

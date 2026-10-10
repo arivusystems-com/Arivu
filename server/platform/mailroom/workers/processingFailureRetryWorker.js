@@ -1,5 +1,6 @@
 'use strict';
 
+const { acquireSchedulerLock } = require('../../../lib/schedulerLock');
 const MailroomProcessingFailure = require('../../../models/MailroomProcessingFailure');
 const {
   MAX_REPLAY_ATTEMPTS,
@@ -15,6 +16,11 @@ let running = false;
 
 async function processRetryBatch() {
   if (running) return;
+  const acquired = await acquireSchedulerLock(
+    'mailroom-failure-retry',
+    Math.max(30_000, DEFAULT_INTERVAL_MS - 5000)
+  );
+  if (!acquired) return;
   running = true;
 
   try {

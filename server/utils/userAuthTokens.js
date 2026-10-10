@@ -29,7 +29,8 @@ function getPasswordResetExpiry() {
 }
 
 function buildClientUrl(path) {
-  const base = String(process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const { resolveClientUrl } = require('./clientUrl');
+  const base = resolveClientUrl();
   return `${base}${path.startsWith('/') ? path : `/${path}`}`;
 }
 

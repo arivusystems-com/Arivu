@@ -37,9 +37,8 @@ function isGoogleLoginConfigured() {
 }
 
 function clientLoginBaseUrl() {
-  let base = String(process.env.CLIENT_URL || '').replace(/\/$/, '');
-  if (!base) base = 'http://localhost:5173';
-  return base;
+  const { resolveClientUrl } = require('../utils/clientUrl');
+  return resolveClientUrl();
 }
 
 function getOAuth2Client() {

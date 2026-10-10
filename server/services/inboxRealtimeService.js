@@ -8,6 +8,7 @@ const Mailbox = require('../models/Mailbox');
 const User = require('../models/User');
 const inboxSSEHub = require('./inboxSSEHub');
 const { canUserAccessMailboxThreads } = require('./mailboxAccessService');
+const { CHANNELS, publishCluster } = require('./realtimeClusterFanout');
 
 /**
  * Notify clients that workspace inbox data may have changed.
@@ -33,7 +34,13 @@ async function emitInboxUpdated({ organizationId, mailboxId = null, reason = 'sy
       const delivered = await emitToMailboxSubscribers(organizationId, mailboxId, payload);
       return { delivered };
     }
-    return { delivered: inboxSSEHub.publishToOrganization(organizationId, payload) };
+    const delivered = inboxSSEHub.publishToOrganization(organizationId, payload);
+    await publishCluster(CHANNELS.inbox, {
+      kind: 'org',
+      organizationId: String(organizationId),
+      payload,
+    });
+    return { delivered };
   } catch (err) {
     console.warn('[inboxRealtime] emitInboxUpdated failed:', err.message);
     return { delivered: 0 };
@@ -47,11 +54,19 @@ async function emitToMailboxSubscribers(organizationId, mailboxId, payload) {
   }
 
   const users = await User.find({ organizationId }).select('_id role isOwner').lean();
+  const userIds = [];
   let delivered = 0;
   for (const user of users) {
     if (!canUserAccessMailboxThreads(user, mb)) continue;
+    userIds.push(String(user._id));
     delivered += inboxSSEHub.publishToUser(organizationId, user._id, payload);
   }
+  await publishCluster(CHANNELS.inbox, {
+    kind: 'users',
+    organizationId: String(organizationId),
+    userIds,
+    payload,
+  });
   return delivered;
 }
 

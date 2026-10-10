@@ -2,7 +2,7 @@
 
 /**
  * SSE hub for telephony realtime events.
- * Best-effort, in-memory — clients may poll as fallback.
+ * Local delivery plus Redis fan-out so Worker publishers reach every API.
  *
  * Event types: IncomingCall, CallAnswered, CallEnded, CallMissed, CallHeld,
  * RecordingReady, TranscriptReady, SummaryReady, PresenceChanged, QueueUpdated, CampaignProgress
@@ -139,7 +139,7 @@ class TelephonySSEHub {
     return delivered;
   }
 
-  publishToOrg(organizationId, payload) {
+  publishToOrg(organizationId, payload, options = {}) {
     if (!organizationId || !payload) return 0;
     const orgIdStr = String(organizationId);
     let delivered = 0;
@@ -154,6 +154,14 @@ class TelephonySSEHub {
       }
     }
     dead.forEach((id) => this.unsubscribe(id));
+    if (!options.fromCluster) {
+      const { CHANNELS, publishCluster } = require('../realtimeClusterFanout');
+      void publishCluster(CHANNELS.telephony, {
+        kind: 'org',
+        organizationId: orgIdStr,
+        payload,
+      });
+    }
     return delivered;
   }
 
@@ -188,11 +196,13 @@ class TelephonySSEHub {
   startCleanupTimer() {
     if (this.cleanupTimer) return;
     this.cleanupTimer = setInterval(() => this.cleanupInactiveConnections(), 30000);
+    this.cleanupTimer.unref?.();
   }
 
   startHeartbeat() {
     if (this.heartbeatTimer) return;
     this.heartbeatTimer = setInterval(() => this.sendHeartbeat(), this.heartbeatInterval);
+    this.heartbeatTimer.unref?.();
   }
 
   shutdown() {
@@ -218,4 +228,6 @@ class TelephonySSEHub {
   }
 }
 
-module.exports = new TelephonySSEHub();
+const hub = new TelephonySSEHub();
+hub.TelephonySSEHub = TelephonySSEHub;
+module.exports = hub;

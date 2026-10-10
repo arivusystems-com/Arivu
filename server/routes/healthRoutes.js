@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { checkRedis } = require('../lib/redisHealth');
+const { checkRedis, redisFailureBlocksReadiness } = require('../lib/redisHealth');
 
 /**
  * Liveness: process is up (no dependency checks). Use for cheap probes.
@@ -54,11 +54,10 @@ router.get('/ready', async (req, res) => {
         ? { configured: false }
         : { configured: true, ok: redisResult.ok, error: redisResult.error };
 
-    // Only fail readiness when Redis is explicitly required (avoid 503 if REDIS_URL is set but unreachable).
-    const redisBlocksReady =
-        process.env.REDIS_HEALTH_BLOCKS_READY === 'true'
-        || process.env.ENABLE_REDIS_REQUIRED === 'true';
-    const redisBlocks = redisBlocksReady && !redisResult.skipped && !redisResult.ok;
+    // Production requires REDIS_HEALTH_BLOCKS_READY=true.
+    // Development does not fail this probe when Redis is down unless that flag
+    // (or ENABLE_REDIS_REQUIRED) is set.
+    const redisBlocks = redisFailureBlocksReadiness(redisResult);
     const ok = mongoOk && !redisBlocks;
     res.status(ok ? 200 : 503).json({ ...payload, status: ok ? 'ready' : 'not_ready' });
 });

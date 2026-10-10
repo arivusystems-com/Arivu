@@ -166,7 +166,8 @@ function buildCancellationContent({ recipientName, eventName, when, cancelledByL
 }
 
 function eventRecordUrl(eventId) {
-  const base = String(process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const { resolveClientUrl } = require('../utils/clientUrl');
+  const base = resolveClientUrl();
   return `${base}/events/${eventId}`;
 }
 

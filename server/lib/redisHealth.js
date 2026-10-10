@@ -55,4 +55,24 @@ function buildUrlFromParts() {
   return `redis://${host}:${port}`;
 }
 
-module.exports = { checkRedis, isRedisRequiredForHealth };
+/**
+ * Production (or an explicit flag) fails readiness when Redis is missing or down.
+ * Development stays ready unless REDIS_HEALTH_BLOCKS_READY=true or ENABLE_REDIS_REQUIRED=true.
+ * @param {{ skipped?: boolean, ok?: boolean }} redisResult
+ * @param {NodeJS.ProcessEnv} [env]
+ */
+function redisFailureBlocksReadiness(redisResult, env = process.env) {
+  const explicit = env.REDIS_HEALTH_BLOCKS_READY;
+  const production = env.NODE_ENV === 'production';
+  const blocks =
+    explicit === 'true'
+    || env.ENABLE_REDIS_REQUIRED === 'true'
+    || (explicit !== 'false' && production);
+  if (!blocks) return false;
+  if (redisResult && redisResult.skipped) {
+    return production && explicit !== 'false';
+  }
+  return !redisResult || redisResult.ok !== true;
+}
+
+module.exports = { checkRedis, isRedisRequiredForHealth, redisFailureBlocksReadiness };

@@ -1,33 +1,29 @@
 # Arivu — production deployment (Arivu Systems)
 
-This runbook matches the product split:
+OCI provisioning is in [OCI_VM_DEPLOYMENT.md](./OCI_VM_DEPLOYMENT.md). Follow that order: network, bastion, MongoDB 8 replica set `rs0`, Redis, Object Storage, Vault, API pool size 1, Worker pool size 1, load balancer, DNS, production smoke tests, legacy quote/invoice migration, API pool size 2, Worker pool size 2, then consider autoscaling. API and Worker require Node.js 22.12.0 or newer on the Node 22 line. This design does not use Docker or Kubernetes.
+
+The product split:
 
 | Surface | Hostname | Platform |
 |--------|-----------|----------|
 | Marketing / website | `arivusystems.com` | Your static site (not this repo) or a separate Vercel project |
 | **Web app (Vue)** | `app.arivusystems.com` | **Vercel** — deploy from the `client/` app |
-| **API + workers** | e.g. `api.arivusystems.com` (custom domain on Railway) | **Railway** — deploy from the `server/` app |
-| Database | — | **MongoDB Atlas** |
-| Queue / cache | — | **Upstash Redis** (or Railway Redis) — set `REDIS_URL` (often `rediss://…`) |
-| Object storage | — | **AWS S3** (see `server/config/awsConfig.js`; uploads today are primarily local with a clear path to S3) |
-| Email | — | **AWS SES** (see `server/services/emailService.js`) |
-| DNS / TLS | — | **Cloudflare** in front of Vercel + Railway |
+| **API + workers** | `api.arivusystems.com` | **OCI instance pools** behind an OCI load balancer — [OCI_VM_DEPLOYMENT.md](./OCI_VM_DEPLOYMENT.md) |
+| Database | — | **MongoDB** on a private OCI VM (auth, single-member replica set) |
+| Queue / cache | — | **Redis** on a private OCI VM (`AOF`, `maxmemory-policy=noeviction`) |
+| Object storage | — | **OCI Object Storage** (`IMPORT_STORAGE_DRIVER=oci`) |
+| Email | — | OCI Email Delivery and AMDS |
+| DNS / TLS | — | Hostinger DNS. TLS for `api` terminates on the OCI load balancer. `app` stays on Vercel. |
 | Errors | — | **Sentry** (`SENTRY_DSN` server, `VITE_SENTRY_DSN` client) |
 | Product analytics | — | **PostHog** (`VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` optional) |
 
 Kubernetes is **not** part of this design.
 
-## Backend (Railway)
+## Backend (OCI)
 
-1. **Root directory:** `server` (or a monorepo sub-service pointing at that folder).
-2. **Start command:** `node server.js` (default `npm start`).
-3. **Health checks:** use `https://<your-api>/health/ready` (readiness) or `GET /health/live` (liveness). Configure Railway / Cloudflare to hit readiness for dependency checks.
-4. **Trust proxy:** `app.set('trust proxy', 1)` is enabled in production so `X-Forwarded-Proto` and secure cookies/headers work behind Cloudflare and Railway.
-5. **Bull + workers:** the API process runs the email queue consumer by default. If you add a **second** Railway service for background work:
-   - Start command: `node worker.js` (see `package.json` → `npm run worker`).
-   - On the **web** service, set `ENABLE_BULL_IN_WEB=false` to avoid two consumers for the same queue unless you intend to scale workers horizontally.
-6. **CORS:** production defaults allow `https://arivusystems.com`, `https://www.arivusystems.com`, and `https://app.arivusystems.com`. Override with `CORS_ORIGINS` (comma-separated) if you add staging hosts.
-7. **Required env (production):** `NODE_ENV=production`, `MONGODB_URI` (Atlas), `JWT_SECRET` (strong random, long), plus SES/Redis as you enable them. See `server/.env.production.example`.
+Click-by-click OCI steps, instance pools, and verification are in [OCI_VM_DEPLOYMENT.md](./OCI_VM_DEPLOYMENT.md).
+
+API process: `node server.js` with `ENABLE_BULL_IN_WEB=false`, `ENABLE_SCHEDULED_JOBS=false`, `PORT=5000`, `EXPRESS_TRUST_PROXY=1`, and `PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable`. Worker process: `node worker.js`. The Worker does not set `PORT`, `ENABLE_BULL_IN_WEB`, `ENABLE_SCHEDULED_JOBS`, or `PUPPETEER_EXECUTABLE_PATH`. Both use the same `MONGODB_URI` (`authSource=admin&replicaSet=rs0&retryWrites=true`), the same `REDIS_URL`, and the same Object Storage block including `STORAGE_FORCE_PATH_STYLE=true`. Readiness is `GET /health/ready` with `REDIS_HEALTH_BLOCKS_READY=true`. Vault contents are in the OCI runbook, not in `server/.env.production.example`.
 
 ## Frontend (Vercel)
 
@@ -38,10 +34,10 @@ Kubernetes is **not** part of this design.
 5. **Split API host without rewrites:** set `VITE_API_ORIGIN=https://api.yourdomain.com` at build time. The app applies this via `getApiUrlForFetch` / the fetch shim in `main.ts` for `/api` and `/portal` API paths. Keep `CORS_ORIGINS` on the API in sync.
 6. **Sentry + PostHog:** set the `VITE_*` variables in Vercel for **Production**; source maps are enabled in Vite for upload to Sentry (configure release + auth token in your CI or Sentry project).
 
-## Cloudflare (recommended)
+## DNS
 
-- **app:** CNAME to Vercel; **api:** CNAME to Railway; SSL mode **Full (strict)**.
-- Consider WAF, bot management, and rate limits at the edge; the API also runs `express-rate-limit` for application-level limits.
+- `app.arivusystems.com` stays on Vercel.
+- `api.arivusystems.com` is an A record to the OCI load balancer public IP.
 
 ## See also (internal beta / UAT)
 
@@ -52,14 +48,11 @@ Kubernetes is **not** part of this design.
 
 ## Environment files
 
-- `server/.env.production.example` — reference for the Node API and worker.
-- `client/.env.production.example` — reference for the Vite build on Vercel.
-
-Copy to real `.env` or configure variables only in the host UI (do not commit secrets).
+API and Worker env files are Vault secrets. First boot writes them to `/etc/arivu/api.env` and `/etc/arivu/worker.env`. The variable list is in [OCI_VM_DEPLOYMENT.md](./OCI_VM_DEPLOYMENT.md). Do not commit those files.
 
 ## CI/CD (next step)
 
-- Add a workflow that: installs dependencies, runs `client` `npm run type-check` / `npm run test`, `server` unit tests, and (optionally) `npm run security:check` in `server`. Deploy remains via Vercel and Railway’s Git integrations.
+- Add a workflow that: installs dependencies, runs `client` `npm run type-check` / `npm run test`, `server` unit tests, and (optionally) `npm run security:check` in `server`. The app stays on Vercel. API and Worker deploys are a new instance configuration and a one-at-a-time instance replacement, in [OCI_VM_DEPLOYMENT.md](./OCI_VM_DEPLOYMENT.md).
 
 ## npm cache / install issues
 

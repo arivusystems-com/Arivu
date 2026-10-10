@@ -1,4 +1,5 @@
 const InstanceRegistry = require('../../models/InstanceRegistry');
+const { acquireSchedulerLock } = require('../../lib/schedulerLock');
 const axios = require('axios');
 const { buildTenantFrontendUrl, buildTenantApiUrl } = require('../../utils/tenantDomain');
 
@@ -58,6 +59,9 @@ class HealthChecker {
      */
     async checkAllInstances() {
         try {
+            const acquired = await acquireSchedulerLock('health-checker', 4 * 60 * 1000);
+            if (!acquired) return;
+
             console.log('🔍 Running health checks on all active instances...');
 
             // Get all instances that are active or provisioning

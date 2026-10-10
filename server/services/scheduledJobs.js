@@ -1,4 +1,19 @@
+const crypto = require('crypto');
 const cron = require('node-cron');
+const { acquireSchedulerLock } = require('../lib/schedulerLock');
+
+function scheduleLocked(expression, func, options) {
+  const fingerprint = crypto
+    .createHash('sha1')
+    .update(`${expression}\n${Function.prototype.toString.call(func).slice(0, 240)}`)
+    .digest('hex')
+    .slice(0, 16);
+  return cron.schedule(expression, async (...args) => {
+    const acquired = await acquireSchedulerLock(`cron:${fingerprint}`);
+    if (!acquired) return undefined;
+    return func(...args);
+  }, options);
+}
 const { runDailyDigest, runWeeklyDigest } = require('./digestScheduler');
 const { tick: escalationTick } = require('./escalationResolver');
 const { purgeExpiredRetention } = require('./deletionService');
@@ -142,7 +157,7 @@ function startScheduledJobs() {
   // Daily digest: Every day at 9:00 AM
   // Cron format: minute hour day month day-of-week
   // '0 9 * * *' = 9:00 AM every day
-  dailyDigestJob = cron.schedule('0 9 * * *', async () => {
+  dailyDigestJob = scheduleLocked('0 9 * * *', async () => {
     const startTime = new Date();
     console.log(`[scheduledJobs] Running daily digest at ${startTime.toISOString()}`);
     
@@ -161,7 +176,7 @@ function startScheduledJobs() {
 
   // Weekly digest: Every Monday at 9:00 AM
   // '0 9 * * 1' = 9:00 AM every Monday (0 = Sunday, 1 = Monday)
-  weeklyDigestJob = cron.schedule('0 9 * * 1', async () => {
+  weeklyDigestJob = scheduleLocked('0 9 * * 1', async () => {
     const startTime = new Date();
     console.log(`[scheduledJobs] Running weekly digest at ${startTime.toISOString()}`);
     
@@ -186,7 +201,7 @@ function startScheduledJobs() {
 
   // Escalation resolver (Phase 3): check pending approvals past timeout
   if (ENABLE_ESCALATION_SCHEDULER) {
-    escalationJob = cron.schedule('* * * * *', async () => {
+    escalationJob = scheduleLocked('* * * * *', async () => {
       try {
         const r = await escalationTick();
         if (r.processed > 0 && NOTIFICATION_DEBUG) {
@@ -203,7 +218,7 @@ function startScheduledJobs() {
 
   // Trash retention: purge items past retentionExpiresAt (excluding legal hold)
   if (ENABLE_TRASH_RETENTION_SCHEDULER) {
-    trashRetentionJob = cron.schedule('0 3 * * *', async () => {
+    trashRetentionJob = scheduleLocked('0 3 * * *', async () => {
       const startTime = new Date();
       console.log(`[scheduledJobs] Running trash retention purge at ${startTime.toISOString()}`);
       try {
@@ -223,7 +238,7 @@ function startScheduledJobs() {
 
   // Assignment scheduler (Helpdesk): execute delayed/scheduled assignment jobs
   if (ENABLE_ASSIGNMENT_SCHEDULER) {
-    assignmentJob = cron.schedule('* * * * *', async () => {
+    assignmentJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await processDueAssignmentJobs();
         if (result.processed > 0 || NOTIFICATION_DEBUG) {
@@ -251,7 +266,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_PROCESS_WAIT_RESUME_SCHEDULER) {
-    processWaitResumeJob = cron.schedule('* * * * *', async () => {
+    processWaitResumeJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await tickProcessWaitResume();
         if (result.due > 0 || NOTIFICATION_DEBUG) {
@@ -269,7 +284,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_PROCESS_SCHEDULE_SCHEDULER) {
-    processScheduleJob = cron.schedule('* * * * *', async () => {
+    processScheduleJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await tickProcessSchedules();
         if (result.due > 0 || NOTIFICATION_DEBUG) {
@@ -287,7 +302,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_DEFERRED_AUTOMATION_SCHEDULER) {
-    deferredAutomationJob = cron.schedule('* * * * *', async () => {
+    deferredAutomationJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await processDueDeferredAutomationActions();
         if (result.processed > 0 || NOTIFICATION_DEBUG) {
@@ -305,7 +320,7 @@ function startScheduledJobs() {
   if (ENABLE_BUSINESS_HOURS_KPI_SCHEDULER) {
     const kpiCron = String(process.env.BUSINESS_HOURS_KPI_CRON || '15 3 * * *').trim();
     if (cron.validate(kpiCron)) {
-      businessHoursKpiJob = cron.schedule(kpiCron, async () => {
+      businessHoursKpiJob = scheduleLocked(kpiCron, async () => {
         try {
           const result = await tickBusinessHoursKpiAggregation();
           console.log(
@@ -325,7 +340,7 @@ function startScheduledJobs() {
     const targetCron = String(process.env.TARGET_RECALC_CRON || '30 2 * * *').trim();
     const { tickTargetRecalc } = require('./targets/targetRecalcScheduler');
     if (cron.validate(targetCron)) {
-      targetRecalcJob = cron.schedule(targetCron, async () => {
+      targetRecalcJob = scheduleLocked(targetCron, async () => {
         try {
           const result = await tickTargetRecalc();
           console.log(
@@ -344,7 +359,7 @@ function startScheduledJobs() {
   if (ENABLE_MARKETING_SEGMENT_REFRESH_SCHEDULER) {
     const segmentCron = String(process.env.MARKETING_SEGMENT_REFRESH_CRON || '*/15 * * * *').trim();
     if (cron.validate(segmentCron)) {
-      marketingSegmentRefreshJob = cron.schedule(segmentCron, async () => {
+      marketingSegmentRefreshJob = scheduleLocked(segmentCron, async () => {
         try {
           const result = await tickMarketingSegmentRefresh();
           if (result?.skipped) return;
@@ -364,7 +379,7 @@ function startScheduledJobs() {
   if (ENABLE_MARKETING_CAMPAIGN_SCHEDULE_SCHEDULER) {
     const campaignScheduleCron = String(process.env.MARKETING_CAMPAIGN_SCHEDULE_CRON || '* * * * *').trim();
     if (cron.validate(campaignScheduleCron)) {
-      marketingCampaignScheduleJob = cron.schedule(campaignScheduleCron, async () => {
+      marketingCampaignScheduleJob = scheduleLocked(campaignScheduleCron, async () => {
         try {
           const result = await tickMarketingCampaignSchedule();
           if (result?.skipped) return;
@@ -386,7 +401,7 @@ function startScheduledJobs() {
   if (ENABLE_MARKETING_AB_TEST_SCHEDULER) {
     const abTestCron = String(process.env.MARKETING_AB_TEST_CRON || '*/5 * * * *').trim();
     if (cron.validate(abTestCron)) {
-      marketingAbTestJob = cron.schedule(abTestCron, async () => {
+      marketingAbTestJob = scheduleLocked(abTestCron, async () => {
         try {
           const result = await tickMarketingAbTests();
           if (result?.skipped) return;
@@ -408,7 +423,7 @@ function startScheduledJobs() {
   if (ENABLE_AMDS_POLICY_SYNC_SCHEDULER) {
     const policySyncCron = String(process.env.AMDS_POLICY_SYNC_CRON || '*/5 * * * *').trim();
     if (cron.validate(policySyncCron)) {
-      amdsPolicySyncJob = cron.schedule(policySyncCron, async () => {
+      amdsPolicySyncJob = scheduleLocked(policySyncCron, async () => {
         try {
           const result = await tickAmdsPolicySyncRetry();
           if (!result || result.attempted === 0) return;
@@ -426,7 +441,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_HELPDESK_SLA_SCHEDULER) {
-    helpdeskSlaJob = cron.schedule('* * * * *', async () => {
+    helpdeskSlaJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await tickHelpdeskSlaNotifications();
         if (result.warningSent > 0 || result.breachSent > 0 || result.escalationsSent > 0 || NOTIFICATION_DEBUG) {
@@ -444,7 +459,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_SLA_POLICY_SCHEDULER) {
-    slaPolicyJob = cron.schedule('* * * * *', async () => {
+    slaPolicyJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await tickSlaPolicyInstances();
         if (result.breached > 0 || result.warnings > 0 || NOTIFICATION_DEBUG) {
@@ -481,7 +496,7 @@ function startScheduledJobs() {
           `[scheduledJobs] Invalid GMAIL_INBOX_SYNC_CRON="${gmailCron}" — Gmail inbox scheduler not started`
         );
       } else {
-        gmailInboxSyncJob = cron.schedule(gmailCron, tickGmail, {
+        gmailInboxSyncJob = scheduleLocked(gmailCron, tickGmail, {
           scheduled: true,
           timezone: process.env.DIGEST_TIMEZONE || 'UTC'
         });
@@ -499,7 +514,7 @@ function startScheduledJobs() {
     const watchCron = String(process.env.GMAIL_WATCH_RENEW_CRON || '15 4 * * *').trim();
     try {
       if (cron.validate(watchCron)) {
-        cron.schedule(watchCron, async () => {
+        scheduleLocked(watchCron, async () => {
           try {
             const r = await tickRenewGmailWatches();
             if (process.env.GMAIL_INBOX_SYNC_SCHEDULER_DEBUG === 'true') {
@@ -517,7 +532,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_SNOOZE_WAKE_NOTIFICATION_SCHEDULER) {
-    snoozeWakeNotificationJob = cron.schedule('* * * * *', async () => {
+    snoozeWakeNotificationJob = scheduleLocked('* * * * *', async () => {
       try {
         await tickSnoozeWakeNotifications();
       } catch (err) {
@@ -538,7 +553,7 @@ function startScheduledJobs() {
         `[scheduledJobs] Invalid APPOINTMENT_REMINDER_CRON="${reminderCron}" — appointment reminder scheduler not started`
       );
     } else {
-      appointmentReminderJob = cron.schedule(
+      appointmentReminderJob = scheduleLocked(
         reminderCron,
         async () => {
           try {
@@ -564,7 +579,7 @@ function startScheduledJobs() {
         `[scheduledJobs] Invalid QUOTE_EXPIRY_CRON="${quoteExpiryCron}" — quote expiry scheduler not started`
       );
     } else {
-      quoteExpiryJob = cron.schedule(
+      quoteExpiryJob = scheduleLocked(
         quoteExpiryCron,
         async () => {
           try {
@@ -588,7 +603,7 @@ function startScheduledJobs() {
         `[scheduledJobs] Invalid DOCUMENT_EXPIRY_NOTIFICATION_CRON="${documentExpiryCron}" — document expiry notification scheduler not started`
       );
     } else {
-      documentExpiryNotificationJob = cron.schedule(
+      documentExpiryNotificationJob = scheduleLocked(
         documentExpiryCron,
         async () => {
           try {
@@ -614,7 +629,7 @@ function startScheduledJobs() {
         `[scheduledJobs] Invalid DOCUMENT_EXTERNAL_LINK_CRON="${externalLinkCron}" — external link scheduler not started`
       );
     } else {
-      documentExternalLinkJob = cron.schedule(
+      documentExternalLinkJob = scheduleLocked(
         externalLinkCron,
         async () => {
           try {
@@ -640,7 +655,7 @@ function startScheduledJobs() {
         `[scheduledJobs] Invalid DOCUMENT_OCR_INDEX_CRON="${ocrIndexCron}" — OCR index scheduler not started`
       );
     } else {
-      documentOcrIndexJob = cron.schedule(
+      documentOcrIndexJob = scheduleLocked(
         ocrIndexCron,
         async () => {
           try {
@@ -666,7 +681,7 @@ function startScheduledJobs() {
         `[scheduledJobs] Invalid DOCUMENT_RESERVATION_CRON="${reservationCron}" — reservation scheduler not started`
       );
     } else {
-      documentReservationJob = cron.schedule(
+      documentReservationJob = scheduleLocked(
         reservationCron,
         async () => {
           try {
@@ -686,7 +701,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_PLAYBOOK_DELAY_SCHEDULER) {
-    playbookDelayJob = cron.schedule('* * * * *', async () => {
+    playbookDelayJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await processDuePlaybookDelayJobs();
         if (result.processed > 0 || NOTIFICATION_DEBUG) {
@@ -704,7 +719,7 @@ function startScheduledJobs() {
   }
 
   if (ENABLE_PLAYBOOK_ALERT_SCHEDULER) {
-    playbookAlertJob = cron.schedule('* * * * *', async () => {
+    playbookAlertJob = scheduleLocked('* * * * *', async () => {
       try {
         const result = await processDuePlaybookAlertJobs();
         if (result.processed > 0 || NOTIFICATION_DEBUG) {
@@ -723,7 +738,7 @@ function startScheduledJobs() {
 
   if (ENABLE_STALLED_INVITE_SCHEDULER) {
     const { tickStalledInviteNotifications } = require('./onboardingStalledInviteSchedulerService');
-    stalledInviteJob = cron.schedule('0 10 * * *', async () => {
+    stalledInviteJob = scheduleLocked('0 10 * * *', async () => {
       try {
         const result = await tickStalledInviteNotifications();
         console.log(
@@ -744,7 +759,7 @@ function startScheduledJobs() {
 
   if (ENABLE_TRIAL_NUDGE_SCHEDULER) {
     const { tickTrialOnboardingNudges } = require('./onboardingTrialNudgeSchedulerService');
-    trialNudgeJob = cron.schedule('0 10 * * *', async () => {
+    trialNudgeJob = scheduleLocked('0 10 * * *', async () => {
       try {
         const result = await tickTrialOnboardingNudges();
         console.log(
@@ -761,7 +776,7 @@ function startScheduledJobs() {
 
   if (ENABLE_ADDON_TRIAL_EXPIRY_SCHEDULER) {
     const { expireAddonTrials } = require('./addonTrialExpirySchedulerService');
-    addonTrialExpiryJob = cron.schedule('5 * * * *', async () => {
+    addonTrialExpiryJob = scheduleLocked('5 * * * *', async () => {
       try {
         const result = await expireAddonTrials();
         if (result.expired > 0) {
@@ -778,7 +793,7 @@ function startScheduledJobs() {
 
   if (ENABLE_COMMERCIAL_BILLING_PERIOD_SCHEDULER) {
     const { tickCommercialBillingPeriods } = require('./commercial/commercialBillingPeriodScheduler');
-    commercialBillingPeriodJob = cron.schedule('15 * * * *', async () => {
+    commercialBillingPeriodJob = scheduleLocked('15 * * * *', async () => {
       try {
         const result = await tickCommercialBillingPeriods();
         if (
@@ -802,7 +817,7 @@ function startScheduledJobs() {
 
   if (ENABLE_RELEASE_NOTE_PUBLISH_SCHEDULER) {
     const { tickReleaseNotePublish } = require('./releaseNotePublishScheduler');
-    releaseNotePublishJob = cron.schedule('*/5 * * * *', async () => {
+    releaseNotePublishJob = scheduleLocked('*/5 * * * *', async () => {
       try {
         const result = await tickReleaseNotePublish();
         if (result.published > 0) {
@@ -819,7 +834,7 @@ function startScheduledJobs() {
 
   if (ENABLE_ANNOUNCEMENT_LIFECYCLE_SCHEDULER) {
     const { tickAnnouncementLifecycle } = require('./announcementLifecycleSchedulerService');
-    announcementLifecycleJob = cron.schedule('*/5 * * * *', async () => {
+    announcementLifecycleJob = scheduleLocked('*/5 * * * *', async () => {
       try {
         const result = await tickAnnouncementLifecycle();
         if (result.published || result.expired || result.archived) {
@@ -838,7 +853,7 @@ function startScheduledJobs() {
 
   if (ENABLE_INTERNAL_CHAT_RETENTION_SCHEDULER) {
     const { tickInternalChatRetention } = require('./internalChatRetentionSchedulerService');
-    internalChatRetentionJob = cron.schedule('30 3 * * *', async () => {
+    internalChatRetentionJob = scheduleLocked('30 3 * * *', async () => {
       try {
         const result = await tickInternalChatRetention();
         if (result.deleted) {
@@ -857,7 +872,7 @@ function startScheduledJobs() {
 
   if (ENABLE_SYSTEM_ANNOUNCEMENT_SCHEDULER) {
     const { tickSystemAnnouncementReminders } = require('./systemAnnouncementService');
-    systemAnnouncementJob = cron.schedule('15 9 * * *', async () => {
+    systemAnnouncementJob = scheduleLocked('15 9 * * *', async () => {
       try {
         const result = await tickSystemAnnouncementReminders();
         console.log(

@@ -743,13 +743,16 @@ async function getMailbox(req, res) {
  *   2. origin of the per-org Gmail redirect URI (Settings → Integrations →
  *      Email → Advanced, or GOOGLE_GMAIL_REDIRECT_URI env). Works for single-
  *      host deployments where the API and SPA share a hostname.
- *   3. http://localhost:5173 — dev fallback
+ *   3. CLIENT_URL, or the dev frontend at http://localhost:5173. Production never uses that fallback.
  */
 async function gmailOAuthCallback(req, res) {
   let base = String(process.env.CLIENT_URL || '').replace(/\/$/, '');
   if (!base) {
     const fromState = await resolveClientBaseUrlFromState(req.query.state).catch(() => '');
-    base = (fromState || 'http://localhost:5173').replace(/\/$/, '');
+    const { resolveClientUrl, isLocalhostClientUrl } = require('../utils/clientUrl');
+    const stateBase = fromState ? String(fromState).replace(/\/$/, '') : '';
+    const stateIsDevOnly = process.env.NODE_ENV === 'production' && isLocalhostClientUrl(stateBase);
+    base = stateBase && !stateIsDevOnly ? stateBase : resolveClientUrl();
   }
 
   try {

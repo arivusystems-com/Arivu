@@ -85,7 +85,9 @@ const CommunicationSchema = new Schema({
     openCount: { type: Number, default: null },
     clickedAt: { type: Date, default: null },
     clickedUrl: { type: String, trim: true, default: null },
-    clickCount: { type: Number, default: null }
+    clickCount: { type: Number, default: null },
+    /** Set when a worker wins the send. A Bull retry must not send again. */
+    sendClaimId: { type: String, trim: true, default: null }
   },
 
   idempotencyKey: { type: String, trim: true },

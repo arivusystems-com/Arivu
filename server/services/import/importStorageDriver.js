@@ -37,6 +37,10 @@ function buildOciStagingKey(organizationId, stagingId) {
   return `imports/staging/${safeOrgId(organizationId)}/${stagingId}.csv`;
 }
 
+function buildOciStagingMetaKey(organizationId, stagingId) {
+  return `imports/staging/${safeOrgId(organizationId)}/${stagingId}.meta.json`;
+}
+
 function buildOciJobKey(organizationId, importHistoryId) {
   return `imports/jobs/${safeOrgId(organizationId)}/${importHistoryId}.csv`;
 }
@@ -90,6 +94,34 @@ async function readStagingMeta(stagingMetaPath) {
   }
 }
 
+async function writeOciStagingMeta(key, meta) {
+  await objectStorage.putBuffer({
+    key,
+    buffer: Buffer.from(JSON.stringify(meta)),
+    contentType: 'application/json',
+  });
+}
+
+async function readOciStagingMeta(key) {
+  try {
+    const buf = await objectStorage.getBuffer({ key });
+    const raw = Buffer.isBuffer(buf) ? buf.toString('utf8') : String(buf || '');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function deleteOciQuietly(key) {
+  if (!key) return;
+  try {
+    await objectStorage.deleteObject({ key });
+  } catch {
+    /* ignore */
+  }
+}
+
 async function deleteFileQuietly(filePath) {
   try {
     await fsp.unlink(filePath);
@@ -138,9 +170,8 @@ async function saveStagingUpload({ organizationId, buffer, originalName, importe
       metadata: { stagingId, organizationId: String(organizationId) },
     });
     meta.storageRef = toStorageRef('oci', key);
-    meta.stagingMetaPath = path.join(stagingDir(organizationId), `${stagingId}.meta.json`);
-    await ensureDir(stagingDir(organizationId));
-    await writeStagingMeta(meta.stagingMetaPath, meta);
+    meta.stagingMetaKey = buildOciStagingMetaKey(organizationId, stagingId);
+    await writeOciStagingMeta(meta.stagingMetaKey, meta);
     return { stagingId, stagingPath: meta.storageRef, meta };
   }
 
@@ -156,10 +187,13 @@ async function saveStagingUpload({ organizationId, buffer, originalName, importe
 async function getStagingFile({ organizationId, stagingId }) {
   const localPath = path.join(stagingDir(organizationId), `${stagingId}.csv`);
   const localMetaPath = buildStagingMetaPath(localPath);
-  const ociMetaPath = path.join(stagingDir(organizationId), `${stagingId}.meta.json`);
+  const ociMetaKey = buildOciStagingMetaKey(organizationId, stagingId);
 
-  let meta = await readStagingMeta(localMetaPath);
-  if (!meta) meta = await readStagingMeta(ociMetaPath);
+  let meta = null;
+  if (useOciStorage()) {
+    meta = await readOciStagingMeta(ociMetaKey);
+  }
+  if (!meta) meta = await readStagingMeta(localMetaPath);
   if (!meta) {
     const err = new Error('Staged import file not found or expired');
     err.code = 'IMPORT_STAGING_NOT_FOUND';
@@ -168,7 +202,7 @@ async function getStagingFile({ organizationId, stagingId }) {
   if (meta.expiresAt && Date.now() > new Date(meta.expiresAt).getTime()) {
     await deleteImportArtifacts(meta.storageRef || localPath);
     await deleteFileQuietly(localMetaPath);
-    await deleteFileQuietly(ociMetaPath);
+    await deleteOciQuietly(meta.stagingMetaKey || ociMetaKey);
     const err = new Error('Staged import file expired');
     err.code = 'IMPORT_STAGING_EXPIRED';
     throw err;
@@ -193,6 +227,7 @@ async function promoteStagingToImport({ organizationId, stagingId, importHistory
     const destKey = buildOciJobKey(organizationId, importHistoryId);
     await objectStorage.copyObject({ fromKey: parsed.key, toKey: destKey });
     await objectStorage.deleteObject({ key: parsed.key });
+    await deleteOciQuietly(meta.stagingMetaKey);
     if (meta.stagingMetaPath) await deleteFileQuietly(meta.stagingMetaPath);
     return {
       importPath: toStorageRef('oci', destKey),

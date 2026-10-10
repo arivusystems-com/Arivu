@@ -17,7 +17,9 @@
  * ============================================================================
  */
 
-// Try to use Redis if available, fallback to in-memory Map
+const { getRedisClient, isRedisConfigured } = require('../lib/redisClient');
+
+// Shared Redis when configured. In-memory only when Redis is not configured (single local process).
 let redisClient = null;
 let inMemoryStore = new Map();
 
@@ -35,6 +37,12 @@ function initializeRedis(redis) {
   } else {
     console.log('[IdempotencyGuard] Using in-memory fallback (no Redis)');
   }
+}
+
+async function resolveRedis() {
+  if (redisClient) return redisClient;
+  if (!isRedisConfigured()) return null;
+  return getRedisClient({ component: 'idempotency', required: false });
 }
 
 /**
@@ -66,9 +74,12 @@ async function checkIdempotency(idempotencyKey, userId, organizationId, capabili
   const key = `idempotency:${hash}`;
 
   try {
-    if (redisClient) {
-      // Use Redis
-      const existing = await redisClient.get(key);
+    const client = await resolveRedis();
+    if (isRedisConfigured() || redisClient) {
+      if (!client) {
+        return { isDuplicate: false, existingResult: null };
+      }
+      const existing = await client.get(key);
       if (existing) {
         const parsed = JSON.parse(existing);
         return {
@@ -116,9 +127,14 @@ async function storeIdempotencyResult(idempotencyKey, userId, organizationId, ca
   const key = `idempotency:${hash}`;
 
   try {
-    if (redisClient) {
-      // Use Redis with TTL
-      await redisClient.setEx(key, IDEMPOTENCY_TTL_SECONDS, JSON.stringify(result));
+    const client = await resolveRedis();
+    if (isRedisConfigured() || redisClient) {
+      if (!client) return;
+      if (typeof client.setEx === 'function') {
+        await client.setEx(key, IDEMPOTENCY_TTL_SECONDS, JSON.stringify(result));
+      } else {
+        await client.set(key, JSON.stringify(result), { EX: IDEMPOTENCY_TTL_SECONDS });
+      }
     } else {
       // Use in-memory store with timestamp
       inMemoryStore.set(key, {

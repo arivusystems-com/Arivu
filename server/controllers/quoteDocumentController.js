@@ -1,5 +1,3 @@
-const fs = require('node:fs');
-const path = require('node:path');
 const crypto = require('node:crypto');
 
 const PDFDocument = require('pdfkit');
@@ -9,6 +7,7 @@ const QuoteDocumentModel = require('../models/QuoteDocument');
 const { listQuoteSections } = require('../services/quoteSectionService');
 const { writeQuoteActivity } = require('../services/quoteActivityService');
 const { getQuoteBranding } = require('../services/quoteBrandingService');
+const fileStorage = require('../services/fileStorageService');
 
 function safeFilePart(value) {
   return String(value || '')
@@ -17,10 +16,6 @@ function safeFilePart(value) {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 120) || 'quote';
-}
-
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
 }
 
 function formatMoney(n) {
@@ -475,16 +470,14 @@ exports.generateDocument = async (req, res) => {
       .lean();
     const nextVersion = Math.max(0, Number(latest?.[0]?.versionNumber) || 0) + 1;
 
-    const outDir = path.join(__dirname, '..', 'public', 'quote-documents', String(organizationId), String(quoteId));
-    ensureDir(outDir);
     const filename = `${safeFilePart(quote.quoteNumber)}-rev${quote.revisionNumber}-v${nextVersion}.pdf`;
-    const filePath = path.join(outDir, filename);
-    fs.writeFileSync(filePath, pdf);
-
-    const stat = fs.statSync(filePath);
-    // IMPORTANT: client runs on Vite (:5173) and proxies /api/* to the server.
-    // Serve PDFs under /api/quote-documents/* so browser doesn't route to the SPA.
-    const publicPath = `/api/quote-documents/${String(organizationId)}/${String(quoteId)}/${filename}`;
+    const uploaded = await fileStorage.uploadBuffer({
+      buffer: pdf,
+      originalName: filename,
+      mimeType: 'application/pdf',
+      organizationId,
+      category: 'quotes'
+    });
 
     const docRow = await QuoteDocumentModel.create({
       organizationId,
@@ -497,9 +490,9 @@ exports.generateDocument = async (req, res) => {
       generatedAt: new Date(),
       generatedBy: req.user._id,
       mimeType: 'application/pdf',
-      storageProvider: 'local',
-      filePath: publicPath,
-      fileSizeBytes: stat.size,
+      storageProvider: 'oci',
+      filePath: uploaded.url,
+      fileSizeBytes: pdf.length,
       currency: quote.currency || 'USD',
       grandTotal: Number(quote.grandTotal) || 0,
       lineCount: (lines || []).filter((l) => l && l.hiddenLine !== true).length

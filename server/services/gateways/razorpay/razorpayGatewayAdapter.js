@@ -44,7 +44,8 @@ function resolveWebhookSecret(settings = {}) {
 }
 
 function resolvePublicAppUrl() {
-  return process.env.PUBLIC_APP_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+  const { resolveClientUrl } = require('../../../utils/clientUrl');
+  return resolveClientUrl([process.env.PUBLIC_APP_URL, process.env.CLIENT_URL]);
 }
 
 async function verifyCredentials({ settings = {} }) {
