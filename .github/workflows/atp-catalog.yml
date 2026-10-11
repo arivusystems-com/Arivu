@@ -3,12 +3,12 @@ name: ATP Catalog
 on:
   pull_request:
     paths:
-      - 'Automation_Testing.md'
+      - 'docs/testing/Automation_Testing.md'
       - 'atp/**'
   push:
     branches: [main, master]
     paths:
-      - 'Automation_Testing.md'
+      - 'docs/testing/Automation_Testing.md'
       - 'atp/**'
 
 jobs:

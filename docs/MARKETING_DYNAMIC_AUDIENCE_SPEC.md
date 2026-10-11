@@ -4,7 +4,7 @@
 **Version:** 1.1  
 **Status:** ✅ Implemented (v1) — Phases A–C shipped 2026-07-01  
 **Supersedes:** M3 baseline segmentation (People-only flat filters)  
-**Related docs:** [MARKETING_APPLICATION_ROADMAP.md](./MARKETING_APPLICATION_ROADMAP.md) · [Architecture_Document.md](../Architecture_Document.md) · Dynamic Audience Builder PRD (PDF)
+**Related docs:** [MARKETING_APPLICATION_ROADMAP.md](./MARKETING_APPLICATION_ROADMAP.md) · [Architecture_Document.md](./Architecture_Document.md) · Dynamic Audience Builder PRD (PDF)
 
 **Last updated:** 2026-07-01
 

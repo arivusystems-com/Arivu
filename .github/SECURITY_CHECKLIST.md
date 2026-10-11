@@ -58,7 +58,7 @@
 - [ ] Manual security testing performed
 
 ## Code Review
-- [ ] Security patterns followed (see SECURITY_GUIDELINES.md)
+- [ ] Security patterns followed (see docs/security/SECURITY_GUIDELINES.md)
 - [ ] No security anti-patterns introduced
 - [ ] Dependencies reviewed for vulnerabilities
 - [ ] Code follows security best practices

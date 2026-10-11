@@ -823,7 +823,7 @@ Event Settings configure the structure, constraints, and eligibility of event re
 
 **Reference:** People Settings (`/settings?tab=core-modules&moduleKey=people`)  
 **Doctrine:** Module Settings Doctrine (`module-settings-doctrine.md`)  
-**Event Model:** Event Model Complete Documentation ([`EVENT_MODEL_COMPLETE.md`](../archive/root-historical/EVENT_MODEL_COMPLETE.md))  
+**Event Model:** Event Model Complete Documentation ([`EVENT_MODEL_COMPLETE.md`](./EVENT_MODEL_COMPLETE.md))  
 **Enforcement:** Code review, architecture review, documentation updates
 
 ---

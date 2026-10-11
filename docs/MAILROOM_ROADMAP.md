@@ -1,6 +1,6 @@
 # Mailroom — Implementation Roadmap
 
-**Source spec:** `mailroom_implementation_requirement.md` (Enterprise Mailroom & Channel Ingestion Platform)
+**Source spec:** [`MAILROOM_IMPLEMENTATION_REQUIREMENT.md`](./MAILROOM_IMPLEMENTATION_REQUIREMENT.md) (Enterprise Mailroom & Channel Ingestion Platform)
 
 **Product placement:** **Settings → Automation → Mailroom** (alongside Assignment Rules, Automation Rules, Processes, Business Flows)
 
@@ -537,4 +537,4 @@ No mandatory stack rewrite for Mailroom v1.
 
 ---
 
-*For the full functional specification, see `mailroom_implementation_requirement.md` at the repository root.*
+*For the full functional specification, see [`MAILROOM_IMPLEMENTATION_REQUIREMENT.md`](./MAILROOM_IMPLEMENTATION_REQUIREMENT.md).*

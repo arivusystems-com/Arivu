@@ -88,8 +88,7 @@ Arivu/
 │   ├── catalog/                  # Parsed Automation_Testing.md + JSON index
 │   ├── fixtures/                 # Personas, seed helpers, HMAC keys
 │   └── shared/                   # Types, assertion lib, env resolver
-├── Automation_Testing.md         # Human catalog (source of truth)
-└── docs/testing/                 # This roadmap + runbooks
+└── docs/testing/                 # This roadmap, runbooks, Automation_Testing.md (human catalog, source of truth)
 ```
 
 ---
@@ -453,8 +452,8 @@ export default defineFlow({
 
 | Document | Path |
 |----------|------|
-| Test case catalog | `/Automation_Testing.md` |
-| Architecture reference | `/Architecture_Document.md` |
+| Test case catalog | `/docs/testing/Automation_Testing.md` |
+| Architecture reference | `/docs/Architecture_Document.md` |
 | Manual UAT flows | `/docs/INTERNAL_BETA_TEST_FLOWS.md` |
 | UAT environment | `/docs/UAT_DEV_ENVIRONMENT.md` |
 | User guide (Phase 5) | `/docs/testing/ATP_USER_GUIDE.md` *(to create)* |

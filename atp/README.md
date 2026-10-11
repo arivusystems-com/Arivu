@@ -169,7 +169,7 @@ node runner/cli.mjs suites
 **Phase 3 fixtures:** copy `fixtures/public.example.json` → `fixtures/public.json` or set `ATP_PUBLIC_QUOTE_TOKEN`, `ATP_EMBED_INSTANCE_KEY` in `.env`.
 
 ```bash
-npm run catalog:sync          # Parse Automation_Testing.md → catalog/index.json
+npm run catalog:sync          # Parse docs/testing/Automation_Testing.md → catalog/index.json
 npm run catalog:check         # CI: fail if catalog stale
 npm run run -- --suite smoke --dry-run
 npm run run -- --suite smoke --env local

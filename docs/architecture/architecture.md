@@ -470,7 +470,7 @@ Core modules are platform-owned capabilities shared across applications:
 - **Types:** Meeting/Appointment, Internal Audit, External Audit (Single Org), External Audit Beat, Field Sales Beat
 - **Lifecycle:** Status (Planned, Completed, Cancelled) + Audit State (for audit events)
 - **Roles:** Event Owner, Auditor, Reviewer, Corrective Owner
-- **Reference:** `event-settings.md`, [`EVENT_MODEL_COMPLETE.md`](../archive/root-historical/EVENT_MODEL_COMPLETE.md)
+- **Reference:** `event-settings.md`, [`EVENT_MODEL_COMPLETE.md`](./EVENT_MODEL_COMPLETE.md)
 
 #### Tasks
 - **Settings Location:** `/settings?tab=core-modules&moduleKey=tasks`
@@ -1023,8 +1023,8 @@ Work → Execute business processes
 - `sidebar-invariants.md` - Sidebar Invariants
 
 ### Platform Documentation
-- [`PLATFORM_ARCHITECTURE.md`](../archive/root-historical/PLATFORM_ARCHITECTURE.md) - Platform Architecture (detailed)
-- [`EVENT_MODEL_COMPLETE.md`](../archive/root-historical/EVENT_MODEL_COMPLETE.md) - Event Model Complete Documentation
+- [`PLATFORM_ARCHITECTURE.md`](./PLATFORM_ARCHITECTURE.md) - Platform Architecture (detailed)
+- [`EVENT_MODEL_COMPLETE.md`](./EVENT_MODEL_COMPLETE.md) - Event Model Complete Documentation
 
 ---
 

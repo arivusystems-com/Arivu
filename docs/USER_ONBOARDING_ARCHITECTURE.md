@@ -39,7 +39,7 @@
 **Related contracts:**
 
 - `client/src/types/empty-state.types.ts` — `EmptyStateType.FIRST_TIME`
-- `docs/archive/root-historical/EMPTY_STATE_CONTRACT.md` — empty state data contract
+- `docs/architecture/EMPTY_STATE_CONTRACT.md` — empty state data contract
 - `server/services/platformHomeService.js` — Platform Home snapshot
 - `server/services/onboardingService.js` — onboarding logic (single source of truth)
 

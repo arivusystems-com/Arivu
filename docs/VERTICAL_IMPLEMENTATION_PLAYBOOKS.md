@@ -1024,6 +1024,6 @@ Each engineer owns one “golden tenant” and demo script for their vertical.
 ## Related docs
 
 - [VERTICAL_IMPLEMENTATION_GUIDE.md](./VERTICAL_IMPLEMENTATION_GUIDE.md) — strategy & architecture
-- [Architecture_Document.md](../Architecture_Document.md) — platform capabilities
+- [Architecture_Document.md](./Architecture_Document.md) — platform capabilities
 - [USER_ONBOARDING_ARCHITECTURE.md](./USER_ONBOARDING_ARCHITECTURE.md) — onboarding behavior
 - [module-settings-doctrine.md](./architecture/module-settings-doctrine.md) — settings vs work boundaries

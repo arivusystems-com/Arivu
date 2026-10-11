@@ -8,9 +8,10 @@ Arivu is a modern CRM platform built on a unique multi-instance architecture whe
 
 **⚠️ CRITICAL: Security is the TOP PRIORITY for all development work**
 
-- 📖 **[Security Guidelines](SECURITY_GUIDELINES.md)** - Comprehensive security best practices
+- 📖 **[Security Guidelines](docs/security/SECURITY_GUIDELINES.md)** - Comprehensive security best practices
 - ✅ **[Security Checklist](.github/SECURITY_CHECKLIST.md)** - PR security review checklist  
-- 🚀 **[Quick Reference](SECURITY_QUICK_REFERENCE.md)** - Security patterns cheat sheet
+- 🚀 **[Quick Reference](docs/security/SECURITY_QUICK_REFERENCE.md)** - Security patterns cheat sheet
+- 🚨 **[Incident Response Plan](docs/security/INCIDENT_RESPONSE_PLAN.md)** - Security incident runbook
 
 **All developers must review security guidelines before writing code.**
 
@@ -147,7 +148,9 @@ See **[Production deployment](docs/ARIVU_PRODUCTION_DEPLOYMENT.md)** for the cur
 ### Getting Started
 - **[Quick Start Guide](docs/QUICK_START.md)** - Get running in 5 minutes ⚡
 - **[Developer Setup Guide](docs/DEVELOPER_SETUP.md)** - Complete developer onboarding 📖
-- **[MongoDB Setup Guide](MONGODB_SETUP_GUIDE.md)** - MongoDB installation and configuration 🗄️
+- **[Getting Started](docs/GETTING_STARTED.md)** - Platform walkthrough and common tasks
+- **[MongoDB Setup Guide](docs/MONGODB_SETUP_GUIDE.md)** - MongoDB installation and configuration 🗄️
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and fixes
 
 ### People and OrganizationV2 (New Models)
 
@@ -181,23 +184,20 @@ Quick verify
 6) CSV: GET /api/csv/export/people
 
 ### Email Integration 📧
-- **[START HERE - Email Integration](START_HERE_EMAIL.md)** - Should you use AWS SES? ⚡
 - **[AWS SES Setup Guide](docs/AWS_SES_SETUP_GUIDE.md)** - Complete SES implementation walkthrough
 - **[Email Service Comparison](docs/EMAIL_SERVICE_COMPARISON.md)** - SES vs SendGrid vs Mailgun
 - **[Email Implementation Checklist](docs/EMAIL_IMPLEMENTATION_CHECKLIST.md)** - 8-phase task breakdown
 - **[Email Quick Reference](docs/EMAIL_QUICK_REFERENCE.md)** - Commands, costs, troubleshooting
 
-### User Interface & Navigation 🎯 NEW!
-- **[START HERE - Internal Tabs](START_HERE_TABS.md)** - Quick overview and benefits ⚡
-- **[Tabs Integration Complete](TABS_INTEGRATION_COMPLETE.md)** - Full integration summary ✅
-- **[Internal Tabs Implementation](INTERNAL_TABS_IMPLEMENTATION.md)** - Complete tabs navigation system 📑
-- **[Tabs Quick Reference](docs/TABS_QUICK_REFERENCE.md)** - Developer guide for tabs integration 🚀
+### User Interface & Navigation
+- **[Tabs Quick Reference](docs/TABS_QUICK_REFERENCE.md)** - Developer guide for tabs integration
 
 ### Technical Documentation  
-- **[Technical Specification](TECHNICAL_SPEC.md)** - Complete technical details
+- **[Architecture Document](docs/Architecture_Document.md)** - Platform architecture source of truth
+- **[Technical Specification](docs/TECHNICAL_SPEC.md)** - Complete technical details
+- **[Automation Testing Catalog](docs/testing/Automation_Testing.md)** - Test case catalog used by ATP
 - **[Multi-instance status](docs/MULTI_INSTANCE_STATUS.md)** - Provisioning status and architecture notes
 - **[Production deployment](docs/ARIVU_PRODUCTION_DEPLOYMENT.md)** - Vercel, Railway, Atlas, and related runbooks
-- **[Build summary (archived)](docs/archive/BUILD_SUMMARY.md)** - Historical development changelog
 
 ---
 

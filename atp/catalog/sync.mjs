@@ -1,5 +1,5 @@
 /**
- * Parse Automation_Testing.md → catalog/index.json
+ * Parse docs/testing/Automation_Testing.md → catalog/index.json
  * Usage: node catalog/sync.mjs [--check]
  */
 
@@ -10,7 +10,7 @@ import crypto from 'node:crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
-const MARKDOWN_PATH = path.join(ROOT, 'Automation_Testing.md');
+const MARKDOWN_PATH = path.join(ROOT, 'docs', 'testing', 'Automation_Testing.md');
 const OUT_PATH = path.join(__dirname, 'index.json');
 const EXECUTORS_DIR = path.resolve(__dirname, '../runner/executors');
 
@@ -211,7 +211,7 @@ export function parseCatalog(markdown = fs.readFileSync(MARKDOWN_PATH, 'utf8')) 
   return {
     version: 1,
     generatedAt: new Date().toISOString(),
-    source: 'Automation_Testing.md',
+    source: 'docs/testing/Automation_Testing.md',
     hash,
     stats: {
       total: entries.length,
@@ -240,7 +240,6 @@ async function parseCatalogAsync() {
   }
 
   const catalog = await buildCatalog();
-  const json = `${JSON.stringify(catalog, null, 2)}\n`;
 
   if (check) {
     if (!fs.existsSync(OUT_PATH)) {
@@ -248,7 +247,8 @@ async function parseCatalogAsync() {
       process.exit(1);
     }
     const existing = fs.readFileSync(OUT_PATH, 'utf8');
-    if (existing !== json) {
+    catalog.generatedAt = JSON.parse(existing).generatedAt;
+    if (existing !== `${JSON.stringify(catalog, null, 2)}\n`) {
       console.error('catalog/index.json is stale — run npm run catalog:sync');
       process.exit(1);
     }
@@ -256,7 +256,7 @@ async function parseCatalogAsync() {
     return;
   }
 
-  fs.writeFileSync(OUT_PATH, json);
+  fs.writeFileSync(OUT_PATH, `${JSON.stringify(catalog, null, 2)}\n`);
   console.log(`Wrote ${OUT_PATH}`);
   console.log(`  Total: ${catalog.stats.total}`);
   console.log(`  Automated: ${catalog.stats.automated}`);

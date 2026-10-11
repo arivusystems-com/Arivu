@@ -4,8 +4,8 @@
 
 Operator docs for the parser service:
 
-- [CRM webhook integration guide.md](../../CRM%20webhook%20integration%20guide.md) — `email.received` webhook contract
-- [CRM provisioning API.md](../../CRM%20provisioning%20API.md) — register tenants/mailboxes in parser
+- [CRM_WEBHOOK_INTEGRATION_GUIDE.md](../../docs/CRM_WEBHOOK_INTEGRATION_GUIDE.md) — `email.received` webhook contract
+- [CRM_PROVISIONING_API.md](../../docs/CRM_PROVISIONING_API.md) — register tenants/mailboxes in parser
 
 ## What is disabled (avoid CASA / Google API review)
 
