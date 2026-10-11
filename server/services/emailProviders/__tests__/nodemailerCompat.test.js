@@ -240,6 +240,22 @@ describe('gmailSendProvider raw MIME (nodemailer/lib/mail-composer)', () => {
     assert.ok(text.includes(Buffer.from('attachment-body').toString('base64')));
   });
 
+  it('keeps the Bcc header so the Gmail API delivers to Bcc recipients', async () => {
+    const mime = await buildMimeMessage({
+      from: 'agent@example.test',
+      to: ['a@example.test'],
+      bcc: ['audit@example.test', 'manager@example.test'],
+      subject: 'x',
+      text: 'x'
+    });
+    assert.match(mime.toString('utf8'), /^Bcc: audit@example\.test, manager@example\.test$/m);
+  });
+
+  it('omits the Bcc header when there are no Bcc recipients', async () => {
+    const mime = await buildMimeMessage({ from: 'agent@example.test', to: ['a@example.test'], bcc: [' '], subject: 'x', text: 'x' });
+    assert.doesNotMatch(mime.toString('utf8'), /^Bcc:/m);
+  });
+
   it('sendRawMessage sends base64url MIME with the thread id', async () => {
     const calls = [];
     const gmail = {
