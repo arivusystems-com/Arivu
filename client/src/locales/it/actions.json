@@ -112,15 +112,15 @@
     "description": "Open print preview for the current record"
   },
   "yes": {
-    "message": "Yes",
+    "message": "SÌ",
     "description": "Affirmative choice"
   },
   "no": {
-    "message": "No",
+    "message": "NO",
     "description": "Negative choice"
   },
   "view": {
-    "message": "View",
+    "message": "Visualizzazione",
     "description": "Open an item to view it"
   }
 }

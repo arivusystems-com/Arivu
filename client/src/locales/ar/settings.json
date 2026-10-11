@@ -23455,175 +23455,175 @@
     "description": "Top tab for Closed Records configuration"
   },
   "invoicesSettingsTitle": {
-    "message": "Invoices",
+    "message": "الفواتير",
     "description": "Invoices settings page heading"
   },
   "invoicesSettingsDesc": {
-    "message": "Choose the document template for invoices and check rendering parity.",
+    "message": "اختر قالب المستند للفواتير وتحقق من تكافؤ العرض.",
     "description": "Invoices settings page subheading"
   },
   "invoicesDocumentTemplateTitle": {
-    "message": "Invoice document template",
+    "message": "نموذج مستند الفاتورة",
     "description": "Invoices settings: default template section heading"
   },
   "invoicesDocumentTemplateHelp": {
-    "message": "Select the published template used to generate invoice documents.",
+    "message": "حدد القالب المنشور المستخدم لإنشاء مستندات الفاتورة.",
     "description": "Invoices settings: default template section help"
   },
   "invoicesBrandingNoteTitle": {
-    "message": "Branding",
+    "message": "العلامة التجارية",
     "description": "Invoices settings: branding section heading"
   },
   "invoicesBrandingNoteHelp": {
-    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "message": "تستخدم الفواتير نفس الشعار والألوان والتذييل كعلامات اقتباس. قم بتحديثها في إعدادات الاقتباس.",
     "description": "Invoices settings: explains branding is shared with quotes"
   },
   "invoicesBrandingNoteLink": {
-    "message": "Open quote branding",
+    "message": "فتح العلامة التجارية الاقتباس",
     "description": "Invoices settings: link to quote branding settings"
   },
   "moduleDocumentTemplateEmpty": {
-    "message": "No published document templates yet. Create and publish one in Templates.",
+    "message": "لا توجد قوالب وثيقة منشورة حتى الآن. قم بإنشاء ونشر واحد في القوالب.",
     "description": "Document template settings: no templates available"
   },
   "moduleDocumentTemplateGoTemplates": {
-    "message": "Go to Templates",
+    "message": "انتقل إلى القوالب",
     "description": "Document template settings: link to Templates"
   },
   "moduleDocumentTemplateLabel": {
-    "message": "Default template",
+    "message": "القالب الافتراضي",
     "description": "Document template settings: select label"
   },
   "moduleDocumentTemplateAuto": {
-    "message": "Automatic (system default)",
+    "message": "تلقائي (افتراضي للنظام)",
     "description": "Document template settings: no explicit default selected"
   },
   "moduleDocumentTemplateHint": {
-    "message": "Used when generating documents for this module.",
+    "message": "يستخدم عند إنشاء المستندات لهذه الوحدة.",
     "description": "Document template settings: select help text"
   },
   "moduleDocumentTemplateLoadFailed": {
-    "message": "Failed to load document template settings.",
+    "message": "فشل تحميل إعدادات قالب المستند.",
     "description": "Document template settings: load error"
   },
   "moduleDocumentTemplateSaved": {
-    "message": "Default template saved.",
+    "message": "تم حفظ القالب الافتراضي.",
     "description": "Document template settings: save success"
   },
   "moduleDocumentTemplateSaveFailed": {
-    "message": "Failed to save the default template.",
+    "message": "فشل في حفظ القالب الافتراضي.",
     "description": "Document template settings: save error"
   },
   "moduleShadowParityTitle": {
-    "message": "Rendering parity",
+    "message": "تقديم التكافؤ",
     "description": "Shadow parity panel heading"
   },
   "moduleShadowParityHelp": {
-    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "message": "يقارن المستندات من العارض القديم وعارض النظام الأساسي للمحتوى الجديد قبل التبديل.",
     "description": "Shadow parity panel description"
   },
   "moduleShadowParityModeLabel": {
-    "message": "Render mode",
+    "message": "وضع العرض",
     "description": "Shadow parity: current render mode label"
   },
   "moduleShadowParityModeLegacy": {
-    "message": "Legacy",
+    "message": "إرث",
     "description": "Render mode: legacy renderer only"
   },
   "moduleShadowParityModeShadow": {
-    "message": "Shadow (legacy served, platform compared)",
+    "message": "الظل (الإصدار القديم، مقارنة النظام الأساسي)",
     "description": "Render mode: both renderers run, legacy output is used"
   },
   "moduleShadowParityModePlatform": {
-    "message": "Platform",
+    "message": "منصة",
     "description": "Render mode: content platform renderer"
   },
   "moduleShadowParityMatchRate": {
-    "message": "{rate}% match",
+    "message": "{rate}% مطابقة",
     "description": "Shadow parity: percentage of matching renders"
   },
   "moduleShadowParityTotal": {
-    "message": "Total",
+    "message": "المجموع",
     "description": "Shadow parity: total comparisons"
   },
   "moduleShadowParityMatched": {
-    "message": "Matched",
+    "message": "متطابق",
     "description": "Shadow parity: matching comparisons"
   },
   "moduleShadowParityMismatched": {
-    "message": "Mismatched",
+    "message": "غير متطابق",
     "description": "Shadow parity: differing comparisons"
   },
   "moduleShadowParityErrors": {
-    "message": "Errors",
+    "message": "أخطاء",
     "description": "Shadow parity: comparisons where the platform render failed"
   },
   "moduleShadowParityRecordLabel": {
-    "message": "Record ID",
+    "message": "معرف السجل",
     "description": "Shadow parity: record to compare"
   },
   "moduleShadowParityRecordPlaceholder": {
-    "message": "Enter a record ID",
+    "message": "أدخل معرف السجل",
     "description": "Shadow parity: record ID input placeholder"
   },
   "moduleShadowParityCompare": {
-    "message": "Compare",
+    "message": "يقارن",
     "description": "Shadow parity: run comparison button"
   },
   "moduleShadowParityColWhen": {
-    "message": "When",
+    "message": "متى",
     "description": "Shadow parity table column: time"
   },
   "moduleShadowParityColRecord": {
-    "message": "Record",
+    "message": "سِجِلّ",
     "description": "Shadow parity table column: record"
   },
   "moduleShadowParityColResult": {
-    "message": "Result",
+    "message": "نتيجة",
     "description": "Shadow parity table column: result"
   },
   "moduleShadowParityColLegacy": {
-    "message": "Legacy checksum",
+    "message": "المجموع الاختباري القديم",
     "description": "Shadow parity table column: legacy output checksum"
   },
   "moduleShadowParityColPlatform": {
-    "message": "Platform checksum",
+    "message": "المجموع الاختباري للمنصة",
     "description": "Shadow parity table column: platform output checksum"
   },
   "moduleShadowParityResultMatch": {
-    "message": "Match",
+    "message": "مباراة",
     "description": "Shadow parity result: outputs identical"
   },
   "moduleShadowParityResultMismatch": {
-    "message": "Mismatch",
+    "message": "عدم التطابق",
     "description": "Shadow parity result: outputs differ"
   },
   "moduleShadowParityResultError": {
-    "message": "Error",
+    "message": "خطأ",
     "description": "Shadow parity result: platform render failed"
   },
   "moduleShadowParityEmpty": {
-    "message": "No comparisons yet.",
+    "message": "لا توجد مقارنات بعد.",
     "description": "Shadow parity: no results"
   },
   "moduleShadowParityLoadFailed": {
-    "message": "Failed to load parity results.",
+    "message": "فشل تحميل نتائج التكافؤ.",
     "description": "Shadow parity: load error"
   },
   "moduleShadowParityCompareMatch": {
-    "message": "Documents match.",
+    "message": "تطابق المستندات.",
     "description": "Shadow parity: comparison matched"
   },
   "moduleShadowParityCompareMismatch": {
-    "message": "Documents differ between the legacy and platform renderers.",
+    "message": "تختلف المستندات بين عارضي النظام الأساسي والتقليدي.",
     "description": "Shadow parity: comparison mismatched"
   },
   "moduleShadowParityCompareFailed": {
-    "message": "Comparison failed.",
+    "message": "فشلت المقارنة.",
     "description": "Shadow parity: comparison error"
   },
   "assignRulesTypeAndPressEnter": {
-    "message": "Type and press Enter to add.",
+    "message": "اكتب واضغط على Enter للإضافة.",
     "description": "Assignment rules: empty multi-value picker hint"
   }
 }

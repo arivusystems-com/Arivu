@@ -3012,15 +3012,15 @@
     "description": "Confirm button label for discarding dirty drawer changes"
   },
   "enabled": {
-    "message": "Enabled",
+    "message": "ممكّن",
     "description": "Status: feature or item is turned on"
   },
   "disabled": {
-    "message": "Disabled",
+    "message": "عاجز",
     "description": "Status: feature or item is turned off"
   },
   "approvalInboxChanges": {
-    "message": "Changes",
+    "message": "التغييرات",
     "description": "Approval inbox: quote change summary label"
   }
 }

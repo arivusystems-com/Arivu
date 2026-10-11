@@ -23455,111 +23455,111 @@
     "description": "Top tab for Closed Records configuration"
   },
   "invoicesSettingsTitle": {
-    "message": "Invoices",
+    "message": "請求書",
     "description": "Invoices settings page heading"
   },
   "invoicesSettingsDesc": {
-    "message": "Choose the document template for invoices and check rendering parity.",
+    "message": "請求書のドキュメント テンプレートを選択し、レンダリングの同等性を確認します。",
     "description": "Invoices settings page subheading"
   },
   "invoicesDocumentTemplateTitle": {
-    "message": "Invoice document template",
+    "message": "請求書ドキュメントのテンプレート",
     "description": "Invoices settings: default template section heading"
   },
   "invoicesDocumentTemplateHelp": {
-    "message": "Select the published template used to generate invoice documents.",
+    "message": "請求書ドキュメントの生成に使用される公開済みのテンプレートを選択します。",
     "description": "Invoices settings: default template section help"
   },
   "invoicesBrandingNoteTitle": {
-    "message": "Branding",
+    "message": "ブランディング",
     "description": "Invoices settings: branding section heading"
   },
   "invoicesBrandingNoteHelp": {
-    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "message": "請求書では、見積書と同じロゴ、色、フッターが使用されます。見積もり設定でそれらを更新します。",
     "description": "Invoices settings: explains branding is shared with quotes"
   },
   "invoicesBrandingNoteLink": {
-    "message": "Open quote branding",
+    "message": "オープン見積のブランディング",
     "description": "Invoices settings: link to quote branding settings"
   },
   "moduleDocumentTemplateEmpty": {
-    "message": "No published document templates yet. Create and publish one in Templates.",
+    "message": "公開されたドキュメント テンプレートはまだありません。テンプレートで作成して公開します。",
     "description": "Document template settings: no templates available"
   },
   "moduleDocumentTemplateGoTemplates": {
-    "message": "Go to Templates",
+    "message": "テンプレートに移動",
     "description": "Document template settings: link to Templates"
   },
   "moduleDocumentTemplateLabel": {
-    "message": "Default template",
+    "message": "デフォルトのテンプレート",
     "description": "Document template settings: select label"
   },
   "moduleDocumentTemplateAuto": {
-    "message": "Automatic (system default)",
+    "message": "自動 (システムのデフォルト)",
     "description": "Document template settings: no explicit default selected"
   },
   "moduleDocumentTemplateHint": {
-    "message": "Used when generating documents for this module.",
+    "message": "このモジュールのドキュメントを生成するときに使用されます。",
     "description": "Document template settings: select help text"
   },
   "moduleDocumentTemplateLoadFailed": {
-    "message": "Failed to load document template settings.",
+    "message": "ドキュメントテンプレート設定の読み込みに失敗しました。",
     "description": "Document template settings: load error"
   },
   "moduleDocumentTemplateSaved": {
-    "message": "Default template saved.",
+    "message": "デフォルトのテンプレートが保存されました。",
     "description": "Document template settings: save success"
   },
   "moduleDocumentTemplateSaveFailed": {
-    "message": "Failed to save the default template.",
+    "message": "デフォルトのテンプレートの保存に失敗しました。",
     "description": "Document template settings: save error"
   },
   "moduleShadowParityTitle": {
-    "message": "Rendering parity",
+    "message": "レンダリングパリティ",
     "description": "Shadow parity panel heading"
   },
   "moduleShadowParityHelp": {
-    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "message": "切り替える前に、従来のレンダラーと新しいコンテンツ プラットフォーム レンダラーからのドキュメントを比較します。",
     "description": "Shadow parity panel description"
   },
   "moduleShadowParityModeLabel": {
-    "message": "Render mode",
+    "message": "レンダリングモード",
     "description": "Shadow parity: current render mode label"
   },
   "moduleShadowParityModeLegacy": {
-    "message": "Legacy",
+    "message": "遺産",
     "description": "Render mode: legacy renderer only"
   },
   "moduleShadowParityModeShadow": {
-    "message": "Shadow (legacy served, platform compared)",
+    "message": "シャドウ (従来のサービス、プラットフォームの比較)",
     "description": "Render mode: both renderers run, legacy output is used"
   },
   "moduleShadowParityModePlatform": {
-    "message": "Platform",
+    "message": "プラットフォーム",
     "description": "Render mode: content platform renderer"
   },
   "moduleShadowParityMatchRate": {
-    "message": "{rate}% match",
+    "message": "{rate}%一致",
     "description": "Shadow parity: percentage of matching renders"
   },
   "moduleShadowParityTotal": {
-    "message": "Total",
+    "message": "合計",
     "description": "Shadow parity: total comparisons"
   },
   "moduleShadowParityMatched": {
-    "message": "Matched",
+    "message": "一致しました",
     "description": "Shadow parity: matching comparisons"
   },
   "moduleShadowParityMismatched": {
-    "message": "Mismatched",
+    "message": "不一致",
     "description": "Shadow parity: differing comparisons"
   },
   "moduleShadowParityErrors": {
-    "message": "Errors",
+    "message": "エラー",
     "description": "Shadow parity: comparisons where the platform render failed"
   },
   "moduleShadowParityRecordLabel": {
-    "message": "Record ID",
+    "message": "レコードID",
     "description": "Shadow parity: record to compare"
   },
   "moduleShadowParityRecordPlaceholder": {
@@ -23567,63 +23567,63 @@
     "description": "Shadow parity: record ID input placeholder"
   },
   "moduleShadowParityCompare": {
-    "message": "Compare",
+    "message": "比較する",
     "description": "Shadow parity: run comparison button"
   },
   "moduleShadowParityColWhen": {
-    "message": "When",
+    "message": "いつ",
     "description": "Shadow parity table column: time"
   },
   "moduleShadowParityColRecord": {
-    "message": "Record",
+    "message": "記録",
     "description": "Shadow parity table column: record"
   },
   "moduleShadowParityColResult": {
-    "message": "Result",
+    "message": "結果",
     "description": "Shadow parity table column: result"
   },
   "moduleShadowParityColLegacy": {
-    "message": "Legacy checksum",
+    "message": "レガシーチェックサム",
     "description": "Shadow parity table column: legacy output checksum"
   },
   "moduleShadowParityColPlatform": {
-    "message": "Platform checksum",
+    "message": "プラットフォームのチェックサム",
     "description": "Shadow parity table column: platform output checksum"
   },
   "moduleShadowParityResultMatch": {
-    "message": "Match",
+    "message": "マッチ",
     "description": "Shadow parity result: outputs identical"
   },
   "moduleShadowParityResultMismatch": {
-    "message": "Mismatch",
+    "message": "ミスマッチ",
     "description": "Shadow parity result: outputs differ"
   },
   "moduleShadowParityResultError": {
-    "message": "Error",
+    "message": "エラー",
     "description": "Shadow parity result: platform render failed"
   },
   "moduleShadowParityEmpty": {
-    "message": "No comparisons yet.",
+    "message": "まだ比較はありません。",
     "description": "Shadow parity: no results"
   },
   "moduleShadowParityLoadFailed": {
-    "message": "Failed to load parity results.",
+    "message": "パリティ結果のロードに失敗しました。",
     "description": "Shadow parity: load error"
   },
   "moduleShadowParityCompareMatch": {
-    "message": "Documents match.",
+    "message": "書類は一致しています。",
     "description": "Shadow parity: comparison matched"
   },
   "moduleShadowParityCompareMismatch": {
-    "message": "Documents differ between the legacy and platform renderers.",
+    "message": "ドキュメントは、レガシー レンダラーとプラットフォーム レンダラー間で異なります。",
     "description": "Shadow parity: comparison mismatched"
   },
   "moduleShadowParityCompareFailed": {
-    "message": "Comparison failed.",
+    "message": "比較に失敗しました。",
     "description": "Shadow parity: comparison error"
   },
   "assignRulesTypeAndPressEnter": {
-    "message": "Type and press Enter to add.",
+    "message": "と入力して Enter キーを押して追加します。",
     "description": "Assignment rules: empty multi-value picker hint"
   }
 }

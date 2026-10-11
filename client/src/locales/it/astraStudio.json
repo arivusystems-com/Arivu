@@ -516,7 +516,7 @@
     "description": "KPI focus for org-wide executive report canvases"
   },
   "checklistEmpty": {
-    "message": "No checklist items yet",
+    "message": "Nessun elemento della lista di controllo ancora",
     "description": "Checklist widget empty state"
   }
 }

@@ -3012,15 +3012,15 @@
     "description": "Confirm button label for discarding dirty drawer changes"
   },
   "enabled": {
-    "message": "Enabled",
+    "message": "Ingeschakeld",
     "description": "Status: feature or item is turned on"
   },
   "disabled": {
-    "message": "Disabled",
+    "message": "Gehandicapt",
     "description": "Status: feature or item is turned off"
   },
   "approvalInboxChanges": {
-    "message": "Changes",
+    "message": "Veranderingen",
     "description": "Approval inbox: quote change summary label"
   }
 }

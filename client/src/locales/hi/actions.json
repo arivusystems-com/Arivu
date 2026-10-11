@@ -112,15 +112,15 @@
     "description": "Open print preview for the current record"
   },
   "yes": {
-    "message": "Yes",
+    "message": "हाँ",
     "description": "Affirmative choice"
   },
   "no": {
-    "message": "No",
+    "message": "नहीं",
     "description": "Negative choice"
   },
   "view": {
-    "message": "View",
+    "message": "देखना",
     "description": "Open an item to view it"
   }
 }

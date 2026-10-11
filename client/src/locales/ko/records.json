@@ -5952,15 +5952,15 @@
     "description": "People record right pane tab for portal and marketing access"
   },
   "activitySystemReviewChanges": {
-    "message": "Review changes",
+    "message": "변경사항 검토",
     "description": "Activity row link to compare changes"
   },
   "quoteReviewChanges": {
-    "message": "Review changes",
+    "message": "변경사항 검토",
     "description": "Quote lines header: review changes action"
   },
   "revisionsCompare": {
-    "message": "Compare",
+    "message": "비교하다",
     "description": "Quote revisions: compare with current revision"
   }
 }

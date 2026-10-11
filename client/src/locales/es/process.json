@@ -3768,15 +3768,15 @@
     "description": "Remove AI token pack row"
   },
   "controlPlaneInboundParser": {
-    "message": "Inbound Parser",
+    "message": "Analizador entrante",
     "description": "Control plane card title"
   },
   "controlPlaneInboundParserDesc": {
-    "message": "Connect CRM and parser servers (URLs, API keys). Tenants only see mailbox forwarding addresses.",
+    "message": "Conecte CRM y servidores analizadores (URL, claves API). Los inquilinos solo ven las direcciones de reenvío de buzones de correo.",
     "description": "Control plane inbound parser card description"
   },
   "controlPlaneConfigure": {
-    "message": "Configure",
+    "message": "Configurar",
     "description": "Control plane card call to action"
   }
 }

@@ -1752,115 +1752,115 @@
     "description": "Tooltip for inbox sidebar compose including keyboard shortcut"
   },
   "connectMailboxModalYourName": {
-    "message": "Your name",
+    "message": "당신의 이름",
     "description": "Connect mailbox: name field label"
   },
   "connectMailboxModalYourNamePlaceholder": {
-    "message": "Prabhu Pavithra",
+    "message": "프라부 파비트라",
     "description": "Connect mailbox: example person name"
   },
   "connectMailboxModalYourNameHelp": {
-    "message": "Shown in the inbound parser so your team can see who owns this mailbox.",
+    "message": "팀에서 이 사서함을 소유한 사람이 누구인지 확인할 수 있도록 인바운드 파서에 표시됩니다.",
     "description": "Connect mailbox: name field help"
   },
   "connectMailboxModalYourWorkEmail": {
-    "message": "Your work email",
+    "message": "직장 이메일",
     "description": "Connect mailbox: work email field label"
   },
   "connectMailboxModalYourWorkEmailPlaceholder": {
-    "message": "hello{'@'}arivusystems.com",
+    "message": "안녕하세요{'@'}arivusystems.com",
     "description": "Connect mailbox: example work email"
   },
   "connectMailboxModalYourWorkEmailHelp": {
-    "message": "The inbox you will forward from (Gmail, Outlook, etc.). Also used as the readable part of your forwarding address.",
+    "message": "전달할 받은 편지함(Gmail, Outlook 등)입니다. 또한 전달 주소의 읽을 수 있는 부분으로도 사용됩니다.",
     "description": "Connect mailbox: work email help"
   },
   "connectMailboxModalCreatingPersonal": {
-    "message": "Creating your mailbox and forwarding address…",
+    "message": "사서함 및 전달 주소를 만드는 중…",
     "description": "Connect mailbox: personal setup in progress"
   },
   "connectMailboxModalYourForwardingAddress": {
-    "message": "Your forwarding address",
+    "message": "귀하의 전달 주소",
     "description": "Connect mailbox: forwarding address heading"
   },
   "connectMailboxModalCopied": {
-    "message": "Copied",
+    "message": "복사됨",
     "description": "Connect mailbox: address copied confirmation"
   },
   "connectMailboxModalCopyAddress": {
-    "message": "Copy address",
+    "message": "주소 복사",
     "description": "Connect mailbox: copy forwarding address button"
   },
   "connectMailboxModalStepCopyAddress": {
-    "message": "Copy the forwarding address above.",
+    "message": "위의 전달 주소를 복사하세요.",
     "description": "Connect mailbox: step 1"
   },
   "connectMailboxModalStepOpenSettings": {
-    "message": "In Gmail or Microsoft 365, open",
+    "message": "Gmail 또는 Microsoft 365에서 다음을 엽니다.",
     "description": "Connect mailbox: step 2, text before settings path"
   },
   "connectMailboxModalStepSettingsPath": {
-    "message": "Settings → Forwarding",
+    "message": "설정 → 전달",
     "description": "Connect mailbox: step 2, settings path (bold)"
   },
   "connectMailboxModalStepPasteAddress": {
-    "message": "and paste this address.",
+    "message": "그리고 이 주소를 붙여넣으세요.",
     "description": "Connect mailbox: step 2, text after settings path"
   },
   "connectMailboxModalStepMailAppears": {
-    "message": "New mail appears in your Arivu inbox.",
+    "message": "Arivu 받은편지함에 새 메일이 나타납니다.",
     "description": "Connect mailbox: step 3"
   },
   "connectMailboxModalSharedInboxName": {
-    "message": "Shared inbox name",
+    "message": "공유받은 편지함 이름",
     "description": "Connect mailbox: shared inbox name label"
   },
   "connectMailboxModalSharedNamePlaceholder": {
-    "message": "Support",
+    "message": "지원하다",
     "description": "Connect mailbox: example shared inbox name"
   },
   "connectMailboxModalTeamEmailOptional": {
-    "message": "Team email (optional)",
+    "message": "팀 이메일(선택사항)",
     "description": "Connect mailbox: team email label"
   },
   "connectMailboxModalForwardTeamMailbox": {
-    "message": "Forward your team mailbox to this address in Gmail or Microsoft 365.",
+    "message": "Gmail 또는 Microsoft 365에서 팀 사서함을 이 주소로 전달하세요.",
     "description": "Connect mailbox: shared forwarding instructions"
   },
   "connectMailboxModalSettingUpShared": {
-    "message": "Setting up shared mailbox…",
+    "message": "공유 편지함 설정 중…",
     "description": "Connect mailbox: shared setup in progress"
   },
   "connectMailboxModalForwardToThisAddress": {
-    "message": "Forward to this address",
+    "message": "이 주소로 전달",
     "description": "Connect mailbox: shared forwarding address heading"
   },
   "connectMailboxModalChooseProvider": {
-    "message": "Choose your email provider",
+    "message": "이메일 제공업체를 선택하세요",
     "description": "Connect mailbox: provider picker heading"
   },
   "connectMailboxModalThenConnectGmail": {
-    "message": ", then connect Gmail.",
+    "message": "을 탭한 다음 Gmail을 연결하세요.",
     "description": "Connect mailbox: suffix after \"shared team mailbox\""
   },
   "connectMailboxModalCreating": {
-    "message": "Creating…",
+    "message": "만드는 중…",
     "description": "Connect mailbox: create button busy state"
   },
   "connectMailboxModalCreateSharedMailbox": {
-    "message": "Create shared mailbox",
+    "message": "공유 사서함 만들기",
     "description": "Connect mailbox: create shared mailbox button"
   },
   "connectMailboxModalGoogleAppPassword": {
-    "message": "Google App Password",
+    "message": "구글 앱 비밀번호",
     "description": "Connect mailbox: Gmail SMTP app password label"
   },
   "connectMailboxModalAppPasswordPlaceholder": {
-    "message": "16-character app password",
+    "message": "16자 앱 비밀번호",
     "description": "Connect mailbox: app password placeholder"
   },
   "connectMailboxModalGoogleSignInNext": {
-    "message": "You’ll sign in with Google in the next step to sync Gmail.",
+    "message": "다음 단계에서는 Gmail을 동기화하기 위해 Google로 로그인하게 됩니다.",
     "description": "Connect mailbox: Gmail OAuth next-step hint"
   }
 }
