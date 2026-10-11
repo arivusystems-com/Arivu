@@ -1,7 +1,7 @@
 # Content Studio — Article & Blog Builder Roadmap
 
 **Source spec:** [ContentEngine.md](./ContentEngine.md) — Arivu Content Studio v1.0 (Draft)  
-**Architecture reference:** [Architecture_Document.md](../Architecture_Document.md) §4–5 (app entitlements, permissions, tenant isolation)  
+**Architecture reference:** [Architecture_Document.md](./Architecture_Document.md) §4–5 (app entitlements, permissions, tenant isolation)  
 **Addon platform reference:** [LIVE_CHAT_ADDON_ROADMAP.md](./LIVE_CHAT_ADDON_ROADMAP.md) §5 (catalog, entitlement, configuration)  
 **Last updated:** 2026-07-06
 
@@ -548,4 +548,4 @@ These are required for tenant website publishing and are not fully specified in 
 | [ContentEngine.md](./ContentEngine.md) | Full product vision and feature spec |
 | [LIVE_CHAT_ADDON_ROADMAP.md](./LIVE_CHAT_ADDON_ROADMAP.md) | Addon platform patterns (reference) |
 | [MARKETING_APPLICATION_ROADMAP.md](./MARKETING_APPLICATION_ROADMAP.md) | Marketing app modules and content platform reuse |
-| [Architecture_Document.md](../Architecture_Document.md) | Platform core, entitlements, tenant isolation |
+| [Architecture_Document.md](./Architecture_Document.md) | Platform core, entitlements, tenant isolation |

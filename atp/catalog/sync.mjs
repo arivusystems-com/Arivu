@@ -1,5 +1,5 @@
 /**
- * Parse Automation_Testing.md → catalog/index.json
+ * Parse docs/testing/Automation_Testing.md → catalog/index.json
  * Usage: node catalog/sync.mjs [--check]
  */
 
@@ -10,7 +10,7 @@ import crypto from 'node:crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
-const MARKDOWN_PATH = path.join(ROOT, 'Automation_Testing.md');
+const MARKDOWN_PATH = path.join(ROOT, 'docs', 'testing', 'Automation_Testing.md');
 const OUT_PATH = path.join(__dirname, 'index.json');
 const EXECUTORS_DIR = path.resolve(__dirname, '../runner/executors');
 
@@ -211,7 +211,7 @@ export function parseCatalog(markdown = fs.readFileSync(MARKDOWN_PATH, 'utf8')) 
   return {
     version: 1,
     generatedAt: new Date().toISOString(),
-    source: 'Automation_Testing.md',
+    source: 'docs/testing/Automation_Testing.md',
     hash,
     stats: {
       total: entries.length,

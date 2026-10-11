@@ -2,7 +2,7 @@
 
 **Source PRD:** `Arivu Marketing Application PRD` v1.0 (Draft)  
 **Platform dependency:** AMDS Track 4 complete — see [ARIVU-TRACK-4-DRAFT.md](./ARIVU-TRACK-4-DRAFT.md) · [AMDS_INTEGRATION_ROADMAP.md](./AMDS_INTEGRATION_ROADMAP.md)  
-**Architecture reference:** [Architecture_Document.md](../Architecture_Document.md) §4–5 (app entitlements, permissions, tenant isolation)
+**Architecture reference:** [Architecture_Document.md](./Architecture_Document.md) §4–5 (app entitlements, permissions, tenant isolation)
 
 **Product goal:** CRM-native marketing operations — audiences, campaigns, templates, scheduling, and analytics — with **all email delivery delegated to AMDS**.
 

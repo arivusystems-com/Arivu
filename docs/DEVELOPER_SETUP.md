@@ -326,7 +326,7 @@ Once logged in, try:
 
 - **Technical Spec:** See `TECHNICAL_SPEC.md`
 - **API Documentation:** Check `server/routes/` for endpoints
-- **Multi-instance:** See [MULTI_INSTANCE_STATUS.md](./MULTI_INSTANCE_STATUS.md) (and [archived implementation guide](./archive/MULTI_INSTANCE_IMPLEMENTATION.md) if you need legacy detail)
+- **Multi-instance:** See [MULTI_INSTANCE_STATUS.md](./MULTI_INSTANCE_STATUS.md)
 
 ---
 

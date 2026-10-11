@@ -132,4 +132,4 @@ cd server && node --test services/astraStudio/__tests__/astraStudio.test.js
 ## 12. Related docs
 
 - [`ASTRA_V2_ARCHITECTURE.md`](./ASTRA_V2_ARCHITECTURE.md)
-- [`Architecture_Document.md`](../Architecture_Document.md)
+- [`Architecture_Document.md`](./Architecture_Document.md)

@@ -243,7 +243,6 @@ if (tab) {
 ## 📖 Full Documentation
 
 For complete documentation, see:
-- [INTERNAL_TABS_IMPLEMENTATION.md](../INTERNAL_TABS_IMPLEMENTATION.md) - Complete implementation guide
 - [/client/src/composables/useTabs.js](../client/src/composables/useTabs.js) - Source code
 - [/client/src/utils/tabNavigation.js](../client/src/utils/tabNavigation.js) - Helper utilities
 

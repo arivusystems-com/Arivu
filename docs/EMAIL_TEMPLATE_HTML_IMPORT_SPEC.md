@@ -3,7 +3,7 @@
 **Module:** Templates / Marketing  
 **Version:** 1.0  
 **Status:** Phase 1 complete — import wizard, analyze API, advanced HTML toolbar (2026-07-01)  
-**Related docs:** [MARKETING_APPLICATION_ROADMAP.md](./MARKETING_APPLICATION_ROADMAP.md) · [Architecture_Document.md](../Architecture_Document.md) · [IN_PRODUCT_EMAIL_PLAN.md](./IN_PRODUCT_EMAIL_PLAN.md)
+**Related docs:** [MARKETING_APPLICATION_ROADMAP.md](./MARKETING_APPLICATION_ROADMAP.md) · [Architecture_Document.md](./Architecture_Document.md) · [IN_PRODUCT_EMAIL_PLAN.md](./IN_PRODUCT_EMAIL_PLAN.md)
 
 **Last updated:** 2026-07-01
 

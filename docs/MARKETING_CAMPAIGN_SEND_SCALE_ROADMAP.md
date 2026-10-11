@@ -3,7 +3,7 @@
 **Audience:** Arivu backend + frontend developers  
 **Status:** **Not started** — M11 (post v1 marketing)  
 **Prerequisite:** M1–M10 complete · Track 4 campaign send · AMDS policy/credits (Track 6)  
-**Architecture reference:** [Architecture_Document.md](../Architecture_Document.md) · tenant isolation · auditability  
+**Architecture reference:** [Architecture_Document.md](./Architecture_Document.md) · tenant isolation · auditability  
 **Parent roadmap:** [MARKETING_APPLICATION_ROADMAP.md](./MARKETING_APPLICATION_ROADMAP.md)
 
 **Product goal:** Campaign sends up to **500,000 recipients** complete without blocking the UI, without OOM, and with predictable delivery — while preserving tenant isolation, idempotency, and the Arivu ↔ AMDS separation doctrine.

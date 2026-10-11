@@ -5,7 +5,7 @@ on:
     paths:
       - 'atp/**'
       - 'server/**'
-      - 'Automation_Testing.md'
+      - 'docs/testing/Automation_Testing.md'
   workflow_dispatch:
 
 jobs:
