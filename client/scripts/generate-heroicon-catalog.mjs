@@ -116,7 +116,11 @@ const embedJs = `;(function (root) {
 
 fs.mkdirSync(path.join(clientRoot, 'src/generated'), { recursive: true });
 fs.writeFileSync(path.join(clientRoot, 'src/generated/heroiconCatalog.ts'), clientTs);
-fs.writeFileSync(path.join(repoRoot, 'server/constants/heroiconCatalog.generated.js'), serverJs);
+// Client-only build contexts (e.g. Dockerfile.frontend) have no server/; the committed server copy is used there.
+const serverConstantsDir = path.join(repoRoot, 'server/constants');
+if (fs.existsSync(serverConstantsDir)) {
+  fs.writeFileSync(path.join(serverConstantsDir, 'heroiconCatalog.generated.js'), serverJs);
+}
 fs.writeFileSync(path.join(clientRoot, 'public/embed/headless-heroicon-paths.js'), embedJs);
 
 console.log(`Generated ${ids.length} heroicons.`);
