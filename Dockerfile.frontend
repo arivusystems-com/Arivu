@@ -2,9 +2,9 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Build the Vue.js application
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
-WORKDIR /app
+WORKDIR /repo/client
 
 # Copy package files
 COPY client/package*.json ./
@@ -14,6 +14,10 @@ RUN npm ci
 
 # Copy source code
 COPY client/ ./
+
+# Build scripts read these via ../tools (repo layout)
+COPY tools/help-sync /repo/tools/help-sync
+COPY tools/arivu-help-install /repo/tools/arivu-help-install
 
 # Build for production
 RUN npm run build
@@ -25,7 +29,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /repo/client/dist /usr/share/nginx/html
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

@@ -64,7 +64,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
       
@@ -446,6 +446,6 @@ jobs:
       
       - name: Test Docker Compose
         run: |
-          docker-compose config
+          docker compose config --quiet
           echo "✅ Docker Compose configuration is valid"
 
