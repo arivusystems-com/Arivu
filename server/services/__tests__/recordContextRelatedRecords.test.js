@@ -315,6 +315,7 @@ async function createEvent(tenantId, userId, name) {
 test.before(async () => {
   mongoServer = await MongoMemoryServer.create();
   await mongoose.connect(mongoServer.getUri());
+  await RelationshipInstance.init();
   await RelationshipDefinition.insertMany(RELATIONSHIP_DEFS);
 });
 
@@ -586,13 +587,13 @@ test('deal related records dedupe instance link with synced dealPeople', async (
     createdBy: userId
   });
 
-  await RelationshipInstance.create({
+  const instanceLinks = await RelationshipInstance.countDocuments({
     organizationId: tenant._id,
     relationshipKey: 'deal_contacts',
-    source: { appKey: 'sales', moduleKey: 'deals', recordId: deal._id },
-    target: { appKey: 'sales', moduleKey: 'people', recordId: person._id },
-    createdBy: userId
+    'source.recordId': deal._id,
+    'target.recordId': person._id
   });
+  assert.equal(instanceLinks, 1);
 
   const dealCtx = await getRecordContext(tenant._id, 'sales', 'deals', deal._id);
   assert.equal(recordIds(dealCtx, 'deal_contacts').length, 1);
