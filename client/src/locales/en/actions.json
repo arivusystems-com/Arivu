@@ -110,5 +110,17 @@
   "send": {
     "message": "Send",
     "description": "Send a message or submit outbound content"
+  },
+  "yes": {
+    "message": "Yes",
+    "description": "Affirmative choice"
+  },
+  "no": {
+    "message": "No",
+    "description": "Negative choice"
+  },
+  "view": {
+    "message": "View",
+    "description": "Open an item to view it"
   }
 }

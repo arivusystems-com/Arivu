@@ -1070,16 +1070,16 @@ const listEmptyMessage = computed(() => {
 
 const fullPageEmptyTitle = computed(() => {
   const es = listDefinition.value?.emptyState;
-  if (!es) return t('moduleList.emptyState.title');
+  if (!es) return t('common.listEmptyTitle');
   if (es.titleKey && te(es.titleKey)) return t(es.titleKey);
-  return es.title || t('moduleList.emptyState.title');
+  return es.title || t('common.listEmptyTitle');
 });
 
 const fullPageEmptyMessage = computed(() => {
   const es = listDefinition.value?.emptyState;
-  if (!es) return t('moduleList.emptyState.description');
+  if (!es) return t('common.listEmptyMessage');
   if (es.descriptionKey && te(es.descriptionKey)) return t(es.descriptionKey);
-  return es.description || t('moduleList.emptyState.description');
+  return es.description || t('common.listEmptyMessage');
 });
 
 const fullPageEmptyActionLabel = computed(() => {

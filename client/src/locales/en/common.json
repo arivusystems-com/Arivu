@@ -3010,5 +3010,13 @@
   "required": {
     "message": "Required",
     "description": "Required field indicator (alias for settings badges)"
+  },
+  "enabled": {
+    "message": "Enabled",
+    "description": "Status: feature or item is turned on"
+  },
+  "disabled": {
+    "message": "Disabled",
+    "description": "Status: feature or item is turned off"
   }
 }

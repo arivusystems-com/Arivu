@@ -2122,5 +2122,9 @@
   "shareRolesRequired": {
     "message": "Select at least one role to share with",
     "description": "Validation when Roles visibility has no role targets"
+  },
+  "fieldMetric": {
+    "message": "Metric",
+    "description": "Widget builder: field used as the chart value"
   }
 }

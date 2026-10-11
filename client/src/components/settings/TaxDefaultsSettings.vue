@@ -214,7 +214,7 @@ async function save() {
       defaultSalesTaxGroupId: form.defaultSalesTaxGroupId
     };
   } catch (err) {
-    saveError.value = err?.response?.data?.message || err?.message || t('states.error');
+    saveError.value = err?.response?.data?.message || err?.message || t('states.genericFailure');
   } finally {
     saving.value = false;
   }

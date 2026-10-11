@@ -110,5 +110,17 @@
   "print": {
     "message": "Print",
     "description": "Open print preview for the current record"
+  },
+  "yes": {
+    "message": "Yes",
+    "description": "Affirmative choice"
+  },
+  "no": {
+    "message": "No",
+    "description": "Negative choice"
+  },
+  "view": {
+    "message": "View",
+    "description": "Open an item to view it"
   }
 }

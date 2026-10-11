@@ -514,5 +514,9 @@
   "buildingCanvas": {
     "message": "Astra is building your Canvas.",
     "description": "Full-screen building state under Astra logo"
+  },
+  "checklistEmpty": {
+    "message": "No checklist items yet",
+    "description": "Checklist widget empty state"
   }
 }
