@@ -150,13 +150,15 @@ export function validateKeyNaming(fullKey) {
   }
   const segment = '[a-z][a-zA-Z0-9]*';
   const snakeLeaf = '[a-z][a-z0-9]*(?:_[a-z0-9]+)*';
+  // Dynamic enum lookups: camelCase prefix + enum value, e.g. sharingMode_public_read, builderStep_selectModule.
+  const enumLeaf = `${segment}(?:_[a-z0-9][a-zA-Z0-9]*)*`;
   let pattern;
   if (fullKey.startsWith('errors.')) {
     pattern = new RegExp(`^errors(\\.${snakeLeaf}){1,2}$`);
   } else if (fullKey.startsWith('validation.')) {
     pattern = new RegExp(`^validation(\\.${segment}){1,2}$`);
   } else {
-    pattern = new RegExp(`^${segment}(\\.${segment}){0,2}$`);
+    pattern = new RegExp(`^${segment}(\\.${segment}){0,1}\\.${enumLeaf}$|^${segment}$`);
   }
   if (!pattern.test(fullKey)) {
     issues.push(`Key "${fullKey}" must follow namespace naming rules`);
