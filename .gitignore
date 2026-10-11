@@ -133,3 +133,8 @@ coverage/
 /client/nul
 **/nul
 client/public/static-sync/arivu-next-static-sync.zip
+
+# Cursor (local-only)
+.cursorrules
+.cursorignore
+.cursor/
