@@ -268,11 +268,14 @@ class InternalChatSSEHub {
   startCleanupTimer() {
     if (this.cleanupTimer) return;
     this.cleanupTimer = setInterval(() => this.cleanupInactiveConnections(), 30000);
+    // Created at require time; must not keep scripts, workers, or tests alive on its own.
+    this.cleanupTimer.unref();
   }
 
   startHeartbeat() {
     if (this.heartbeatTimer) return;
     this.heartbeatTimer = setInterval(() => this.sendHeartbeat(), this.heartbeatInterval);
+    this.heartbeatTimer.unref();
   }
 
   shutdown() {

@@ -712,6 +712,10 @@ API-only values:
 - `EXPRESS_TRUST_PROXY=1`
 - `PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable`
 
+Optional on the API: `HEALTH_DETAILS_TOKEN=<openssl rand -hex 32>` (enables `/health/status` and Redis error detail on `/health/ready`) and `MAILROOM_METRICS_TOKEN=<openssl rand -hex 32>` (enables `/health/mailroom-metrics`). Without them those routes return 404 in production.
+
+Percent-encode special characters in the Mongo and Redis passwords (`encodeURIComponent`: `@` → `%40`, `/` → `%2F`, `?` → `%3F`, `:` → `%3A`, `%` → `%25`). Startup fails with `MONGODB_URI is invalid` (the URI itself is never logged) when they are not encoded. Boolean flags such as `ENABLE_BULL_IN_WEB` must be exactly `true` or `false`; any other value is fatal in production.
+
 `ENABLE_BULL_IN_WEB=false` and `ENABLE_SCHEDULED_JOBS=false` keep queue consumers and cron off the API. The Worker runs them. The Worker ignores those two flags if they are present, so leave them off the Worker file. `EXPRESS_TRUST_PROXY=1` matches one OCI load balancer hop. `REDIS_HEALTH_BLOCKS_READY=true` makes `/health/ready` depend on Redis. Copy the rest of the integration secrets you already use (OCI Email Delivery SMTP, parser API key, Razorpay, Sentry) from the current production env. Do not set `DISABLE_SECURITY=true`.
 
 Embeddings are not required to boot. If Arivu embeddings are intended to use this OCI MongoDB instead of MongoDB Atlas, set `AI_VECTOR_STORE=mongo` on both API and Worker. Leave it unset if you are still on Atlas. The process default is `atlas`, which only warns at startup.
@@ -899,10 +903,10 @@ Vercel already rewrites `/api` to `https://api.arivusystems.com` (`client/vercel
 
 Run these while both pools are still size 1. Fix the first failure before you continue. Do not raise either pool size yet. Do not start the legacy migration until Object Storage in this table has passed.
 
-The load balancer probe is `GET /health/ready` (and liveness is `GET /health/live`). Two other routes are on the same public hostname and are not locked down by application code:
+The load balancer probe is `GET /health/ready` (and liveness is `GET /health/live`). Both are public. `/health/ready` returns 200/503 with Mongo state and `redis.ok`; it never returns dependency error strings unless the caller sends `HEALTH_DETAILS_TOKEN`. Two operator routes are on the same public hostname:
 
-- `GET /health/status` has no authentication. The JSON includes the MongoDB host name and connection state. Do not publish it as a status page. Use `/health/ready` for the load balancer.
-- `GET /health/mailroom-metrics` returns Prometheus text with no authentication unless `MAILROOM_METRICS_TOKEN` is set. Set that token on the API env if those metrics must not be readable on `api.arivusystems.com`. Requests then need `Authorization: Bearer <token>` or `X-Metrics-Token`.
+- `GET /health/status` returns **404** in production unless `HEALTH_DETAILS_TOKEN` is set on the API env, then requires `Authorization: Bearer <token>` (or `X-Health-Token`). It never includes the MongoDB host.
+- `GET /health/mailroom-metrics` returns **404** in production unless `MAILROOM_METRICS_TOKEN` is set, then requires `Authorization: Bearer <token>` or `X-Metrics-Token`.
 
 `GET /internal/notifications/health` returns 403 in production unless `INTERNAL_HEALTH_TOKEN` matches. That token is optional.
 

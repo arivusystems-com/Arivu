@@ -2,6 +2,10 @@
 
 const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
+const mongoose = require('mongoose');
+
+// No DB in these tests: un-injected model queries must fail fast, not buffer for a connection.
+mongoose.set('bufferCommands', false);
 
 const bootstrap = require('../../bootstrap');
 const toolRegistry = require('../../tools/toolRegistry');

@@ -1,7 +1,6 @@
 # Dependencies
 node_modules/
 client/package-lock.json
-server/package-lock.json
 /.pnp
 .pnp.js
 
@@ -134,3 +133,8 @@ coverage/
 /client/nul
 **/nul
 client/public/static-sync/arivu-next-static-sync.zip
+
+# Cursor (local-only)
+.cursorrules
+.cursorignore
+.cursor/

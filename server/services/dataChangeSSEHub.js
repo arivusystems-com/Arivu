@@ -115,11 +115,14 @@ class DataChangeSSEHub {
   startHeartbeat() {
     if (this.heartbeatTimer) return;
     this.heartbeatTimer = setInterval(() => this.sendHeartbeat(), this.heartbeatInterval);
+    // Created at require time; must not keep scripts, workers, or tests alive on its own.
+    this.heartbeatTimer.unref();
   }
 
   startCleanupTimer() {
     if (this.cleanupTimer) return;
     this.cleanupTimer = setInterval(() => this.cleanupInactiveConnections(), 30000);
+    this.cleanupTimer.unref();
   }
 
   shutdown() {

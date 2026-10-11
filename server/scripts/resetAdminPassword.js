@@ -16,7 +16,15 @@ const User = require('../models/User');
 
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.MONGO_URI_LOCAL;
 const ADMIN_EMAIL = process.env.DEFAULT_ADMIN_EMAIL || 'admin@arivusystems.com';
-const NEW_PASSWORD = process.argv[2] || process.env.DEFAULT_ADMIN_PASSWORD || 'Admin@123';
+const { resolveAdminSeedPassword } = require('../config/validateEnv');
+
+let NEW_PASSWORD;
+try {
+    NEW_PASSWORD = resolveAdminSeedPassword(process.argv[2]);
+} catch (err) {
+    console.error(`❌ ${err.message}`);
+    process.exit(1);
+}
 
 async function resetAdminPassword() {
     try {
@@ -63,7 +71,9 @@ async function resetAdminPassword() {
         console.log('✅ Password reset successfully!');
         console.log(`\n📝 New Credentials:`);
         console.log(`   Email: ${ADMIN_EMAIL}`);
-        console.log(`   Password: ${NEW_PASSWORD}`);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`   Password: ${NEW_PASSWORD}`);
+        }
         console.log(`\n⚠️  Remember to change this password after testing!`);
         
         await mongoose.disconnect();

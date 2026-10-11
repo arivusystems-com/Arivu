@@ -26,7 +26,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: server/package-lock.json
       
@@ -41,6 +41,18 @@ jobs:
       - name: Run quotes unit tests
         working-directory: ./server
         run: npm run test:quotes
+
+      - name: Run production-readiness and dependency regression tests
+        working-directory: ./server
+        run: |
+          npm run test:production-readiness
+          npm run test:pdf-renderer
+          npm run test:csv-import
+          npm run test:email-providers
+          npm run test:marketing-campaigns
+          npm run test:related-records
+          npm run test:payment-gateways
+          npm run test:astra-intent
   
   lint-and-test-frontend:
     runs-on: ubuntu-latest
