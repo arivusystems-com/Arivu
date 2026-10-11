@@ -148,6 +148,20 @@ describe('mailboxSmtpService with nodemailer', () => {
     }
   });
 
+  it('verifySmtpCredentials classifies a closed connection as NETWORK_ERROR', async () => {
+    const closing = net.createServer((socket) => socket.end());
+    await new Promise((resolve) => closing.listen(0, '127.0.0.1', resolve));
+    const { port } = closing.address();
+
+    try {
+      const result = await verifySmtpCredentials({ host: '127.0.0.1', port, secure: false }, VALID_USER, VALID_PASS);
+      assert.equal(result.ok, false);
+      assert.equal(result.status, VERIFY_STATUS.NETWORK_ERROR);
+    } finally {
+      await new Promise((resolve) => closing.close(resolve));
+    }
+  });
+
   it('sendViaMailboxSmtp delivers threaded HTML mail with attachments', async () => {
     const before = smtp.sessions.length;
     const mailbox = {
