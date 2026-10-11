@@ -316,8 +316,7 @@ arivu/
 ├── .github/
 │   └── workflows/                   # GitHub Actions CI (no production deploy)
 │       ├── test.yml
-│       ├── monitoring.yml
-│       └── cleanup.yml
+│       └── monitoring.yml
 ├── Dockerfile.backend               # Backend container
 ├── Dockerfile.frontend              # Frontend container
 ├── docker-compose.yml               # Local development
