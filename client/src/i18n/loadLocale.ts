@@ -18,8 +18,12 @@ import { flattenCatalog, type CatalogFile, type FlatMessages } from './catalog';
 import { pseudoTransformMessages } from './pseudo';
 import { trackI18nEvent } from './telemetry';
 
-/** Vite eager glob — enables lazy per-locale chunks at build time. */
-const catalogModules = import.meta.glob<CatalogFile>('../locales/*/*.json');
+/** Catalogs ship as static assets: bundling them as modules exhausts build memory. */
+const catalogUrls = import.meta.glob<string>('../locales/*/*.json', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+});
 
 const localeCache = new Map<string, FlatMessages>();
 const loadedLocales = new Set<string>();
@@ -41,16 +45,16 @@ async function loadNamespace(language: string, namespace: SharedNamespace): Prom
   const primaryPath = catalogPath(baseLang, namespace);
   const fallbackPath = catalogPath(FALLBACK_LANGUAGE, namespace);
 
-  const loader = catalogModules[primaryPath] ?? catalogModules[fallbackPath];
-  if (!loader) {
+  const url = catalogUrls[primaryPath] ?? catalogUrls[fallbackPath];
+  if (!url) {
     throw new Error(`Missing locale catalog: ${primaryPath}`);
   }
 
-  const mod: unknown = await loader();
-  const file: CatalogFile =
-    mod !== null && typeof mod === 'object' && 'default' in mod
-      ? (mod as { default: CatalogFile }).default
-      : (mod as CatalogFile);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load locale catalog ${primaryPath}: HTTP ${response.status}`);
+  }
+  const file = (await response.json()) as CatalogFile;
   const messages = flattenCatalog(file, namespace).messages;
 
   if (
