@@ -1862,5 +1862,125 @@
   "connectMailboxModalGoogleSignInNext": {
     "message": "Vous vous connecterez avec Google à l'étape suivante pour synchroniser Gmail.",
     "description": "Connect mailbox: Gmail OAuth next-step hint"
+  },
+  "connectMailboxModalTitlePersonal": {
+    "message": "Connect your personal inbox",
+    "description": "Connect mailbox: personal forwarding title"
+  },
+  "connectMailboxModalTitleSharedForwarding": {
+    "message": "Shared mailbox forwarding",
+    "description": "Connect mailbox: shared mailbox forwarding title"
+  },
+  "connectMailboxModalTitleConnectShared": {
+    "message": "Connect shared mailbox",
+    "description": "Connect mailbox: connect shared mailbox title"
+  },
+  "connectMailboxModalTitleCreateSharedInbox": {
+    "message": "Create shared inbox",
+    "description": "Connect mailbox: create shared inbox title"
+  },
+  "connectMailboxModalTitleConnectYourInbox": {
+    "message": "Connect your inbox",
+    "description": "Connect mailbox: provider picker title"
+  },
+  "connectMailboxModalTitleSetUpMailbox": {
+    "message": "Set up your mailbox",
+    "description": "Connect mailbox: create mailbox title"
+  },
+  "connectMailboxModalTitleConnectInbox": {
+    "message": "Connect inbox",
+    "description": "Connect mailbox: fallback title"
+  },
+  "connectMailboxModalSubtitlePersonal": {
+    "message": "Get one forwarding address — works with Gmail, Microsoft 365, or any email provider.",
+    "description": "Connect mailbox: personal forwarding subtitle"
+  },
+  "connectMailboxModalSubtitleSharedForwarding": {
+    "message": "Add this address in your team mailbox forwarding settings.",
+    "description": "Connect mailbox: shared forwarding subtitle"
+  },
+  "connectMailboxModalSubtitleCreateShared": {
+    "message": "Set up a team inbox and forwarding address in one step.",
+    "description": "Connect mailbox: create shared mailbox subtitle"
+  },
+  "connectMailboxModalSubtitleProviders": {
+    "message": "Link your work email to send and receive from the CRM.",
+    "description": "Connect mailbox: provider picker subtitle"
+  },
+  "connectMailboxModalSubtitleGoogle": {
+    "message": "Sign in with Google to sync Gmail.",
+    "description": "Connect mailbox: Google provider subtitle"
+  },
+  "connectMailboxModalProgressProvider": {
+    "message": "Provider",
+    "description": "Connect mailbox: step indicator — choose provider"
+  },
+  "connectMailboxModalProgressMailbox": {
+    "message": "Mailbox",
+    "description": "Connect mailbox: step indicator — mailbox"
+  },
+  "connectMailboxModalProgressConnect": {
+    "message": "Connect",
+    "description": "Connect mailbox: step indicator — connect"
+  },
+  "connectMailboxModalSettingUp": {
+    "message": "Setting up…",
+    "description": "Connect mailbox: primary button while provisioning"
+  },
+  "connectMailboxModalCreateAndGetAddress": {
+    "message": "Create & get address",
+    "description": "Connect mailbox: create shared mailbox and forwarding address button"
+  },
+  "connectMailboxModalGetForwardingAddress": {
+    "message": "Get forwarding address",
+    "description": "Connect mailbox: get forwarding address button"
+  },
+  "connectMailboxModalOnlyAdminsCreateShared": {
+    "message": "Only admins can create shared mailboxes.",
+    "description": "Connect mailbox: shared mailbox permission error"
+  },
+  "connectMailboxModalSetUpMailboxFailed": {
+    "message": "Could not set up mailbox.",
+    "description": "Connect mailbox: mailbox creation failed"
+  },
+  "connectMailboxModalParserNotReady": {
+    "message": "Inbound parser is not ready on this server. Your platform admin must enable it in Control Plane → Inbound Parser (Parser URL + API key), then use Test parser connection.",
+    "description": "Connect mailbox: inbound parser not configured"
+  },
+  "connectMailboxModalForwardingAddressFailed": {
+    "message": "Could not generate a forwarding address. Ask your platform admin to configure the inbound parser.",
+    "description": "Connect mailbox: forwarding address provisioning failed"
+  },
+  "connectMailboxModalSetupFailed": {
+    "message": "Setup failed",
+    "description": "Connect mailbox: generic setup failure"
+  },
+  "connectMailboxModalCopiedForwardingAddress": {
+    "message": "Copied forwarding address",
+    "description": "Connect mailbox: forwarding address copied toast"
+  },
+  "connectMailboxModalCopyFailed": {
+    "message": "Could not copy — select the address and copy manually",
+    "description": "Connect mailbox: clipboard copy failed toast"
+  },
+  "connectMailboxModalCreatePersonalFailed": {
+    "message": "Could not create personal mailbox",
+    "description": "Connect mailbox: personal mailbox creation failed toast"
+  },
+  "connectMailboxModalSharedCreated": {
+    "message": "Shared mailbox created",
+    "description": "Connect mailbox: shared mailbox created toast"
+  },
+  "connectMailboxModalCreateSharedFailed": {
+    "message": "Could not create shared mailbox",
+    "description": "Connect mailbox: shared mailbox creation failed toast"
+  },
+  "connectMailboxModalGmailSmtpConnected": {
+    "message": "Gmail SMTP connected",
+    "description": "Connect mailbox: Gmail SMTP connected toast"
+  },
+  "connectMailboxModalGmailSmtpFailed": {
+    "message": "Could not connect Gmail SMTP",
+    "description": "Connect mailbox: Gmail SMTP connection failed toast"
   }
 }
