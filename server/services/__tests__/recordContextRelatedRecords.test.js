@@ -239,10 +239,11 @@ async function seedTenant() {
   return { tenant, userId };
 }
 
-async function createSalesOrg(tenantId, name) {
+async function createSalesOrg(tenantId, userId, name) {
   return Organization.create({
     name,
-    isTenant: false
+    isTenant: false,
+    assignedTo: userId
   });
 }
 
@@ -250,6 +251,7 @@ async function createPerson(tenantId, userId, { firstName, organization }) {
   return People.create({
     organizationId: tenantId,
     createdBy: userId,
+    assignedTo: userId,
     first_name: firstName,
     organization
   });
@@ -323,8 +325,8 @@ test.after(async () => {
 
 test('people ↔ organizations: lookup field links and reverse lookup', async () => {
   const { tenant, userId } = await seedTenant();
-  const orgA = await createSalesOrg(tenant._id, 'Org A');
-  const orgB = await createSalesOrg(tenant._id, 'Org B');
+  const orgA = await createSalesOrg(tenant._id, userId, 'Org A');
+  const orgB = await createSalesOrg(tenant._id, userId, 'Org B');
   const person = await createPerson(tenant._id, userId, { firstName: 'Pat', organization: orgA._id });
 
   let personCtx = await getRecordContext(tenant._id, 'sales', 'people', person._id);
@@ -348,10 +350,11 @@ test('people ↔ organizations: lookup field links and reverse lookup', async ()
 
 test('organizations: resolve people linked via customFields.organization', async () => {
   const { tenant, userId } = await seedTenant();
-  const org = await createSalesOrg(tenant._id, 'Custom Fields Org');
+  const org = await createSalesOrg(tenant._id, userId, 'Custom Fields Org');
   const person = await People.create({
     organizationId: tenant._id,
     createdBy: userId,
+    assignedTo: userId,
     first_name: 'Custom',
     last_name: 'Field',
     customFields: { organization: org._id }
@@ -363,7 +366,7 @@ test('organizations: resolve people linked via customFields.organization', async
 
 test('organizations: reverse lookup uses people.organization not tenant organizationId metadata', async () => {
   const { tenant, userId } = await seedTenant();
-  const org = await createSalesOrg(tenant._id, 'Acme');
+  const org = await createSalesOrg(tenant._id, userId, 'Acme');
   await ModuleDefinition.create({
     organizationId: tenant._id,
     key: 'people',
@@ -418,8 +421,8 @@ test('deal ↔ event: RelationshipInstance links both directions', async () => {
 
 test('deal dealPeople/dealOrganizations sync updates related records when fields change', async () => {
   const { tenant, userId } = await seedTenant();
-  const orgA = await createSalesOrg(tenant._id, 'Deal Org A');
-  const orgB = await createSalesOrg(tenant._id, 'Deal Org B');
+  const orgA = await createSalesOrg(tenant._id, userId, 'Deal Org A');
+  const orgB = await createSalesOrg(tenant._id, userId, 'Deal Org B');
   const personA = await createPerson(tenant._id, userId, { firstName: 'Alice', organization: orgA._id });
   const personB = await createPerson(tenant._id, userId, { firstName: 'Bob', organization: orgB._id });
 
@@ -487,8 +490,8 @@ test('deal dealPeople/dealOrganizations sync updates related records when fields
 
 test('cases: contactId and organizationRefId lookup links update on field change', async () => {
   const { tenant, userId } = await seedTenant();
-  const orgA = await createSalesOrg(tenant._id, 'Case Org A');
-  const orgB = await createSalesOrg(tenant._id, 'Case Org B');
+  const orgA = await createSalesOrg(tenant._id, userId, 'Case Org A');
+  const orgB = await createSalesOrg(tenant._id, userId, 'Case Org B');
   const contactA = await createPerson(tenant._id, userId, { firstName: 'CaseContactA', organization: orgA._id });
   const contactB = await createPerson(tenant._id, userId, { firstName: 'CaseContactB', organization: orgB._id });
 
@@ -522,7 +525,7 @@ test('cases: contactId and organizationRefId lookup links update on field change
 
 test('quotes: all lookup fields resolve and update in related records', async () => {
   const { tenant, userId } = await seedTenant();
-  const org = await createSalesOrg(tenant._id, 'Quote Org');
+  const org = await createSalesOrg(tenant._id, userId, 'Quote Org');
   const contact = await createPerson(tenant._id, userId, { firstName: 'QuoteContact', organization: org._id });
   const deal = await createDeal(tenant._id, userId, 'Quote Deal');
   const supportCase = await createCase(tenant._id, userId, { title: 'Quote Case' });
@@ -560,7 +563,7 @@ test('quotes: all lookup fields resolve and update in related records', async ()
 
 test('deal related records dedupe instance link with synced dealPeople', async () => {
   const { tenant, userId } = await seedTenant();
-  const org = await createSalesOrg(tenant._id, 'Dedupe Org');
+  const org = await createSalesOrg(tenant._id, userId, 'Dedupe Org');
   const person = await createPerson(tenant._id, userId, { firstName: 'Dedupe', organization: org._id });
   const deal = await Deal.create({
     organizationId: tenant._id,
@@ -598,7 +601,7 @@ test('deal related records dedupe instance link with synced dealPeople', async (
 
 test('clearing lookup fields removes related records from both sides', async () => {
   const { tenant, userId } = await seedTenant();
-  const org = await createSalesOrg(tenant._id, 'Clear Org');
+  const org = await createSalesOrg(tenant._id, userId, 'Clear Org');
   const person = await createPerson(tenant._id, userId, { firstName: 'Clearable', organization: org._id });
 
   let personCtx = await getRecordContext(tenant._id, 'sales', 'people', person._id);
