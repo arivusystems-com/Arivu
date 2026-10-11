@@ -1116,7 +1116,7 @@
     "description": "Form edit modal title"
   },
   "emailExamplePh": {
-    "message": "email@example.com",
+    "message": "email{'@'}example.com",
     "description": "Email question placeholder"
   },
   "evidenceAddRequiredHint": {
@@ -4260,7 +4260,7 @@
     "description": "Collapse text responses button"
   },
   "resultsSummaryMediaCount": {
-    "message": "{count, plural, one {# upload} other {# uploads}}",
+    "message": "{count} upload | {count} uploads",
     "description": "File/signature upload count"
   },
   "resultsSummaryMediaHint": {
@@ -4308,7 +4308,7 @@
     "description": "Error when deleting form with submitted responses"
   },
   "hubDeleteBlockedSubmittedCount": {
-    "message": "{count, plural, one {# form was skipped because it has submitted responses. Archive it instead.} other {# forms were skipped because they have submitted responses. Archive them instead.}}",
+    "message": "{count} form was skipped because it has submitted responses. Archive it instead. | {count} forms were skipped because they have submitted responses. Archive them instead.",
     "description": "Bulk delete skip message for forms with submitted responses"
   },
   "hubPublicFormExpired": {

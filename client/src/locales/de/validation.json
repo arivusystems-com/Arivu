@@ -8,11 +8,11 @@
     "description": "Email format validation"
   },
   "minLength": {
-    "message": "Muss mindestens {min, number} Zeichen umfassen",
+    "message": "Muss mindestens {min} Zeichen umfassen",
     "description": "Minimum length validation with ICU number"
   },
   "maxLength": {
-    "message": "Darf höchstens {max, number} Zeichen umfassen",
+    "message": "Darf höchstens {max} Zeichen umfassen",
     "description": "Maximum length validation with ICU number"
   },
   "imageFileRequired": {

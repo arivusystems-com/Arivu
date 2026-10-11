@@ -1940,7 +1940,7 @@
     "description": "CLI command label for full Blog sync via local tools/help-sync"
   },
   "addonsBlogStaticSyncCliNpxFull": {
-    "message": "Initial full sync (npx @arivu/help-sync)",
+    "message": "Initial full sync (npx {'@'}arivu/help-sync)",
     "description": "CLI command label for full Blog sync via published package"
   },
   "addonsBlogStaticSyncCliSlug": {
@@ -15536,7 +15536,7 @@
     "description": "Alert recipients label"
   },
   "modFieldsRecipientsPh": {
-    "message": "e.g., revenue-ops@company.com, manager@company.com",
+    "message": "e.g., revenue-ops{'@'}company.com, manager{'@'}company.com",
     "description": "Alert recipients placeholder"
   },
   "modFieldsAlertMessagePh": {
@@ -20072,31 +20072,31 @@
     "description": "Condition field: salutation"
   },
   "salesPipeStageCount": {
-    "message": "{count, plural, one {# stage} other {# stages}}",
+    "message": "{count} stage | {count} stages",
     "description": "Stage count in pipeline list or detail"
   },
   "modFieldsOptionCount": {
-    "message": "{count, plural, one {# option} other {# options}}",
+    "message": "{count} option | {count} options",
     "description": "Dependency option count"
   },
   "modFieldsStageCount": {
-    "message": "{count, plural, one {# stage} other {# stages}}",
+    "message": "{count} stage | {count} stages",
     "description": "Other tabs section"
   },
   "settingsSubDetailDaysCount": {
-    "message": "{count, plural, one {# day} other {# days}}",
+    "message": "{count} day | {count} days",
     "description": "Days remaining count"
   },
   "settingsAppDetailModuleCount": {
-    "message": "({count, plural, one {# module} other {# modules}})",
+    "message": "({count} module) | ({count} modules)",
     "description": "Dependency module count"
   },
   "peopleTypesInUse": {
-    "message": "In use by {count, plural, one {# person} other {# people}}",
+    "message": "In use by {count} person | In use by {count} people",
     "description": "Role usage count on row"
   },
   "peopleTypesDeleteInUse": {
-    "message": "This role is used by {count, plural, one {# person} other {# people}}. Removing it from the list does not change existing records; they will keep their current role value until updated.",
+    "message": "This role is used by {count} person. Removing it from the list does not change existing records; they will keep their current role value until updated. | This role is used by {count} people. Removing it from the list does not change existing records; they will keep their current role value until updated.",
     "description": "Delete role confirm when in use"
   },
   "automationModuleNumbering": {

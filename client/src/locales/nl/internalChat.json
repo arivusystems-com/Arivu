@@ -388,7 +388,7 @@
     "description": "Checkbox to emit in-app notifications for channel and record chat posts"
   },
   "notifyChannelMessagesHint": {
-    "message": "When off, only DMs and @mentions create alerts. Unread badges still update for channels.",
+    "message": "When off, only DMs and {'@'}mentions create alerts. Unread badges still update for channels.",
     "description": "Help text for channel notification setting"
   },
   "mentionAllHint": {
@@ -420,7 +420,7 @@
     "description": "Seen receipts mode: disabled"
   },
   "seenReceiptsPrivate": {
-    "message": "Privé — DM’s, kleine groepen en @vermeldingen",
+    "message": "Privé — DM’s, kleine groepen en {'@'}vermeldingen",
     "description": "Seen receipts mode: default privacy-aware"
   },
   "seenReceiptsOn": {

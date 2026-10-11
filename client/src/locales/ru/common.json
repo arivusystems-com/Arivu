@@ -1,10 +1,10 @@
 {
   "recordsCount": {
-    "message": "{count, plural, one {# record} other {# records}}",
+    "message": "{count} record | {count} records",
     "description": "Record list count with ICU pluralization"
   },
   "itemsSelected": {
-    "message": "{count, plural, one {# item selected} other {# items selected}}",
+    "message": "{count} item selected | {count} items selected",
     "description": "Bulk selection count in list views"
   },
   "welcomeUser": {
@@ -12,7 +12,7 @@
     "description": "Personalized greeting with interpolation"
   },
   "assignedToUser": {
-    "message": "Assigned to {gender, select, female {her} male {him} other {them}}",
+    "message": "Assigned to them",
     "description": "ICU select example for gendered copy (platform chrome only)"
   },
   "localeDevTitle": {
@@ -220,7 +220,7 @@
     "description": "Bulk selection clear button tooltip"
   },
   "listRowsSelected": {
-    "message": "{count, plural, one {# {singular} selected} other {# {plural} selected}}",
+    "message": "{count} {singular} selected | {count} {plural} selected",
     "description": "Bulk row selection count in list"
   },
   "listSearchFields": {
@@ -280,7 +280,7 @@
     "description": "All records across pages selected"
   },
   "tableSelectedCount": {
-    "message": "{count, plural, one {# selected} other {# selected}}",
+    "message": "{count} selected | {count} selected",
     "description": "Bulk selection count in data table"
   },
   "tableDeleteSelected": {
@@ -516,7 +516,7 @@
     "description": "Record age when created today"
   },
   "lifecycleAgeDays": {
-    "message": "{days, plural, one {# day} other {# days}}",
+    "message": "{days} day | {days} days",
     "description": "Record age in days"
   },
   "lifecycleAgeZero": {
@@ -688,7 +688,7 @@
     "description": "Create record from link drawer"
   },
   "linkRecordsSelectedCount": {
-    "message": "{count, plural, one {# selected} other {# selected}}",
+    "message": "{count} selected | {count} selected",
     "description": "Link drawer multi-select count"
   },
   "linkRecordsLink": {

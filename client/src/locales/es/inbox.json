@@ -64,7 +64,7 @@
     "description": "Auto-migrated from connectMailboxModal"
   },
   "connectMailboxModalYouCompanyCom": {
-    "message": "usted@empresa.com",
+    "message": "usted{'@'}empresa.com",
     "description": "Auto-migrated from connectMailboxModal"
   },
   "connectMailboxModalGmailAddress": {
@@ -92,7 +92,7 @@
     "description": "Auto-migrated from connectMailboxModal"
   },
   "connectMailboxModalSupportCompanyCom": {
-    "message": "soporte@empresa.com",
+    "message": "soporte{'@'}empresa.com",
     "description": "Auto-migrated from connectMailboxModal"
   },
   "connectMailboxModalSharedEmailAddress": {
@@ -572,7 +572,7 @@
     "description": "Auto-migrated from inboxSurface"
   },
   "inboxSurfaceContactUs": {
-    "message": "contáctanos@…",
+    "message": "contáctanos{'@'}…",
     "description": "Auto-migrated from inboxSurface"
   },
   "inboxSurfaceAddressOptional": {

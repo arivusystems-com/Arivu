@@ -8,11 +8,11 @@
     "description": "Email format validation"
   },
   "minLength": {
-    "message": "कम से कम {min, number} अक्षर होना चाहिए",
+    "message": "कम से कम {min} अक्षर होना चाहिए",
     "description": "Minimum length validation with ICU number"
   },
   "maxLength": {
-    "message": "अधिकतम {max, number} अक्षर होना चाहिए",
+    "message": "अधिकतम {max} अक्षर होना चाहिए",
     "description": "Maximum length validation with ICU number"
   },
   "imageFileRequired": {

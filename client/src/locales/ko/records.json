@@ -500,7 +500,7 @@
     "description": "Right pane activity tab"
   },
   "commentComposerDefaultPh": {
-    "message": "댓글 쓰기... 사용자 또는 그룹을 @멘션하세요.",
+    "message": "댓글 쓰기... 사용자 또는 그룹을 {'@'}멘션하세요.",
     "description": "Default comment composer placeholder"
   },
   "commentAddFile": {
@@ -4972,7 +4972,7 @@
     "description": "Email to label"
   },
   "drSendEmailToPlaceholder": {
-    "message": "customer@example.com",
+    "message": "customer{'@'}example.com",
     "description": "Email to placeholder"
   },
   "drSendEmailSubject": {
@@ -5292,7 +5292,7 @@
     "description": "Email to label"
   },
   "dnSendEmailToPlaceholder": {
-    "message": "customer@example.com",
+    "message": "customer{'@'}example.com",
     "description": "Email to placeholder"
   },
   "dnSendEmailSubject": {

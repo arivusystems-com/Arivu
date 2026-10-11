@@ -2792,7 +2792,7 @@
     "description": "Tooltip for record right pane resize handle"
   },
   "commentComposerDefaultPh": {
-    "message": "Write a comment... @mention users or groups",
+    "message": "Write a comment... {'@'}mention users or groups",
     "description": "Default comment composer placeholder"
   },
   "commentAddFile": {
@@ -5012,7 +5012,7 @@
     "description": "Email to label"
   },
   "drSendEmailToPlaceholder": {
-    "message": "customer@example.com",
+    "message": "customer{'@'}example.com",
     "description": "Email to placeholder"
   },
   "drSendEmailSubject": {
@@ -5332,7 +5332,7 @@
     "description": "Email to label"
   },
   "dnSendEmailToPlaceholder": {
-    "message": "customer@example.com",
+    "message": "customer{'@'}example.com",
     "description": "Email to placeholder"
   },
   "dnSendEmailSubject": {

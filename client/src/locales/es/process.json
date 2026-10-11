@@ -328,7 +328,7 @@
     "description": "Flow card metadata label"
   },
   "flowProcessCount": {
-    "message": "{count, plural, one {# proceso} other {# procesos}}",
+    "message": "{count} proceso | {count} procesos",
     "description": "Flow card process count"
   },
   "flowMetaLastUpdated": {
@@ -376,7 +376,7 @@
     "description": "Template import confirmation title"
   },
   "flowImportBody": {
-    "message": "Se crearán {count, plural, one {# proceso} other {# procesos}} y un flujo de negocio.",
+    "message": "Se crearán {count} proceso y un flujo de negocio. | Se crearán {count} procesos y un flujo de negocio.",
     "description": "Template import confirmation body"
   },
   "flowImportWhatCreated": {
@@ -624,7 +624,7 @@
     "description": "Health status display fallback"
   },
   "flowHealthBottlenecks": {
-    "message": "{count, plural, one {# cuello de botella detectado} other {# cuellos de botella detectados}}",
+    "message": "{count} cuello de botella detectado | {count} cuellos de botella detectados",
     "description": "Bottleneck alert heading"
   },
   "flowHealthBottleneckSummary": {
@@ -2028,7 +2028,7 @@
     "description": "Flow active badge"
   },
   "appFlowsProcessCount": {
-    "message": "{count, plural, one {# proceso} other {# procesos}}",
+    "message": "{count} proceso | {count} procesos",
     "description": "Flow process count"
   },
   "appFlowsLoadFailed": {
