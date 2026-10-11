@@ -133,15 +133,19 @@ describe('mailboxSmtpService with nodemailer', () => {
     assert.ok(!result.error.includes('wrong-password'));
   });
 
-  it('verifySmtpCredentials classifies a refused connection as NETWORK_ERROR', async () => {
-    const closed = net.createServer();
-    await new Promise((resolve) => closed.listen(0, '127.0.0.1', resolve));
-    const { port } = closed.address();
-    await new Promise((resolve) => closed.close(resolve));
+  it('verifySmtpCredentials classifies a reset connection as NETWORK_ERROR', async () => {
+    // Keep the port bound: a released port can be reused by parallel test processes.
+    const resetting = net.createServer((socket) => socket.resetAndDestroy());
+    await new Promise((resolve) => resetting.listen(0, '127.0.0.1', resolve));
+    const { port } = resetting.address();
 
-    const result = await verifySmtpCredentials({ host: '127.0.0.1', port, secure: false }, VALID_USER, VALID_PASS);
-    assert.equal(result.ok, false);
-    assert.equal(result.status, VERIFY_STATUS.NETWORK_ERROR);
+    try {
+      const result = await verifySmtpCredentials({ host: '127.0.0.1', port, secure: false }, VALID_USER, VALID_PASS);
+      assert.equal(result.ok, false);
+      assert.equal(result.status, VERIFY_STATUS.NETWORK_ERROR);
+    } finally {
+      await new Promise((resolve) => resetting.close(resolve));
+    }
   });
 
   it('sendViaMailboxSmtp delivers threaded HTML mail with attachments', async () => {
