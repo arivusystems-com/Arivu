@@ -15,7 +15,8 @@ export default defineConfigWithVueTs(
     files: ['**/*.{ts,mts,tsx,vue}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  // public/static-sync: installer/sync scripts customers download and run in their own Node projects.
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'public/static-sync/**']),
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,

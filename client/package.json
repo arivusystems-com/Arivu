@@ -18,7 +18,7 @@
     "type-check": "NODE_OPTIONS=--max-old-space-size=6144 vue-tsc --build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint:oxlint": "oxlint . -D correctness --ignore-path .gitignore",
+    "lint:oxlint": "oxlint . -D correctness --ignore-path .gitignore --ignore-pattern 'public/static-sync/**'",
     "lint:eslint": "eslint .",
     "lint": "run-s -c lint:oxlint lint:eslint",
     "lint:fix": "run-s -c \"lint:oxlint -- --fix\" \"lint:eslint -- --fix\"",
