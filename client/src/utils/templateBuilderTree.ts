@@ -141,8 +141,8 @@ export function updateNode(
       ...node.style,
       ...patch.style,
       typography: {
-        ...(node.style?.typography || {}),
-        ...(patch.style.typography || {})
+        ...(node.style?.typography as Record<string, unknown> | undefined),
+        ...(patch.style.typography as Record<string, unknown> | undefined)
       }
     };
   }
