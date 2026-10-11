@@ -74,7 +74,10 @@ jobs:
       
       - name: Run ESLint
         working-directory: ./client
-        run: npm run lint || true  # Continue even if linting fails
+        # Report only: `npm run lint` uses --fix, which would rewrite sources before the build checks them.
+        run: |
+          npx oxlint . -D correctness --ignore-path .gitignore || true
+          npx eslint . || true
 
       - name: i18n validation
         working-directory: ./client
