@@ -34,13 +34,22 @@ async function checkRedis() {
     },
   });
 
+  let socketError = null;
+  client.on('error', (err) => {
+    socketError = err;
+  });
+
   try {
     await client.connect();
     const pong = await client.ping();
-    await client.disconnect().catch(() => {});
     return { ok: pong === 'PONG' || pong === 'pong' };
   } catch (e) {
-    return { ok: false, error: e.message || String(e) };
+    const cause = socketError || e;
+    return { ok: false, error: cause.message || String(cause) };
+  } finally {
+    if (client.isOpen) {
+      await client.disconnect().catch(() => {});
+    }
   }
 }
 
