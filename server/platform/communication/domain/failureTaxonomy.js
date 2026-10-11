@@ -6,7 +6,7 @@ function classifyCommunicationFailure(errorLike) {
   if (
     message.includes('auth') ||
     message.includes('invalid login') ||
-    message.includes('535') ||
+    /\b535\b/.test(message) ||
     message.includes('eauth') ||
     message.includes('authentication')
   ) {
