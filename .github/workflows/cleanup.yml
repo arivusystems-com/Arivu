@@ -6,49 +6,7 @@ on:
     - cron: '0 2 * * 0'
   workflow_dispatch:
 
-env:
-  AWS_REGION: us-east-1
-
 jobs:
-  cleanup-ecr:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      
-      - name: Delete old ECR images
-        run: |
-          echo "🧹 Cleaning up old ECR images..."
-          
-          # Keep only the last 10 images for each repository
-          for REPO in arivu-backend arivu-frontend; do
-            echo "Cleaning $REPO..."
-            
-            # Get image digests older than 30 days
-            OLD_IMAGES=$(aws ecr describe-images \
-              --repository-name $REPO \
-              --query 'sort_by(imageDetails,& imagePushedAt)[:-10].[imageDigest]' \
-              --output text)
-            
-            if [ -n "$OLD_IMAGES" ]; then
-              echo "Deleting old images from $REPO..."
-              echo "$OLD_IMAGES" | while read digest; do
-                aws ecr batch-delete-image \
-                  --repository-name $REPO \
-                  --image-ids imageDigest=$digest || true
-              done
-            else
-              echo "No old images to delete in $REPO"
-            fi
-          done
-          
-          echo "✅ ECR cleanup complete"
-  
   cleanup-terminated-instances:
     runs-on: ubuntu-latest
     

@@ -221,8 +221,7 @@ Quick verify
 
 ### Infrastructure
 - **Containerization:** Docker
-- **Orchestration:** Kubernetes (AWS EKS)
-- **Package Manager:** Helm 3
+- **Hosting:** OCI VM instance pools (API + Worker) behind an OCI load balancer
 - **Web Server:** Nginx
 - **SSL:** cert-manager + Let's Encrypt
 - **DNS:** AWS Route 53
@@ -230,25 +229,19 @@ Quick verify
 - **Email:** AWS SES
 
 ### CI/CD
-- **GitHub Actions** - Automated builds and deployments
-- **AWS ECR** - Docker image registry
+- **GitHub Actions** - Tests, i18n gates, Docker build check, scheduled health monitoring
+- Production deployment is **manual** (no deploy workflow)
 
 ---
 
 ## 🚢 Deployment
 
-### Production Deployment to AWS
+### Production Deployment to OCI
 
-Follow the [production deployment runbook](docs/ARIVU_PRODUCTION_DEPLOYMENT.md) for step-by-step instructions.
+Production runs on OCI VMs. Deployment is manual; no GitHub Actions workflow deploys production.
 
-**Quick Overview:**
-1. Create AWS EKS cluster
-2. Install ingress-nginx and cert-manager
-3. Configure Route 53 DNS
-4. Build and push Docker images
-5. Deploy with Helm
-6. Configure environment variables
-7. Test instance provisioning
+- Provisioning and release procedure: [OCI_VM_DEPLOYMENT.md](docs/OCI_VM_DEPLOYMENT.md) (section 18, "Deploy a later release")
+- Overview and smoke tests: [production deployment runbook](docs/ARIVU_PRODUCTION_DEPLOYMENT.md)
 
 ### Environment Variables
 
@@ -321,11 +314,10 @@ arivu/
 │       ├── values.yaml
 │       └── templates/               # K8s resource templates
 ├── .github/
-│   └── workflows/                   # GitHub Actions CI/CD
-│       ├── deploy-master.yml
+│   └── workflows/                   # GitHub Actions CI (no production deploy)
 │       ├── test.yml
-│       ├── docker-publish.yml
-│       └── monitoring.yml
+│       ├── monitoring.yml
+│       └── cleanup.yml
 ├── Dockerfile.backend               # Backend container
 ├── Dockerfile.frontend              # Frontend container
 ├── docker-compose.yml               # Local development

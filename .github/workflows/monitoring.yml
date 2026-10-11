@@ -6,10 +6,6 @@ on:
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
-env:
-  AWS_REGION: us-east-1
-  EKS_CLUSTER_NAME: arivu-production
-
 jobs:
   health-check:
     runs-on: ubuntu-latest
@@ -69,45 +65,4 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           echo "Check the logs and investigate immediately."
           # In production, this would send alerts via email, Slack, PagerDuty, etc.
-  
-  resource-usage:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      
-      - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig \
-            --region ${{ env.AWS_REGION }} \
-            --name ${{ env.EKS_CLUSTER_NAME }}
-      
-      - name: Check cluster resources
-        run: |
-          echo "📊 Cluster Resource Usage:"
-          kubectl top nodes || echo "Metrics server not available"
-          
-          echo ""
-          echo "📦 Pod Resource Usage (Top 10):"
-          kubectl top pods --all-namespaces --sort-by=memory | head -n 11 || echo "Metrics server not available"
-      
-      - name: Check pod status
-        run: |
-          echo "🔍 Checking for unhealthy pods..."
-          
-          # Find pods that are not Running or Completed
-          UNHEALTHY_PODS=$(kubectl get pods --all-namespaces --field-selector=status.phase!=Running,status.phase!=Succeeded -o json)
-          UNHEALTHY_COUNT=$(echo "$UNHEALTHY_PODS" | jq '.items | length')
-          
-          if [ $UNHEALTHY_COUNT -gt 0 ]; then
-            echo "⚠️  Warning: $UNHEALTHY_COUNT unhealthy pod(s) found"
-            echo "$UNHEALTHY_PODS" | jq -r '.items[] | "\(.metadata.namespace)/\(.metadata.name): \(.status.phase)"'
-          else
-            echo "✅ All pods are healthy"
-          fi
 
