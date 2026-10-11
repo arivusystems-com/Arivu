@@ -350,7 +350,7 @@
                                       </button>
 
                                       <div v-if="(clauseValueMultiOptionList(clause) || []).length === 0" class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                                        Type and press Enter to add.
+                                        {{ t('settings.assignRulesTypeAndPressEnter') }}
                                       </div>
                                     </div>
                                   </div>

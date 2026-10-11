@@ -2115,5 +2115,9 @@
   "homeAiAskFailed": {
     "message": "Could not suggest reports right now.",
     "description": "Analytics home AI intent error"
+  },
+  "fieldMetric": {
+    "message": "Metric",
+    "description": "Widget builder: field used as the chart value"
   }
 }

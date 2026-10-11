@@ -963,7 +963,7 @@ async function save(alsoGenerate) {
       message.value = t('settings.itemGroupSaved');
     }
   } catch (err) {
-    formError.value = err?.response?.data?.message || err?.message || t('states.error');
+    formError.value = err?.response?.data?.message || err?.message || t('states.genericFailure');
   } finally {
     saving.value = false;
     saveAndGenerate.value = false;

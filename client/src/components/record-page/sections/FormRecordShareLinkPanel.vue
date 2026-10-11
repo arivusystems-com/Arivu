@@ -123,10 +123,10 @@ async function enablePublicLink() {
       emit('updated', response.data);
       success(t('forms.recordShareLinkEnabled'));
     } else {
-      notifyError(response?.message || t('forms.builderShellEnablePublicFailed.message'));
+      notifyError(response?.message || t('forms.builderShellEnablePublicFailed'));
     }
   } catch (err) {
-    notifyError(err?.response?.data?.message || t('forms.builderShellEnablePublicFailed.message'));
+    notifyError(err?.response?.data?.message || t('forms.builderShellEnablePublicFailed'));
   } finally {
     enabling.value = false;
   }

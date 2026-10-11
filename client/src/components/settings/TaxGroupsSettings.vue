@@ -233,7 +233,7 @@ async function saveGroup() {
     showForm.value = false;
     await load();
   } catch (err) {
-    formError.value = err?.response?.data?.message || err?.message || t('states.error');
+    formError.value = err?.response?.data?.message || err?.message || t('states.genericFailure');
   } finally {
     saving.value = false;
   }
@@ -251,7 +251,7 @@ async function confirmDelete() {
     pendingDelete.value = null;
     await load();
   } catch (err) {
-    notifications.error(err?.response?.data?.message || err?.message || t('states.error'));
+    notifications.error(err?.response?.data?.message || err?.message || t('states.genericFailure'));
   } finally {
     deleting.value = false;
   }

@@ -1008,7 +1008,7 @@
     "description": "Formula block canvas placeholder"
   },
   "builderPageNumberPlaceholder": {
-    "message": "Page {{System.PageNumber}} of {{System.PageCount}}",
+    "message": "Page {'{'}{'{'}System.PageNumber{'}'}{'}'} of {'{'}{'{'}System.PageCount{'}'}{'}'}",
     "description": "Page number block canvas placeholder"
   },
   "builderWatermarkPlaceholder": {
@@ -2212,7 +2212,7 @@
     "description": "HubSpot conditional panel title"
   },
   "htmlImport.hubspotConditionalDescription": {
-    "message": "HubSpot {% if %} blocks are not supported in campaigns. Choose how to handle them before import.",
+    "message": "HubSpot {'{'}% if %{'}'} blocks are not supported in campaigns. Choose how to handle them before import.",
     "description": "HubSpot conditional panel description"
   },
   "htmlImport.hubspotConditionalKeep": {
@@ -2228,7 +2228,7 @@
     "description": "Strip HubSpot conditionals option"
   },
   "htmlImport.hubspotConditionalStripHint": {
-    "message": "Removes {% if %}/{% else %} tags and keeps the first branch content only.",
+    "message": "Removes {'{'}% if %{'}'}/{'{'}% else %{'}'} tags and keeps the first branch content only.",
     "description": "Strip HubSpot conditionals hint"
   },
   "htmlImport.warningHubspotConditional": {

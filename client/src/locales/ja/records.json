@@ -500,7 +500,7 @@
     "description": "Right pane activity tab"
   },
   "commentComposerDefaultPh": {
-    "message": "コメントを書く...ユーザーまたはグループを @メンションする",
+    "message": "コメントを書く...ユーザーまたはグループを {'@'}メンションする",
     "description": "Default comment composer placeholder"
   },
   "commentAddFile": {
@@ -4972,7 +4972,7 @@
     "description": "Email to label"
   },
   "drSendEmailToPlaceholder": {
-    "message": "customer@example.com",
+    "message": "customer{'@'}example.com",
     "description": "Email to placeholder"
   },
   "drSendEmailSubject": {
@@ -5292,7 +5292,7 @@
     "description": "Email to label"
   },
   "dnSendEmailToPlaceholder": {
-    "message": "customer@example.com",
+    "message": "customer{'@'}example.com",
     "description": "Email to placeholder"
   },
   "dnSendEmailSubject": {
@@ -5950,5 +5950,17 @@
   "genericTabAccess": {
     "message": "Access",
     "description": "People record right pane tab for portal and marketing access"
+  },
+  "activitySystemReviewChanges": {
+    "message": "Review changes",
+    "description": "Activity row link to compare changes"
+  },
+  "quoteReviewChanges": {
+    "message": "Review changes",
+    "description": "Quote lines header: review changes action"
+  },
+  "revisionsCompare": {
+    "message": "Compare",
+    "description": "Quote revisions: compare with current revision"
   }
 }

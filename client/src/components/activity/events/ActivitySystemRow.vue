@@ -70,7 +70,7 @@
           :href="compareLink"
           class="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
         >
-          Review changes
+          {{ t('records.activitySystemReviewChanges') }}
         </a>
       </div>
       <div

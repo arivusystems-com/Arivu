@@ -410,7 +410,7 @@ async function saveTax() {
     showForm.value = false;
     await loadTaxes();
   } catch (err) {
-    formError.value = err?.response?.data?.message || err?.message || t('states.error');
+    formError.value = err?.response?.data?.message || err?.message || t('states.genericFailure');
   } finally {
     saving.value = false;
   }
@@ -422,7 +422,7 @@ async function toggleStatus(tax) {
     await apiClient.patch(`/taxes/${tax._id}/status`, { status });
     await loadTaxes();
   } catch (err) {
-    notifications.error(err?.response?.data?.message || err?.message || t('states.error'));
+    notifications.error(err?.response?.data?.message || err?.message || t('states.genericFailure'));
   }
 }
 
@@ -438,7 +438,7 @@ async function confirmDelete() {
     pendingDelete.value = null;
     await loadTaxes();
   } catch (err) {
-    notifications.error(err?.response?.data?.message || err?.message || t('states.error'));
+    notifications.error(err?.response?.data?.message || err?.message || t('states.genericFailure'));
   } finally {
     deleting.value = false;
   }

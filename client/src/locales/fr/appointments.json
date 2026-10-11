@@ -448,7 +448,7 @@
     "description": "Share modal empty list"
   },
   "contactsSelected": {
-    "message": "{count, plural, one {# contact selected} other {# contacts selected}}",
+    "message": "{count} contact selected | {count} contacts selected",
     "description": "Share modal selection count"
   },
   "composeEmail": {

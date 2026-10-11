@@ -94,7 +94,7 @@ async function load() {
     form.defaultPurchaseChargeIds = (d.defaultPurchaseChargeIds || []).map(String);
     form.defaultItemChargeIds = (d.defaultItemChargeIds || []).map(String);
   } catch (err) {
-    error.value = err?.response?.data?.message || err?.message || t('states.error');
+    error.value = err?.response?.data?.message || err?.message || t('states.genericFailure');
   } finally {
     loading.value = false;
   }
@@ -110,7 +110,7 @@ async function save() {
       defaultItemChargeIds: form.defaultItemChargeIds
     });
   } catch (err) {
-    error.value = err?.response?.data?.message || t('states.error');
+    error.value = err?.response?.data?.message || t('states.genericFailure');
   } finally {
     saving.value = false;
   }

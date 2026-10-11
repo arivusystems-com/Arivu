@@ -6,8 +6,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { CLIENT_ROOT, isEnforcementPath, scanSourceFiles } from './shared.mjs';
 
-const ENGLISH_TEXT_RE = />\s*([A-Za-z][A-Za-z0-9\s,'’.!?-]{2,})\s*</g;
-const ATTR_TEXT_RE = /(?:title|label|placeholder|aria-label)=["']([A-Za-z][^"']{2,})["']/g;
+// (?<![=-]) skips arrow functions / TS generics such as `=> Record<string, string>`.
+const ENGLISH_TEXT_RE = /(?<![=-])>\s*([A-Za-z][A-Za-z0-9\s,'’.!?-]{2,})\s*</g;
+// (?<![:@\w-]) skips bound attributes (`:title="a === 'b' ? t(...) : t(...)"`); static `subtitle="..."` / `empty-label="..."` are still checked.
+const ATTR_TEXT_RE = /(?<![:@\w-])[\w-]*(?:title|label|placeholder)=["']([A-Za-z][^"']{2,})["']/g;
 const TOAST_RE = /(?:toast|notify|showMessage|alert)\([^)]*["']([A-Za-z][^"']{3,})["']/g;
 
 const ALLOWLIST = new Set([

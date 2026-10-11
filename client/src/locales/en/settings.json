@@ -1940,7 +1940,7 @@
     "description": "CLI command label for full Blog sync via local tools/help-sync"
   },
   "addonsBlogStaticSyncCliNpxFull": {
-    "message": "Initial full sync (npx @arivu/help-sync)",
+    "message": "Initial full sync (npx {'@'}arivu/help-sync)",
     "description": "CLI command label for full Blog sync via published package"
   },
   "addonsBlogStaticSyncCliSlug": {
@@ -15536,7 +15536,7 @@
     "description": "Alert recipients label"
   },
   "modFieldsRecipientsPh": {
-    "message": "e.g., revenue-ops@company.com, manager@company.com",
+    "message": "e.g., revenue-ops{'@'}company.com, manager{'@'}company.com",
     "description": "Alert recipients placeholder"
   },
   "modFieldsAlertMessagePh": {
@@ -20072,31 +20072,31 @@
     "description": "Condition field: salutation"
   },
   "salesPipeStageCount": {
-    "message": "{count, plural, one {# stage} other {# stages}}",
+    "message": "{count} stage | {count} stages",
     "description": "Stage count in pipeline list or detail"
   },
   "modFieldsOptionCount": {
-    "message": "{count, plural, one {# option} other {# options}}",
+    "message": "{count} option | {count} options",
     "description": "Dependency option count"
   },
   "modFieldsStageCount": {
-    "message": "{count, plural, one {# stage} other {# stages}}",
+    "message": "{count} stage | {count} stages",
     "description": "Other tabs section"
   },
   "settingsSubDetailDaysCount": {
-    "message": "{count, plural, one {# day} other {# days}}",
+    "message": "{count} day | {count} days",
     "description": "Days remaining count"
   },
   "settingsAppDetailModuleCount": {
-    "message": "({count, plural, one {# module} other {# modules}})",
+    "message": "({count} module) | ({count} modules)",
     "description": "Dependency module count"
   },
   "peopleTypesInUse": {
-    "message": "In use by {count, plural, one {# person} other {# people}}",
+    "message": "In use by {count} person | In use by {count} people",
     "description": "Role usage count on row"
   },
   "peopleTypesDeleteInUse": {
-    "message": "This role is used by {count, plural, one {# person} other {# people}}. Removing it from the list does not change existing records; they will keep their current role value until updated.",
+    "message": "This role is used by {count} person. Removing it from the list does not change existing records; they will keep their current role value until updated. | This role is used by {count} people. Removing it from the list does not change existing records; they will keep their current role value until updated.",
     "description": "Delete role confirm when in use"
   },
   "automationModuleNumbering": {
@@ -23385,5 +23385,177 @@
   "billingPostalInvalid": {
     "message": "Enter a valid postal / PIN code for the selected country.",
     "description": "Postal code validation error for billing address"
+  },
+  "invoicesSettingsTitle": {
+    "message": "Invoices",
+    "description": "Invoices settings page heading"
+  },
+  "invoicesSettingsDesc": {
+    "message": "Choose the document template for invoices and check rendering parity.",
+    "description": "Invoices settings page subheading"
+  },
+  "invoicesDocumentTemplateTitle": {
+    "message": "Invoice document template",
+    "description": "Invoices settings: default template section heading"
+  },
+  "invoicesDocumentTemplateHelp": {
+    "message": "Select the published template used to generate invoice documents.",
+    "description": "Invoices settings: default template section help"
+  },
+  "invoicesBrandingNoteTitle": {
+    "message": "Branding",
+    "description": "Invoices settings: branding section heading"
+  },
+  "invoicesBrandingNoteHelp": {
+    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "description": "Invoices settings: explains branding is shared with quotes"
+  },
+  "invoicesBrandingNoteLink": {
+    "message": "Open quote branding",
+    "description": "Invoices settings: link to quote branding settings"
+  },
+  "moduleDocumentTemplateEmpty": {
+    "message": "No published document templates yet. Create and publish one in Templates.",
+    "description": "Document template settings: no templates available"
+  },
+  "moduleDocumentTemplateGoTemplates": {
+    "message": "Go to Templates",
+    "description": "Document template settings: link to Templates"
+  },
+  "moduleDocumentTemplateLabel": {
+    "message": "Default template",
+    "description": "Document template settings: select label"
+  },
+  "moduleDocumentTemplateAuto": {
+    "message": "Automatic (system default)",
+    "description": "Document template settings: no explicit default selected"
+  },
+  "moduleDocumentTemplateHint": {
+    "message": "Used when generating documents for this module.",
+    "description": "Document template settings: select help text"
+  },
+  "moduleDocumentTemplateLoadFailed": {
+    "message": "Failed to load document template settings.",
+    "description": "Document template settings: load error"
+  },
+  "moduleDocumentTemplateSaved": {
+    "message": "Default template saved.",
+    "description": "Document template settings: save success"
+  },
+  "moduleDocumentTemplateSaveFailed": {
+    "message": "Failed to save the default template.",
+    "description": "Document template settings: save error"
+  },
+  "moduleShadowParityTitle": {
+    "message": "Rendering parity",
+    "description": "Shadow parity panel heading"
+  },
+  "moduleShadowParityHelp": {
+    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "description": "Shadow parity panel description"
+  },
+  "moduleShadowParityModeLabel": {
+    "message": "Render mode",
+    "description": "Shadow parity: current render mode label"
+  },
+  "moduleShadowParityModeLegacy": {
+    "message": "Legacy",
+    "description": "Render mode: legacy renderer only"
+  },
+  "moduleShadowParityModeShadow": {
+    "message": "Shadow (legacy served, platform compared)",
+    "description": "Render mode: both renderers run, legacy output is used"
+  },
+  "moduleShadowParityModePlatform": {
+    "message": "Platform",
+    "description": "Render mode: content platform renderer"
+  },
+  "moduleShadowParityMatchRate": {
+    "message": "{rate}% match",
+    "description": "Shadow parity: percentage of matching renders"
+  },
+  "moduleShadowParityTotal": {
+    "message": "Total",
+    "description": "Shadow parity: total comparisons"
+  },
+  "moduleShadowParityMatched": {
+    "message": "Matched",
+    "description": "Shadow parity: matching comparisons"
+  },
+  "moduleShadowParityMismatched": {
+    "message": "Mismatched",
+    "description": "Shadow parity: differing comparisons"
+  },
+  "moduleShadowParityErrors": {
+    "message": "Errors",
+    "description": "Shadow parity: comparisons where the platform render failed"
+  },
+  "moduleShadowParityRecordLabel": {
+    "message": "Record ID",
+    "description": "Shadow parity: record to compare"
+  },
+  "moduleShadowParityRecordPlaceholder": {
+    "message": "Enter a record ID",
+    "description": "Shadow parity: record ID input placeholder"
+  },
+  "moduleShadowParityCompare": {
+    "message": "Compare",
+    "description": "Shadow parity: run comparison button"
+  },
+  "moduleShadowParityColWhen": {
+    "message": "When",
+    "description": "Shadow parity table column: time"
+  },
+  "moduleShadowParityColRecord": {
+    "message": "Record",
+    "description": "Shadow parity table column: record"
+  },
+  "moduleShadowParityColResult": {
+    "message": "Result",
+    "description": "Shadow parity table column: result"
+  },
+  "moduleShadowParityColLegacy": {
+    "message": "Legacy checksum",
+    "description": "Shadow parity table column: legacy output checksum"
+  },
+  "moduleShadowParityColPlatform": {
+    "message": "Platform checksum",
+    "description": "Shadow parity table column: platform output checksum"
+  },
+  "moduleShadowParityResultMatch": {
+    "message": "Match",
+    "description": "Shadow parity result: outputs identical"
+  },
+  "moduleShadowParityResultMismatch": {
+    "message": "Mismatch",
+    "description": "Shadow parity result: outputs differ"
+  },
+  "moduleShadowParityResultError": {
+    "message": "Error",
+    "description": "Shadow parity result: platform render failed"
+  },
+  "moduleShadowParityEmpty": {
+    "message": "No comparisons yet.",
+    "description": "Shadow parity: no results"
+  },
+  "moduleShadowParityLoadFailed": {
+    "message": "Failed to load parity results.",
+    "description": "Shadow parity: load error"
+  },
+  "moduleShadowParityCompareMatch": {
+    "message": "Documents match.",
+    "description": "Shadow parity: comparison matched"
+  },
+  "moduleShadowParityCompareMismatch": {
+    "message": "Documents differ between the legacy and platform renderers.",
+    "description": "Shadow parity: comparison mismatched"
+  },
+  "moduleShadowParityCompareFailed": {
+    "message": "Comparison failed.",
+    "description": "Shadow parity: comparison error"
+  },
+  "assignRulesTypeAndPressEnter": {
+    "message": "Type and press Enter to add.",
+    "description": "Assignment rules: empty multi-value picker hint"
   }
 }

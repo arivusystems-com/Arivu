@@ -2074,5 +2074,13 @@
   "dashboardActionReports": {
     "message": "Reports",
     "description": "Dashboard link to marketing reports"
+  },
+  "dashboardColOpenRate": {
+    "message": "Open rate",
+    "description": "Table column: email open rate"
+  },
+  "dashboardColClickRate": {
+    "message": "Click rate",
+    "description": "Table column: email click rate"
   }
 }

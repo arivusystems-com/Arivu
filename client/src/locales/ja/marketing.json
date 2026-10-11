@@ -2074,5 +2074,13 @@
   "campaignsAiSummary": {
     "message": "Summarize with AI",
     "description": "Campaign detail AI summary action"
+  },
+  "dashboardColOpenRate": {
+    "message": "Open rate",
+    "description": "Table column: email open rate"
+  },
+  "dashboardColClickRate": {
+    "message": "Click rate",
+    "description": "Table column: email click rate"
   }
 }

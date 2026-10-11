@@ -124,6 +124,7 @@
     "yjs": "^13.6.31"
   },
   "devDependencies": {
+    "@intlify/message-compiler": "^11.4.14",
     "@tailwindcss/vite": "^4.0.0",
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^22.18.6",

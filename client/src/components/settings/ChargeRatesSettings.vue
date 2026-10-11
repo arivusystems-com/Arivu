@@ -230,7 +230,7 @@ async function loadCharges() {
     });
     charges.value = unwrapList(res);
   } catch (err) {
-    loadError.value = err?.response?.data?.message || err?.message || t('states.error');
+    loadError.value = err?.response?.data?.message || err?.message || t('states.genericFailure');
     charges.value = [];
   } finally {
     loading.value = false;
@@ -304,7 +304,7 @@ async function saveCharge() {
     showForm.value = false;
     await loadCharges();
   } catch (err) {
-    formError.value = err?.response?.data?.message || t('states.error');
+    formError.value = err?.response?.data?.message || t('states.genericFailure');
   } finally {
     saving.value = false;
   }
@@ -316,7 +316,7 @@ async function toggleStatus(row) {
     await apiClient.patch(`/charges/${row._id}/status`, { status });
     await loadCharges();
   } catch (err) {
-    loadError.value = err?.response?.data?.message || t('states.error');
+    loadError.value = err?.response?.data?.message || t('states.genericFailure');
   }
 }
 
@@ -332,7 +332,7 @@ async function confirmDelete() {
     pendingDelete.value = null;
     await loadCharges();
   } catch (err) {
-    loadError.value = err?.response?.data?.message || t('states.error');
+    loadError.value = err?.response?.data?.message || t('states.genericFailure');
   } finally {
     deleting.value = false;
   }

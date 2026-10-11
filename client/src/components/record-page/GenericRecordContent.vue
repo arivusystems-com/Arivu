@@ -5673,7 +5673,7 @@ async function confirmDelete() {
     emit('close');
   } catch (e) {
     if (e?.response?.data?.code === 'FORM_HAS_SUBMITTED_RESPONSES') {
-      notifications.warning(t('forms.deleteBlockedSubmittedResponses.message'));
+      notifications.warning(t('forms.deleteBlockedSubmittedResponses'));
     } else {
       error.value = e?.message || 'Failed to delete';
     }

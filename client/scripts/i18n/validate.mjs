@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * i18n:validate — ICU syntax, key governance, missing fallbacks, duplicate semantics.
+ * i18n:validate — vue-i18n message syntax, key governance, missing fallbacks, duplicate semantics.
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import IntlMessageFormat from 'intl-messageformat';
+import { baseCompile } from '@intlify/message-compiler';
 import {
   CLIENT_ROOT,
   LOCALES_DIR,
@@ -19,12 +19,11 @@ import {
 const errors = [];
 const warnings = [];
 
-function validateIcu(message, key) {
-  try {
-    new IntlMessageFormat(message);
-  } catch (e) {
-    errors.push(`Invalid ICU for "${key}": ${e.message}`);
-  }
+/** The app compiles catalogs with vue-i18n (no ICU plural/select; `@` and braces must be escaped). */
+function validateMessage(message, key) {
+  baseCompile(message, {
+    onError: (e) => errors.push(`Invalid vue-i18n message for "${key}": ${e.message}`),
+  });
 }
 
 function checkDuplicateSemantics(allMessages) {
@@ -52,7 +51,7 @@ function main() {
 
   for (const [key, message] of Object.entries(base.messages)) {
     errors.push(...validateKeyNaming(key).map((m) => `[naming] ${m}`));
-    validateIcu(message, key);
+    validateMessage(message, key);
   }
 
   checkDuplicateSemantics(base.messages);
@@ -78,7 +77,7 @@ function main() {
     }
 
     for (const [key, message] of Object.entries(messages)) {
-      validateIcu(message, `${lang}:${key}`);
+      validateMessage(message, `${lang}:${key}`);
     }
   }
 

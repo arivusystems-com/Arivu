@@ -12,7 +12,7 @@
     "description": "Personalized greeting with interpolation"
   },
   "assignedToUser": {
-    "message": "Assigned to {gender, select, female {her} male {him} other {them}}",
+    "message": "Assigned to them",
     "description": "ICU select example for gendered copy (platform chrome only)"
   },
   "assignedTo": {
@@ -1100,7 +1100,7 @@
     "description": "Record age when created today"
   },
   "lifecycleAgeDays": {
-    "message": "{days, plural, one {# day} other {# days}}",
+    "message": "{days} day | {days} days",
     "description": "Record age in days"
   },
   "lifecycleAgeZero": {
@@ -3010,5 +3010,17 @@
   "required": {
     "message": "Required",
     "description": "Required field indicator (alias for settings badges)"
+  },
+  "enabled": {
+    "message": "Enabled",
+    "description": "Status: feature or item is turned on"
+  },
+  "disabled": {
+    "message": "Disabled",
+    "description": "Status: feature or item is turned off"
+  },
+  "approvalInboxChanges": {
+    "message": "Changes",
+    "description": "Approval inbox: quote change summary label"
   }
 }

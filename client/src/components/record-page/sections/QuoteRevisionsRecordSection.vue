@@ -51,7 +51,7 @@
             class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
             @click="compareRevision(rev)"
           >
-            Compare
+            {{ t('records.revisionsCompare') }}
           </button>
           <button
             v-if="!isCurrentRevision(rev)"

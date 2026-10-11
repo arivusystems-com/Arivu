@@ -102,7 +102,7 @@ const recordAge = computed(() => {
   if (!props.record.createdAt) return t('common.lifecycleAgeZero');
   const days = Math.floor((new Date() - new Date(props.record.createdAt)) / (1000 * 60 * 60 * 24));
   if (days === 0) return t('common.lifecycleJustCreated');
-  return t('common.lifecycleAgeDays', { days });
+  return t('common.lifecycleAgeDays', { days }, days);
 });
 
 // Get field definition helper

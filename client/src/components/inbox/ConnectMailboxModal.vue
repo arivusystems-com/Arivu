@@ -19,7 +19,7 @@
               v-if="showBackButton"
               type="button"
               class="mt-0.5 rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-              aria-label="Back"
+              :aria-label="t('actions.back')"
               @click="goBack"
             >
               <ArrowLeftIcon class="h-5 w-5" />
@@ -35,7 +35,7 @@
             <button
               type="button"
               class="shrink-0 rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-              aria-label="Close"
+              :aria-label="t('actions.close')"
               @click="close"
             >
               <XMarkIcon class="h-5 w-5" />
@@ -70,32 +70,32 @@
           <!-- Personal mailbox: single-step forwarding (parser mode) -->
           <template v-if="isPersonalParserFlow">
             <label class="block text-sm font-medium text-gray-800 dark:text-gray-200">
-              Your name
+              {{ t('inbox.connectMailboxModalYourName') }}
               <input
                 v-model="personalLabel"
                 type="text"
                 autocomplete="name"
                 class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white"
-                placeholder="Prabhu Pavithra"
+                :placeholder="t('inbox.connectMailboxModalYourNamePlaceholder')"
                 :disabled="setupLoading"
               >
             </label>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Shown in the inbound parser so your team can see who owns this mailbox.
+              {{ t('inbox.connectMailboxModalYourNameHelp') }}
             </p>
             <label class="mt-4 block text-sm font-medium text-gray-800 dark:text-gray-200">
-              Your work email
+              {{ t('inbox.connectMailboxModalYourWorkEmail') }}
               <input
                 v-model="emailHint"
                 type="email"
                 autocomplete="email"
                 class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white"
-                placeholder="hello@arivusystems.com"
+                :placeholder="t('inbox.connectMailboxModalYourWorkEmailPlaceholder')"
                 :disabled="setupLoading"
               >
             </label>
             <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-              The inbox you will forward from (Gmail, Outlook, etc.). Also used as the readable part of your forwarding address.
+              {{ t('inbox.connectMailboxModalYourWorkEmailHelp') }}
             </p>
 
             <div
@@ -103,7 +103,7 @@
               class="mt-5 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 dark:border-gray-700 dark:bg-gray-800/50"
             >
               <div class="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-emerald-600 dark:border-gray-600 dark:border-t-emerald-400" />
-              <span class="text-sm text-gray-600 dark:text-gray-300">Creating your mailbox and forwarding address…</span>
+              <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('inbox.connectMailboxModalCreatingPersonal') }}</span>
             </div>
 
             <div
@@ -111,7 +111,7 @@
               class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-4 dark:border-emerald-900/60 dark:bg-emerald-950/25"
             >
               <p class="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
-                Your forwarding address
+                {{ t('inbox.connectMailboxModalYourForwardingAddress') }}
               </p>
               <p class="mt-2 break-all font-mono text-sm leading-relaxed text-emerald-950 dark:text-emerald-50 select-all">
                 {{ activeMailbox.inboundParser.routingAddress }}
@@ -121,7 +121,7 @@
                 class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
                 @click="copyRoutingAddress"
               >
-                {{ routingCopied ? 'Copied' : 'Copy address' }}
+                {{ routingCopied ? t('inbox.connectMailboxModalCopied') : t('inbox.connectMailboxModalCopyAddress') }}
               </button>
             </div>
 
@@ -135,15 +135,15 @@
             <ol class="mt-5 space-y-2.5 text-sm text-gray-600 dark:text-gray-400">
               <li class="flex gap-2">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">1</span>
-                <span>Copy the forwarding address above.</span>
+                <span>{{ t('inbox.connectMailboxModalStepCopyAddress') }}</span>
               </li>
               <li class="flex gap-2">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">2</span>
-                <span>In Gmail or Microsoft 365, open <strong class="font-medium text-gray-800 dark:text-gray-200">Settings → Forwarding</strong> and paste this address.</span>
+                <span>{{ t('inbox.connectMailboxModalStepOpenSettings') }} <strong class="font-medium text-gray-800 dark:text-gray-200">{{ t('inbox.connectMailboxModalStepSettingsPath') }}</strong> {{ t('inbox.connectMailboxModalStepPasteAddress') }}</span>
               </li>
               <li class="flex gap-2">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">3</span>
-                <span>New mail appears in your Arivu inbox.</span>
+                <span>{{ t('inbox.connectMailboxModalStepMailAppears') }}</span>
               </li>
             </ol>
           </template>
@@ -152,27 +152,27 @@
           <template v-else-if="isGroupParserFlow">
             <template v-if="!activeMailbox?.id && !targetMailbox?.id">
               <label class="block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Shared inbox name
+                {{ t('inbox.connectMailboxModalSharedInboxName') }}
                 <input
                   v-model="groupLabel"
                   type="text"
                   class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white"
-                  placeholder="Support"
+                  :placeholder="t('inbox.connectMailboxModalSharedNamePlaceholder')"
                 >
               </label>
               <label class="mt-3 block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Team email (optional)
+                {{ t('inbox.connectMailboxModalTeamEmailOptional') }}
                 <input
                   v-model="groupEmail"
                   type="email"
                   class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white"
-                  placeholder="support@company.com"
+                  :placeholder="t('inbox.connectMailboxModalSupportCompanyCom')"
                 >
               </label>
             </template>
             <template v-else>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Forward your team mailbox to this address in Gmail or Microsoft 365.
+                {{ t('inbox.connectMailboxModalForwardTeamMailbox') }}
               </p>
             </template>
 
@@ -181,14 +181,14 @@
               class="mt-4 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50"
             >
               <div class="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-violet-600" />
-              <span class="text-sm text-gray-600 dark:text-gray-300">Setting up shared mailbox…</span>
+              <span class="text-sm text-gray-600 dark:text-gray-300">{{ t('inbox.connectMailboxModalSettingUpShared') }}</span>
             </div>
 
             <div
               v-else-if="activeMailbox?.inboundParser?.routingAddress"
               class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 dark:border-emerald-900/60 dark:bg-emerald-950/25"
             >
-              <p class="text-xs font-semibold text-emerald-900 dark:text-emerald-100">Forward to this address</p>
+              <p class="text-xs font-semibold text-emerald-900 dark:text-emerald-100">{{ t('inbox.connectMailboxModalForwardToThisAddress') }}</p>
               <p class="mt-2 break-all font-mono text-sm text-emerald-950 dark:text-emerald-50 select-all">
                 {{ activeMailbox.inboundParser.routingAddress }}
               </p>
@@ -197,7 +197,7 @@
                 class="mt-3 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100"
                 @click="copyRoutingAddress"
               >
-                {{ routingCopied ? 'Copied' : 'Copy address' }}
+                {{ routingCopied ? t('inbox.connectMailboxModalCopied') : t('inbox.connectMailboxModalCopyAddress') }}
               </button>
             </div>
 
@@ -218,15 +218,15 @@
               >
                 <li class="flex gap-2">
                   <CheckCircleIcon class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  <span>Send and receive email inside the CRM</span>
+                  <span>{{ t('inbox.connectMailboxModalSendAndReceiveEmailInsideThe') }}</span>
                 </li>
                 <li class="flex gap-2">
                   <CheckCircleIcon class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  <span>Sync threads to your workspace inbox</span>
+                  <span>{{ t('inbox.connectMailboxModalSyncThreadsToYourWorkspaceInbox') }}</span>
                 </li>
               </ul>
               <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
-                Choose your email provider
+                {{ t('inbox.connectMailboxModalChooseProvider') }}
               </p>
               <div class="mt-4 grid grid-cols-2 gap-3">
                 <InboxProviderCard
@@ -242,15 +242,15 @@
 
             <template v-else-if="legacyView === 'create-mailbox'">
               <p class="text-sm text-gray-700 dark:text-gray-300">
-                Create a <span class="font-medium">shared team mailbox</span>, then connect Gmail.
+                {{ t('inbox.connectMailboxModalCreateA') }} <span class="font-medium">{{ t('inbox.connectMailboxModalSharedTeamMailbox') }}</span>{{ t('inbox.connectMailboxModalThenConnectGmail') }}
               </p>
               <label class="mt-3 block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Display name
-                <input v-model="groupLabel" type="text" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" placeholder="Support">
+                {{ t('inbox.connectMailboxModalDisplayName') }}
+                <input v-model="groupLabel" type="text" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" :placeholder="t('inbox.connectMailboxModalSharedNamePlaceholder')">
               </label>
               <label class="mt-3 block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Shared email
-                <input v-model="groupEmail" type="email" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" placeholder="support@company.com">
+                {{ t('inbox.connectMailboxModalSharedEmailAddress') }}
+                <input v-model="groupEmail" type="email" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" :placeholder="t('inbox.connectMailboxModalSupportCompanyCom')">
               </label>
               <button
                 type="button"
@@ -258,33 +258,33 @@
                 :disabled="setupLoading || !groupLabel.trim()"
                 @click="createGroupMailboxGmail"
               >
-                {{ setupLoading ? 'Creating…' : 'Create shared mailbox' }}
+                {{ setupLoading ? t('inbox.connectMailboxModalCreating') : t('inbox.connectMailboxModalCreateSharedMailbox') }}
               </button>
             </template>
 
             <template v-else-if="legacyView === 'connect-provider' && selectedProviderId === 'google-smtp'">
               <label class="block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Gmail address
-                <input v-model="emailHint" type="email" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" placeholder="you@company.com">
+                {{ t('inbox.connectMailboxModalGmailAddress') }}
+                <input v-model="emailHint" type="email" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" :placeholder="t('inbox.connectMailboxModalYouCompanyCom')">
               </label>
               <label class="mt-4 block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Google App Password
-                <input v-model="appPassword" type="password" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" placeholder="16-character app password">
+                {{ t('inbox.connectMailboxModalGoogleAppPassword') }}
+                <input v-model="appPassword" type="password" class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white" :placeholder="t('inbox.connectMailboxModalAppPasswordPlaceholder')">
               </label>
             </template>
 
             <template v-else-if="legacyView === 'connect-provider' && selectedProviderId === 'google'">
               <label class="block text-sm font-medium text-gray-800 dark:text-gray-200">
-                Work email address
+                {{ t('inbox.connectMailboxModalWorkEmailAddress') }}
                 <input
                   v-model="emailHint"
                   type="email"
                   class="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm dark:border-gray-600 dark:bg-gray-950 dark:text-white"
-                  :placeholder="selectedProvider?.emailPlaceholder || 'you@company.com'"
+                  :placeholder="selectedProvider?.emailPlaceholder || t('inbox.connectMailboxModalYouCompanyCom')"
                 >
               </label>
               <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                You’ll sign in with Google in the next step to sync Gmail.
+                {{ t('inbox.connectMailboxModalGoogleSignInNext') }}
               </p>
             </template>
           </template>
@@ -337,6 +337,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ArrowLeftIcon, CheckCircleIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/authRegistry';
 import { useNotifications } from '@/composables/useNotifications';
@@ -355,6 +356,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'connected']);
+const { t } = useI18n();
 
 const authStore = useAuthStore();
 const notifications = useNotifications();

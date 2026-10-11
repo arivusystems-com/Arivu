@@ -564,7 +564,7 @@ const viewResponses = (form) => {
 
 const handleDelete = async (form) => {
   if (!canHardDeleteForm(form)) {
-    notifications.warning(t('forms.deleteBlockedSubmittedResponses.message'));
+    notifications.warning(t('forms.deleteBlockedSubmittedResponses'));
     return;
   }
 
@@ -579,10 +579,10 @@ const handleDelete = async (form) => {
   } catch (error) {
     console.error('Error deleting form:', error);
     if (error?.response?.data?.code === FORM_DELETE_BLOCKED_CODE) {
-      notifications.warning(t('forms.deleteBlockedSubmittedResponses.message'));
+      notifications.warning(t('forms.deleteBlockedSubmittedResponses'));
       return;
     }
-    notifications.error(t('forms.hubDeleteFormFailed.message'));
+    notifications.error(t('forms.hubDeleteFormFailed'));
   }
 };
 
@@ -597,7 +597,7 @@ const handleBulkAction = async (actionId, selectedRows) => {
       const skippedCount = selectedRows.length - deletableRows.length;
 
       if (skippedCount > 0) {
-        notifications.warning(t('forms.hubDeleteBlockedSubmittedCount.message', { count: skippedCount }));
+        notifications.warning(t('forms.hubDeleteBlockedSubmittedCount', { count: skippedCount }));
       }
 
       if (!deletableRows.length) return;
@@ -614,7 +614,7 @@ const handleBulkAction = async (actionId, selectedRows) => {
       ).length;
 
       if (blocked > 0) {
-        notifications.warning(t('forms.hubDeleteBlockedSubmittedCount.message', { count: blocked }));
+        notifications.warning(t('forms.hubDeleteBlockedSubmittedCount', { count: blocked }));
       }
 
       await fetchForms();

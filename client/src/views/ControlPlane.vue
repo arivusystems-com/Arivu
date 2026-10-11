@@ -51,13 +51,13 @@
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              Inbound Parser
+              {{ t('process.controlPlaneInboundParser') }}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Connect CRM and parser servers (URLs, API keys). Tenants only see mailbox forwarding addresses.
+              {{ t('process.controlPlaneInboundParserDesc') }}
             </p>
             <div class="flex items-center text-sm text-indigo-600 dark:text-indigo-400 font-medium">
-              Configure
+              {{ t('process.controlPlaneConfigure') }}
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>

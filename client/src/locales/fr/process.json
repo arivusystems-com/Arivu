@@ -328,7 +328,7 @@
     "description": "Flow card metadata label"
   },
   "flowProcessCount": {
-    "message": "{count, plural, one {# process} other {# processes}}",
+    "message": "{count} process | {count} processes",
     "description": "Flow card process count"
   },
   "flowMetaLastUpdated": {
@@ -376,7 +376,7 @@
     "description": "Template import confirmation title"
   },
   "flowImportBody": {
-    "message": "This will create {count, plural, one {# process} other {# processes}} and a Business Flow.",
+    "message": "This will create {count} process and a Business Flow. | This will create {count} processes and a Business Flow.",
     "description": "Template import confirmation body"
   },
   "flowImportWhatCreated": {
@@ -624,7 +624,7 @@
     "description": "Health status display fallback"
   },
   "flowHealthBottlenecks": {
-    "message": "{count, plural, one {# Bottleneck} other {# Bottlenecks}} Detected",
+    "message": "{count} Bottleneck Detected | {count} Bottlenecks Detected",
     "description": "Bottleneck alert heading"
   },
   "flowHealthBottleneckSummary": {
@@ -2028,7 +2028,7 @@
     "description": "Flow active badge"
   },
   "appFlowsProcessCount": {
-    "message": "{count, plural, one {# process} other {# processes}}",
+    "message": "{count} process | {count} processes",
     "description": "Flow process count"
   },
   "appFlowsLoadFailed": {
@@ -3766,5 +3766,17 @@
   "controlPlaneAiPricingRemove": {
     "message": "Remove",
     "description": "Remove AI token pack row"
+  },
+  "controlPlaneInboundParser": {
+    "message": "Inbound Parser",
+    "description": "Control plane card title"
+  },
+  "controlPlaneInboundParserDesc": {
+    "message": "Connect CRM and parser servers (URLs, API keys). Tenants only see mailbox forwarding addresses.",
+    "description": "Control plane inbound parser card description"
+  },
+  "controlPlaneConfigure": {
+    "message": "Configure",
+    "description": "Control plane card call to action"
   }
 }

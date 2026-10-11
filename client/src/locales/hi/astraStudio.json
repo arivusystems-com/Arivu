@@ -514,5 +514,9 @@
   "kpiFocusOrg": {
     "message": "Organization",
     "description": "KPI focus for org-wide executive report canvases"
+  },
+  "checklistEmpty": {
+    "message": "No checklist items yet",
+    "description": "Checklist widget empty state"
   }
 }
