@@ -7,7 +7,7 @@
       :disabled="busy"
       @click="reviewChanges"
     >
-      Review changes
+      {{ t('records.quoteReviewChanges') }}
     </button>
     <button
       v-if="canSubmitForApproval"

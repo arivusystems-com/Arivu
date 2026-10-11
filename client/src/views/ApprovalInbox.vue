@@ -82,7 +82,7 @@
                 </span>
               </div>
               <div v-if="approval.quoteCompareSummary">
-                <span class="font-medium">Changes</span>
+                <span class="font-medium">{{ t('common.approvalInboxChanges') }}</span>
                 {{ quoteChangeSummary(approval.quoteCompareSummary.changeCounts) }}
               </div>
             </div>

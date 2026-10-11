@@ -23621,5 +23621,9 @@
   "moduleShadowParityCompareFailed": {
     "message": "Comparison failed.",
     "description": "Shadow parity: comparison error"
+  },
+  "assignRulesTypeAndPressEnter": {
+    "message": "Type and press Enter to add.",
+    "description": "Assignment rules: empty multi-value picker hint"
   }
 }
