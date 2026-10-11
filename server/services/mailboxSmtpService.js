@@ -43,7 +43,11 @@ function classifySmtpError(err) {
   if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT' || /timeout/i.test(msg)) {
     return VERIFY_STATUS.TIMEOUT;
   }
-  if (code === 'ECONNREFUSED' || code === 'ECONNRESET' || /network|econn/i.test(msg)) {
+  // Nodemailer wraps socket failures as ESOCKET and early disconnects as ECONNECTION.
+  if (
+    ['ECONNREFUSED', 'ECONNRESET', 'ECONNECTION', 'ESOCKET'].includes(code)
+    || /network|econn|connection closed/i.test(msg)
+  ) {
     return VERIFY_STATUS.NETWORK_ERROR;
   }
   if (/auth.*required|must authenticate/i.test(msg)) {
