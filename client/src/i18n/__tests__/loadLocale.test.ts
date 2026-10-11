@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createI18n } from 'vue-i18n';
 import { loadCoreLocaleMessages, loadPublicAuthLocaleMessages } from '../loadLocale';
+import { stubCatalogFetch } from './stubCatalogFetch';
 
 describe('loadLocale', () => {
+  beforeAll(stubCatalogFetch);
+
   it('loads navigation.home in core bundle', async () => {
     const core = await loadCoreLocaleMessages('en');
     expect(core['navigation.home']).toBeTruthy();

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { stubCatalogFetch } from './stubCatalogFetch';
 
 describe('upgradeI18nAfterLogin flow', () => {
   beforeEach(async () => {
+    stubCatalogFetch();
     const { clearLocaleCache } = await import('../loadLocale');
     clearLocaleCache();
     vi.resetModules();
