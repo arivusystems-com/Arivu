@@ -384,7 +384,7 @@ const selectedProviderId = ref('google');
 const setupLoading = ref(false);
 const emailHint = ref('');
 const personalLabel = ref('');
-const groupLabel = ref('Support');
+const groupLabel = ref(t('inbox.connectMailboxModalSharedNamePlaceholder'));
 const groupEmail = ref('');
 const appPassword = ref('');
 const smtpConnectLoading = ref(false);
@@ -420,46 +420,47 @@ const showLegacyStepIndicator = computed(
 );
 
 const headerTitle = computed(() => {
-  if (isPersonalParserFlow.value) return 'Connect your personal inbox';
+  if (isPersonalParserFlow.value) return t('inbox.connectMailboxModalTitlePersonal');
   if (isGroupParserFlow.value) {
     return activeMailbox.value?.inboundParser?.routingAddress
-      ? 'Shared mailbox forwarding'
+      ? t('inbox.connectMailboxModalTitleSharedForwarding')
       : props.targetMailbox?.id
-        ? 'Connect shared mailbox'
-        : 'Create shared mailbox';
+        ? t('inbox.connectMailboxModalTitleConnectShared')
+        : t('inbox.connectMailboxModalCreateSharedMailbox');
   }
   if (props.mailboxKind === 'group') {
-    if (legacyView.value === 'providers') return 'Connect shared mailbox';
-    if (legacyView.value === 'create-mailbox') return 'Create shared inbox';
-    return 'Connect Gmail';
+    if (legacyView.value === 'providers') return t('inbox.connectMailboxModalTitleConnectShared');
+    if (legacyView.value === 'create-mailbox') return t('inbox.connectMailboxModalTitleCreateSharedInbox');
+    return t('inbox.inboxSurfaceConnectGmail');
   }
-  if (legacyView.value === 'providers') return 'Connect your inbox';
-  if (legacyView.value === 'create-mailbox') return 'Set up your mailbox';
-  if (selectedProvider.value) return `Connect ${selectedProvider.value.name}`;
-  return 'Connect inbox';
+  if (legacyView.value === 'providers') return t('inbox.connectMailboxModalTitleConnectYourInbox');
+  if (legacyView.value === 'create-mailbox') return t('inbox.connectMailboxModalTitleSetUpMailbox');
+  if (selectedProvider.value) return t('inbox.inboxProviderConnectTitle', { name: selectedProvider.value.name });
+  return t('inbox.connectMailboxModalTitleConnectInbox');
 });
 
 const headerSubtitle = computed(() => {
   if (isPersonalParserFlow.value) {
-    return 'Get one forwarding address — works with Gmail, Microsoft 365, or any email provider.';
+    return t('inbox.connectMailboxModalSubtitlePersonal');
   }
   if (isGroupParserFlow.value) {
     return activeMailbox.value?.inboundParser?.routingAddress
-      ? 'Add this address in your team mailbox forwarding settings.'
-      : 'Set up a team inbox and forwarding address in one step.';
+      ? t('inbox.connectMailboxModalSubtitleSharedForwarding')
+      : t('inbox.connectMailboxModalSubtitleCreateShared');
   }
   if (legacyView.value === 'providers') {
-    return 'Link your work email to send and receive from the CRM.';
+    return t('inbox.connectMailboxModalSubtitleProviders');
   }
   if (selectedProvider.value?.id === 'google') {
-    return 'Sign in with Google to sync Gmail.';
+    return t('inbox.connectMailboxModalSubtitleGoogle');
   }
   return selectedProvider.value?.integrationLabel || '';
 });
 
 const legacyStepLabels = computed(() => {
-  if (legacyView.value === 'create-mailbox') return ['Provider', 'Mailbox'];
-  return ['Provider', 'Mailbox', 'Connect'];
+  const steps = [t('inbox.connectMailboxModalProgressProvider'), t('inbox.connectMailboxModalProgressMailbox')];
+  if (legacyView.value === 'create-mailbox') return steps;
+  return [...steps, t('inbox.connectMailboxModalProgressConnect')];
 });
 
 const legacyStepIndex = computed(() => {
@@ -469,10 +470,10 @@ const legacyStepIndex = computed(() => {
 });
 
 const parserPrimaryLabel = computed(() => {
-  if (setupLoading.value) return 'Setting up…';
-  if (activeMailbox.value?.inboundParser?.routingAddress) return 'Done';
-  if (isGroupParserFlow.value && !activeMailbox.value?.id) return 'Create & get address';
-  return 'Get forwarding address';
+  if (setupLoading.value) return t('inbox.connectMailboxModalSettingUp');
+  if (activeMailbox.value?.inboundParser?.routingAddress) return t('inbox.connectMailboxModalDone');
+  if (isGroupParserFlow.value && !activeMailbox.value?.id) return t('inbox.connectMailboxModalCreateAndGetAddress');
+  return t('inbox.connectMailboxModalGetForwardingAddress');
 });
 
 const primaryParserDisabled = computed(() => {
@@ -508,7 +509,9 @@ watch(
     } else if (isGroupParserFlow.value) {
       emailHint.value = '';
       groupLabel.value =
-        String(props.targetMailbox?.label || '').trim() || groupLabel.value || 'Support';
+        String(props.targetMailbox?.label || '').trim()
+        || groupLabel.value
+        || t('inbox.connectMailboxModalSharedNamePlaceholder');
       groupEmail.value = props.targetMailbox?.emailAddress
         ? String(props.targetMailbox.emailAddress).trim()
         : '';
@@ -621,7 +624,7 @@ async function runParserSetup() {
     if (isPersonalParserFlow.value) {
       if (!mb?.id) {
         if (!flags.value.canCreatePersonal) {
-          forwardingError.value = 'You cannot create a personal mailbox. Ask your administrator.';
+          forwardingError.value = t('inbox.connectMailboxModalYourRoleCannotCreateAPersonal');
           return;
         }
         mb = await ensurePersonalMailbox({
@@ -632,7 +635,7 @@ async function runParserSetup() {
     } else if (isGroupParserFlow.value) {
       if (!mb?.id) {
         if (!flags.value.canCreateGroup) {
-          forwardingError.value = 'Only admins can create shared mailboxes.';
+          forwardingError.value = t('inbox.connectMailboxModalOnlyAdminsCreateShared');
           return;
         }
         mb = await ensureGroupMailbox({
@@ -644,7 +647,7 @@ async function runParserSetup() {
     }
 
     if (!mb?.id) {
-      forwardingError.value = 'Could not set up mailbox.';
+      forwardingError.value = t('inbox.connectMailboxModalSetUpMailboxFailed');
       return;
     }
 
@@ -664,8 +667,7 @@ async function runParserSetup() {
 
     if (!mb.inboundParser?.routingAddress) {
       if (loaded.value && !flags.value.inboundParserProvisionReady) {
-        forwardingError.value =
-          'Inbound parser is not ready on this server. Your platform admin must enable it in Control Plane → Inbound Parser (Parser URL + API key), then use Test parser connection.';
+        forwardingError.value = t('inbox.connectMailboxModalParserNotReady');
         return;
       }
 
@@ -675,7 +677,7 @@ async function runParserSetup() {
         mb = result.mailbox;
       } else {
         forwardingError.value = result.message
-          || 'Could not generate a forwarding address. Ask your platform admin to configure the inbound parser.';
+          || t('inbox.connectMailboxModalForwardingAddressFailed');
         return;
       }
     }
@@ -686,7 +688,7 @@ async function runParserSetup() {
       await saveGroupEmailOnMailbox(mb.id);
     }
   } catch (err) {
-    forwardingError.value = err?.message || 'Setup failed';
+    forwardingError.value = err?.message || t('inbox.connectMailboxModalSetupFailed');
   } finally {
     setupLoading.value = false;
   }
@@ -706,12 +708,12 @@ async function copyRoutingAddress() {
   try {
     await navigator.clipboard.writeText(addr);
     routingCopied.value = true;
-    notifications.success('Copied forwarding address');
+    notifications.success(t('inbox.connectMailboxModalCopiedForwardingAddress'));
     setTimeout(() => {
       routingCopied.value = false;
     }, 2000);
   } catch {
-    notifications.warning('Could not copy — select the address and copy manually');
+    notifications.warning(t('inbox.connectMailboxModalCopyFailed'));
   }
 }
 
@@ -737,7 +739,7 @@ async function onProviderSelect(providerId) {
       if (!mbId) {
         const mb = await ensurePersonalMailbox();
         if (!mb?.id) {
-          notifications.error('Could not create personal mailbox');
+          notifications.error(t('inbox.connectMailboxModalCreatePersonalFailed'));
           return;
         }
         mbId = mb.id;
@@ -766,7 +768,7 @@ async function onProviderSelect(providerId) {
     try {
       const mb = await ensurePersonalMailbox();
       if (!mb?.id) {
-        notifications.error('Could not create personal mailbox');
+        notifications.error(t('inbox.connectMailboxModalCreatePersonalFailed'));
         return;
       }
     } finally {
@@ -785,11 +787,11 @@ async function createGroupMailboxGmail() {
     });
     if (mb?.id) {
       connectTargetMailbox.value = mb;
-      notifications.success('Shared mailbox created');
+      notifications.success(t('inbox.connectMailboxModalSharedCreated'));
       legacyView.value = 'connect-provider';
       selectedProviderId.value = 'google';
     } else {
-      notifications.error('Could not create shared mailbox');
+      notifications.error(t('inbox.connectMailboxModalCreateSharedFailed'));
     }
   } finally {
     setupLoading.value = false;
@@ -826,15 +828,15 @@ async function connectGmailSmtp() {
       })
     });
     if (res?.success) {
-      notifications.success('Gmail SMTP connected');
+      notifications.success(t('inbox.connectMailboxModalGmailSmtpConnected'));
       appPassword.value = '';
       await refreshMailboxes();
       finishConnected();
     } else {
-      notifications.error(res?.message || 'Could not connect Gmail SMTP');
+      notifications.error(res?.message || t('inbox.connectMailboxModalGmailSmtpFailed'));
     }
   } catch (err) {
-    notifications.error(err?.response?.data?.message || err?.message || 'Could not connect Gmail SMTP');
+    notifications.error(err?.response?.data?.message || err?.message || t('inbox.connectMailboxModalGmailSmtpFailed'));
   } finally {
     smtpConnectLoading.value = false;
   }
