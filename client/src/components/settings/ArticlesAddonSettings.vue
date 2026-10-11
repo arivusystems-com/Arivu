@@ -1139,37 +1139,38 @@ const embedStylesheetLink = computed(() => (
   `<link rel="preload" href="${embedOrigin.value}/embed/headless-blocks.css" as="style" />\n<link rel="stylesheet" href="${embedOrigin.value}/embed/headless-blocks.css" />`
 ));
 
+// `<\u002Fscript>`: a literal closing script tag ends this SFC block; lint --fix strips `<\/script>`.
 const unifiedEmbedSnippet = computed(() => (
-  `${embedStylesheetLink.value}\n<div id="arivu-help"></div>\n<script\n  ${buildUnifiedScriptAttrs()}\n><\/script>`
+  `${embedStylesheetLink.value}\n<div id="arivu-help"></div>\n<script\n  ${buildUnifiedScriptAttrs()}\n><\u002Fscript>`
 ));
 
 const unifiedPageSnippet = computed(() => (
-  `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>Help Center</title>\n  ${embedStylesheetLink.value}\n</head>\n<body>\n  <main id="arivu-help"></main>\n  <script\n    ${buildUnifiedScriptAttrs()}\n  ><\/script>\n</body>\n</html>`
+  `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>Help Center</title>\n  ${embedStylesheetLink.value}\n</head>\n<body>\n  <main id="arivu-help"></main>\n  <script\n    ${buildUnifiedScriptAttrs()}\n  ><\u002Fscript>\n</body>\n</html>`
 ));
 
 const homeEmbedSnippet = computed(() => {
   const pathPrefix = normalizedEmbedPathPrefix.value;
-  return `${embedStylesheetLink.value}\n<div id="help-home"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-help-home.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-target="#help-home"\n  data-link-prefix="${pathPrefix}"\n  data-title="How can we help?"\n><\/script>`;
+  return `${embedStylesheetLink.value}\n<div id="help-home"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-help-home.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-target="#help-home"\n  data-link-prefix="${pathPrefix}"\n  data-title="How can we help?"\n><\u002Fscript>`;
 });
 
 const categoryEmbedSnippet = computed(() => {
   const pathPrefix = normalizedEmbedPathPrefix.value;
-  return `${embedStylesheetLink.value}\n<div id="help-category"></div>\n<script src="${embedOrigin.value}/embed/headless-help-common.js"><\/script>\n<script\n  src="${embedOrigin.value}/embed/headless-help-category.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-collection="your-category-slug"\n  data-target="#help-category"\n  data-link-prefix="${pathPrefix}"\n  data-section-prefix="${pathPrefix}"\n  data-home-prefix="${pathPrefix}"\n  data-article-prefix="${pathPrefix}"\n><\/script>`;
+  return `${embedStylesheetLink.value}\n<div id="help-category"></div>\n<script src="${embedOrigin.value}/embed/headless-help-common.js"><\u002Fscript>\n<script\n  src="${embedOrigin.value}/embed/headless-help-category.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-collection="your-category-slug"\n  data-target="#help-category"\n  data-link-prefix="${pathPrefix}"\n  data-section-prefix="${pathPrefix}"\n  data-home-prefix="${pathPrefix}"\n  data-article-prefix="${pathPrefix}"\n><\u002Fscript>`;
 });
 
 const sectionEmbedSnippet = computed(() => {
   const pathPrefix = normalizedEmbedPathPrefix.value;
-  return `${embedStylesheetLink.value}\n<div id="help-section"></div>\n<script src="${embedOrigin.value}/embed/headless-help-common.js"><\/script>\n<script\n  src="${embedOrigin.value}/embed/headless-help-section.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-section="your-section-slug"\n  data-parent="your-category-slug"\n  data-target="#help-section"\n  data-link-prefix="${pathPrefix}"\n  data-category-prefix="${pathPrefix}"\n  data-section-prefix="${pathPrefix}"\n  data-home-prefix="${pathPrefix}"\n  data-article-prefix="${pathPrefix}"\n><\/script>`;
+  return `${embedStylesheetLink.value}\n<div id="help-section"></div>\n<script src="${embedOrigin.value}/embed/headless-help-common.js"><\u002Fscript>\n<script\n  src="${embedOrigin.value}/embed/headless-help-section.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-section="your-section-slug"\n  data-parent="your-category-slug"\n  data-target="#help-section"\n  data-link-prefix="${pathPrefix}"\n  data-category-prefix="${pathPrefix}"\n  data-section-prefix="${pathPrefix}"\n  data-home-prefix="${pathPrefix}"\n  data-article-prefix="${pathPrefix}"\n><\u002Fscript>`;
 });
 
 const listEmbedSnippet = computed(() => {
   const pathPrefix = normalizedEmbedPathPrefix.value;
-  return `${embedStylesheetLink.value}\n<div id="help-list"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-article-list.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-target="#help-list"\n  data-link-prefix="${pathPrefix}"\n><\/script>`;
+  return `${embedStylesheetLink.value}\n<div id="help-list"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-article-list.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-target="#help-list"\n  data-link-prefix="${pathPrefix}"\n><\u002Fscript>`;
 });
 
 const embedSnippet = computed(() => {
   const pathPrefix = normalizedEmbedPathPrefix.value;
-  return `${embedStylesheetLink.value}\n<div id="help-article"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-article.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-slug="your-article-slug"\n  data-target="#help-article"\n  data-show-sidebar="true"\n  data-show-breadcrumbs="true"\n  data-show-feedback-footer="true"\n  data-link-prefix="${pathPrefix}"\n  data-home-prefix="${pathPrefix}"\n  data-category-prefix="${pathPrefix}"\n  data-section-prefix="${pathPrefix}"\n  data-article-prefix="${pathPrefix}"\n  data-collection="your-category-slug"\n  data-section="your-section-slug"\n><\/script>`;
+  return `${embedStylesheetLink.value}\n<div id="help-article"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-article.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-slug="your-article-slug"\n  data-target="#help-article"\n  data-show-sidebar="true"\n  data-show-breadcrumbs="true"\n  data-show-feedback-footer="true"\n  data-link-prefix="${pathPrefix}"\n  data-home-prefix="${pathPrefix}"\n  data-category-prefix="${pathPrefix}"\n  data-section-prefix="${pathPrefix}"\n  data-article-prefix="${pathPrefix}"\n  data-collection="your-category-slug"\n  data-section="your-section-slug"\n><\u002Fscript>`;
 });
 
 const advancedEmbedSnippets = computed(() => [
