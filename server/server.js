@@ -860,6 +860,13 @@ const gracefulShutdown = async (signal) => {
   }
 
   try {
+    const { closeBrowser } = require('./services/contentPlatform/renderers/puppeteerPdfRenderer');
+    await closeBrowser();
+  } catch (err) {
+    console.error('[server] Error closing PDF browser:', err.message);
+  }
+
+  try {
     const { closeAllRedisConnections } = require('./lib/redisClient');
     await closeAllRedisConnections();
     console.log('[server] Redis client closed');
