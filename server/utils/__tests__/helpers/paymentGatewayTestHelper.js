@@ -3,6 +3,7 @@
  */
 
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const Organization = require('../../../models/Organization');
 const Invoice = require('../../../models/Invoice');
 const OrganizationPaymentGatewaySettings = require('../../../models/OrganizationPaymentGatewaySettings');
@@ -10,13 +11,14 @@ const {
   mockStripeGatewayAdapter
 } = require('../../../services/gateways/gatewayAdapterRegistry');
 
-async function createTestOrganization(label = 'tenant') {
+async function createTestOrganization(label = 'tenant', { currency } = {}) {
   const suffix = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   return Organization.create({
     name: `Gateway Test ${label} ${suffix}`,
     slug: `gw-${label}-${suffix}`,
     isTenant: true,
-    isActive: true
+    isActive: true,
+    ...(currency ? { settings: { currency } } : {})
   });
 }
 
@@ -25,11 +27,13 @@ async function createPostedInvoice({
   organizationRefId,
   amountDue = 100,
   currency = 'USD',
-  status = 'Posted'
+  status = 'Posted',
+  assignedTo = new mongoose.Types.ObjectId()
 }) {
   return Invoice.create({
     organizationId,
     organizationRefId,
+    assignedTo,
     status,
     invoiceType: 'standard',
     grandTotal: amountDue,
@@ -47,7 +51,7 @@ async function seedGatewayContext({ amountDue = 100, providers = ['stripe'], cur
   const { mockRazorpayGatewayAdapter } = require('../../../services/gateways/gatewayAdapterRegistry');
   mockRazorpayGatewayAdapter.resetMockRazorpayStore();
 
-  const tenant = await createTestOrganization('tenant');
+  const tenant = await createTestOrganization('tenant', { currency });
   const account = await createTestOrganization('account');
 
   const invoice = await createPostedInvoice({

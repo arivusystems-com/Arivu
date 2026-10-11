@@ -4,17 +4,53 @@ const MASTER_DB = process.env.MASTER_DB_NAME || 'arivu_master';
 const MAX_ATTEMPTS = Number(process.env.MONGO_CONNECT_RETRIES) || 5;
 const DELAY_MS = Number(process.env.MONGO_CONNECT_RETRY_DELAY_MS) || 3000;
 
+function invalidMongoUri(reason) {
+  const err = new Error(
+    `MONGODB_URI is invalid: ${reason}. Percent-encode special characters in the username/password `
+    + '(e.g. encodeURIComponent: @ → %40, / → %2F, ? → %3F, : → %3A, % → %25)',
+  );
+  err.code = 'MONGODB_CONFIG_INVALID';
+  return err;
+}
+
+/**
+ * Structural checks that would otherwise make the host/db split below silently wrong.
+ * Error messages never include the URI (it may contain credentials).
+ */
+function assertValidMongoUri(uri) {
+  const match = /^(mongodb(?:\+srv)?):\/\/([^/?]*)([^?]*)(\?.*)?$/.exec(uri);
+  if (!match) {
+    throw invalidMongoUri('expected mongodb:// or mongodb+srv:// scheme');
+  }
+  const [, , authority, pathPart, query = ''] = match;
+  const at = authority.lastIndexOf('@');
+  if (pathPart.includes('@') || (at === -1 && query.includes('@'))) {
+    throw invalidMongoUri('unencoded "/" or "?" in credentials');
+  }
+  const userInfo = at === -1 ? '' : authority.slice(0, at);
+  const hosts = at === -1 ? authority : authority.slice(at + 1);
+  if (!hosts) {
+    throw invalidMongoUri('missing host');
+  }
+  if (userInfo) {
+    if (userInfo.includes('@')) throw invalidMongoUri('unencoded "@" in credentials');
+    if ((userInfo.match(/:/g) || []).length > 1) throw invalidMongoUri('unencoded ":" in password');
+    if (/%(?![0-9A-Fa-f]{2})/.test(userInfo)) throw invalidMongoUri('invalid percent-encoding in credentials');
+  }
+}
+
 /**
  * Same URI resolution as the historical server entry (MONGODB_URI / MONGO_URI / prod|local).
+ * @param {NodeJS.ProcessEnv} [env]
  */
-function getMongoUris() {
-  const isProduction = process.env.NODE_ENV === 'production';
+function getMongoUris(env = process.env) {
+  const isProduction = env.NODE_ENV === 'production';
   const MONGO_URI =
-    process.env.MONGODB_URI ||
-    process.env.MONGO_URI ||
+    env.MONGODB_URI ||
+    env.MONGO_URI ||
     (isProduction
-      ? process.env.MONGO_URI_PRODUCTION
-      : process.env.MONGO_URI_LOCAL);
+      ? env.MONGO_URI_PRODUCTION
+      : env.MONGO_URI_LOCAL);
 
   if (!MONGO_URI) {
     const err = new Error(
@@ -24,6 +60,9 @@ function getMongoUris() {
     throw err;
   }
 
+  assertValidMongoUri(MONGO_URI);
+  const masterDbName = env.MASTER_DB_NAME || 'arivu_master';
+
   const [mongoUriWithoutQuery, mongoUriQueryPart] = MONGO_URI.split('?');
   const mongoQueryString = mongoUriQueryPart ? `?${mongoUriQueryPart}` : '';
   const pathParts = mongoUriWithoutQuery.split('/');
@@ -32,9 +71,9 @@ function getMongoUris() {
   const baseUri = hasDbInPath
     ? pathParts.slice(0, -1).join('/')
     : mongoUriWithoutQuery.replace(/\/$/, '');
-  const masterUri = `${baseUri}/${MASTER_DB}${mongoQueryString}`;
+  const masterUri = `${baseUri}/${masterDbName}${mongoQueryString}`;
 
-  return { MONGO_URI, mongoQueryString, baseUri, masterUri, masterDbName: MASTER_DB };
+  return { MONGO_URI, mongoQueryString, baseUri, masterUri, masterDbName };
 }
 
 function wait(ms) {

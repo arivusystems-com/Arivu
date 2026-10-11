@@ -42,7 +42,10 @@ async function buildMimeMessage(options) {
     messageId: options.messageId || undefined,
     attachments: options.attachments?.length ? options.attachments : undefined
   });
-  return mail.compile().build();
+  const message = mail.compile();
+  // Gmail API delivers to the Bcc header and strips it before delivery; without it Bcc is lost.
+  message.keepBcc = true;
+  return message.build();
 }
 
 function classifyGmailSendError(err) {

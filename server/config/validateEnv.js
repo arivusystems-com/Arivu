@@ -5,6 +5,80 @@
  * Env keys remain a fallback. Legacy ASTRA_* v1 flags are ignored by Astra v2.
  */
 const { productionClientUrlError } = require('../utils/clientUrl');
+const { getMongoUris } = require('../lib/mongoConnect');
+
+/** Flags compared with `!== 'false'`; a typo such as `False` would silently enable the feature. */
+const PROCESS_BOOLEAN_FLAGS = [
+  'ENABLE_SCHEDULED_JOBS',
+  'ENABLE_BULL_IN_WEB',
+  'ENABLE_HEALTH_CHECKER',
+  'ENABLE_METRICS_COLLECTOR',
+  'REDIS_HEALTH_BLOCKS_READY',
+  'ENABLE_REDIS_REQUIRED'
+];
+
+const KNOWN_WEAK_ADMIN_PASSWORDS = new Set(['Admin@123', 'Admin@123456']);
+const DEV_ADMIN_PASSWORD = 'Admin@123';
+
+/**
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {string[]} configuration errors (fatal in production, warnings elsewhere)
+ */
+function processConfigErrors(env = process.env) {
+  const errors = [];
+  for (const key of PROCESS_BOOLEAN_FLAGS) {
+    const value = env[key];
+    if (value !== undefined && value !== '' && value !== 'true' && value !== 'false') {
+      errors.push(`${key} must be "true" or "false" (got "${value}")`);
+    }
+  }
+  if (env.PORT !== undefined && env.PORT !== '') {
+    const port = Number(env.PORT);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      errors.push(`PORT must be an integer between 1 and 65535 (got "${env.PORT}")`);
+    }
+  }
+  return errors;
+}
+
+/**
+ * Production-only requirements beyond JWT/CLIENT_URL. Never includes secret values in messages.
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {string[]}
+ */
+function productionConfigErrors(env = process.env) {
+  const errors = [];
+  try {
+    getMongoUris(env);
+  } catch (err) {
+    errors.push(err.message);
+  }
+  const redisConfigured = Boolean(String(env.REDIS_URL || '').trim() || String(env.REDIS_HOST || '').trim());
+  if (!redisConfigured && env.REDIS_HEALTH_BLOCKS_READY !== 'false') {
+    errors.push('REDIS_URL (or REDIS_HOST) is required in production for Bull queues, rate limiting and readiness');
+  }
+  return errors;
+}
+
+/**
+ * Password for admin seed/reset scripts. Production requires an explicit, non-default value.
+ * @param {string | undefined} explicit
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string}
+ */
+function resolveAdminSeedPassword(explicit, env = process.env) {
+  const password = explicit || env.DEFAULT_ADMIN_PASSWORD || '';
+  if (env.NODE_ENV !== 'production') {
+    return password || DEV_ADMIN_PASSWORD;
+  }
+  if (!password) {
+    throw new Error('Production requires an explicit admin password (argument or DEFAULT_ADMIN_PASSWORD).');
+  }
+  if (KNOWN_WEAK_ADMIN_PASSWORDS.has(password) || password.length < 12) {
+    throw new Error('Admin password is a known default or shorter than 12 characters; choose a strong unique password.');
+  }
+  return password;
+}
 
 function validateEnv() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -51,7 +125,17 @@ function validateEnv() {
     console.warn('⚠️  AI_ATLAS_VECTOR_INDEX is empty. Atlas vector search will use the default index name.');
   }
 
+  const configErrors = processConfigErrors(process.env);
+  if (!isProd) {
+    configErrors.forEach((message) => console.warn(`⚠️  ${message}`));
+  }
+
   if (isProd) {
+    const fatal = [...configErrors, ...productionConfigErrors(process.env)];
+    if (fatal.length) {
+      fatal.forEach((message) => console.error(`❌ FATAL: ${message}.`));
+      process.exit(1);
+    }
     if (!process.env.JWT_SECRET || String(process.env.JWT_SECRET).length < 24) {
       console.error('❌ FATAL: production requires JWT_SECRET (use a long random string, e.g. openssl rand -base64 48).');
       process.exit(1);
@@ -93,4 +177,9 @@ function validateEnv() {
   }
 }
 
-module.exports = { validateEnv };
+module.exports = {
+  validateEnv,
+  processConfigErrors,
+  productionConfigErrors,
+  resolveAdminSeedPassword
+};

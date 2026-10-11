@@ -1,5 +1,6 @@
 'use strict';
 
+const mongoose = require('mongoose');
 const { readMetadata } = require('../../../utils/arivuMetadata');
 const Campaign = require('../../../models/Campaign');
 const CampaignRecipient = require('../../../models/CampaignRecipient');

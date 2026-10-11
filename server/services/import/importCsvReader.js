@@ -1,3 +1,4 @@
+const { pipeline } = require('stream');
 const { parse } = require('csv-parse');
 const { parseCSV } = require('./importCsvParser');
 const { openImportReadStream, parseStorageRef } = require('./importStorageDriver');
@@ -12,7 +13,9 @@ async function createCsvParserStream(storageRef) {
     relax_column_count: true,
     trim: false,
   });
-  stream.pipe(parser);
+  // pipeline() forwards source errors to the parser's async iterator and destroys the
+  // source when a consumer stops early; errors surface through iteration.
+  pipeline(stream, parser, () => {});
   return parser;
 }
 

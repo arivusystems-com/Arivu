@@ -114,6 +114,10 @@ test('listCampaigns returns paginated campaigns scoped to organization', async (
     assert.equal(String(match.organizationId), String(orgId));
     return 1;
   }, t);
+  patchMethod(Campaign, 'aggregate', async (pipeline) => {
+    assert.equal(String(pipeline[0].$match.organizationId), String(orgId));
+    return [{ _id: 'draft', count: 1 }];
+  }, t);
 
   const req = baseReq({ params: {}, query: { page: '1', limit: '10', search: 'summer' } });
   const res = createRes();
@@ -125,6 +129,7 @@ test('listCampaigns returns paginated campaigns scoped to organization', async (
   assert.equal(res.body.success, true);
   assert.equal(res.body.data.length, 1);
   assert.equal(res.body.pagination.total, 1);
+  assert.equal(res.body.listStatistics.draft, 1);
 });
 
 test('createCampaign rejects missing name', async (t) => {
@@ -464,6 +469,7 @@ function loadAudienceModule() {
 
 function patchMarketingSendAllowed(t) {
   patchMethod(orgEmailPolicyService, 'assertMarketingSendAllowed', async () => ({ allowed: true }), t);
+  patchMethod(campaignSendOrchestrator, 'assertCampaignSendPolicy', async () => {}, t);
 }
 
 test('sendCampaign resolves audienceId to recipients', async (t) => {

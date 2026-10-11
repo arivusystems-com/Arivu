@@ -24,6 +24,7 @@ const { INSTANCE_STATUS } = require('../constants/instanceLifecycle');
 const { ensureDefaultCommunicationSettingsForOrganization } = require('../services/communicationDefaultsSeeder');
 const { ensureOrgEmailPolicy } = require('../services/orgEmailPolicyService');
 const { getMongoUris, connectMasterWithRetry } = require('../lib/mongoConnect');
+const { resolveAdminSeedPassword } = require('../config/validateEnv');
 const {
     initializeOnboardingForUser,
     ONBOARDING_ORIGINS
@@ -153,7 +154,7 @@ async function ensureDefaultAdminOnboarding(user) {
 // Default Admin Credentials (use environment variables or defaults)
 const DEFAULT_ADMIN = {
     email: process.env.DEFAULT_ADMIN_EMAIL || 'hello@arivusystems.com',
-    password: process.env.DEFAULT_ADMIN_PASSWORD || 'Admin@123',
+    password: null,
     username: 'Arivu Admin',
     firstName: 'Arivu',
     lastName: 'Admin',
@@ -164,6 +165,7 @@ const DEFAULT_ADMIN = {
 async function createDefaultAdmin() {
     try {
         console.log('🚀 Creating Default Admin Account...\n');
+        DEFAULT_ADMIN.password = resolveAdminSeedPassword(undefined);
 
         console.log('🔗 Connecting to MongoDB...');
         const { masterUri, masterDbName } = getMongoUris();
@@ -387,7 +389,11 @@ async function createDefaultAdmin() {
         console.log('='.repeat(60));
         console.log('\n📝 LOGIN CREDENTIALS:\n');
         console.log(`   Email:    ${DEFAULT_ADMIN.email}`);
-        console.log(`   Password: ${DEFAULT_ADMIN.password}`);
+        console.log(
+            process.env.NODE_ENV === 'production'
+                ? '   Password: (value of DEFAULT_ADMIN_PASSWORD)'
+                : `   Password: ${DEFAULT_ADMIN.password}`
+        );
         console.log('\n⚠️  SECURITY WARNING:');
         console.log('   Please change this password immediately after first login!');
         console.log('   Go to Settings → Update Password\n');
