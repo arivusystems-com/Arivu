@@ -29,7 +29,8 @@ function classifySmtpError(err) {
   const msg = String(err?.message || err || '').toLowerCase();
   const code = String(err?.code || '').toUpperCase();
   if (
-    /invalid.?login|authentication|535|534|535-5\.7|auth/i.test(msg)
+    // Whole reply codes only: socket errors embed host:port (e.g. "connect ECONNRESET 127.0.0.1:45351").
+    /invalid.?login|authentication|\b53[45]\b|auth/i.test(msg)
     || code === 'EAUTH'
   ) {
     return VERIFY_STATUS.INVALID_CREDENTIALS;

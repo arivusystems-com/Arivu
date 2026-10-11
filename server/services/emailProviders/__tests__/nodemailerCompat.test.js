@@ -13,6 +13,7 @@ process.env.TENANT_SECRET_ENCRYPTION_KEY = process.env.TENANT_SECRET_ENCRYPTION_
 const {
   verifySmtpCredentials,
   sendViaMailboxSmtp,
+  classifySmtpError,
   VERIFY_STATUS
 } = require('../../mailboxSmtpService');
 const { encryptTenantSecret } = require('../../../utils/tenantSecretCrypto');
@@ -146,6 +147,15 @@ describe('mailboxSmtpService with nodemailer', () => {
     } finally {
       await new Promise((resolve) => resetting.close(resolve));
     }
+  });
+
+  it('does not read a port containing 534/535 as an auth failure', () => {
+    const err = Object.assign(new Error('connect ECONNRESET 127.0.0.1:45351'), { code: 'ESOCKET' });
+    assert.equal(classifySmtpError(err), VERIFY_STATUS.NETWORK_ERROR);
+    const authErr = Object.assign(new Error('Invalid login: 535-5.7.8 Username and Password not accepted'), {
+      code: 'EAUTH'
+    });
+    assert.equal(classifySmtpError(authErr), VERIFY_STATUS.INVALID_CREDENTIALS);
   });
 
   it('verifySmtpCredentials classifies a closed connection as NETWORK_ERROR', async () => {
