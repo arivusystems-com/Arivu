@@ -368,23 +368,23 @@
     "description": "Today strip chip count"
   },
   "platformHomeApprovalCountOne": {
-    "message": "__UCI_0__ aprobación",
+    "message": "{count} aprobación",
     "description": "Today strip chip count singular"
   },
   "platformHomeApprovalCountMany": {
-    "message": "__UCI_0__ aprobaciones",
+    "message": "{count} aprobaciones",
     "description": "Today strip chip count plural"
   },
   "platformHomeUnreadCountOne": {
-    "message": "__UCI_0__ sin leer",
+    "message": "{count} sin leer",
     "description": "Today strip chip count singular"
   },
   "platformHomeUnreadCountMany": {
-    "message": "__UCI_0__ sin leer",
+    "message": "{count} sin leer",
     "description": "Today strip chip count plural"
   },
   "platformHomeOverdueCount": {
-    "message": "__UCI_0__ vencida",
+    "message": "{count} vencida",
     "description": "Attention summary overdue count"
   },
   "platformHomeDueTodayCount": {
@@ -392,11 +392,11 @@
     "description": "Attention summary due today count"
   },
   "platformHomeItemCountOne": {
-    "message": "__UCI_0__ elemento",
+    "message": "{count} elemento",
     "description": "Attention summary fallback singular"
   },
   "platformHomeItemCountMany": {
-    "message": "__UCI_0__ artículos",
+    "message": "{count} artículos",
     "description": "Attention summary fallback plural"
   },
   "platformHomeAlertInstanceSuspendedTitle": {
@@ -436,7 +436,7 @@
     "description": "Platform home greeting"
   },
   "platformHomeGreetingMorningWithName": {
-    "message": "Buenos días, __UCI_0__",
+    "message": "Buenos días, {name}",
     "description": "Platform home greeting"
   },
   "platformHomeGreetingAfternoon": {
@@ -444,7 +444,7 @@
     "description": "Platform home greeting"
   },
   "platformHomeGreetingAfternoonWithName": {
-    "message": "Buenas tardes, __UCI_0__",
+    "message": "Buenas tardes, {name}",
     "description": "Platform home greeting"
   },
   "platformHomeGreetingEvening": {
@@ -452,7 +452,7 @@
     "description": "Platform home greeting"
   },
   "platformHomeGreetingEveningWithName": {
-    "message": "Buenas noches, __UCI_0__",
+    "message": "Buenas noches, {name}",
     "description": "Platform home greeting"
   },
   "listViewDraftItems": {

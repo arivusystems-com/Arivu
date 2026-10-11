@@ -23455,175 +23455,175 @@
     "description": "Top tab for Closed Records configuration"
   },
   "invoicesSettingsTitle": {
-    "message": "Invoices",
+    "message": "Fatture",
     "description": "Invoices settings page heading"
   },
   "invoicesSettingsDesc": {
-    "message": "Choose the document template for invoices and check rendering parity.",
+    "message": "Scegli il modello di documento per le fatture e verifica la parità di rendering.",
     "description": "Invoices settings page subheading"
   },
   "invoicesDocumentTemplateTitle": {
-    "message": "Invoice document template",
+    "message": "Modello di documento di fattura",
     "description": "Invoices settings: default template section heading"
   },
   "invoicesDocumentTemplateHelp": {
-    "message": "Select the published template used to generate invoice documents.",
+    "message": "Seleziona il modello pubblicato utilizzato per generare i documenti di fattura.",
     "description": "Invoices settings: default template section help"
   },
   "invoicesBrandingNoteTitle": {
-    "message": "Branding",
+    "message": "Marchio",
     "description": "Invoices settings: branding section heading"
   },
   "invoicesBrandingNoteHelp": {
-    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "message": "Le fatture utilizzano lo stesso logo, colori e piè di pagina delle virgolette. Aggiornali nelle impostazioni del preventivo.",
     "description": "Invoices settings: explains branding is shared with quotes"
   },
   "invoicesBrandingNoteLink": {
-    "message": "Open quote branding",
+    "message": "Marchio con citazione aperta",
     "description": "Invoices settings: link to quote branding settings"
   },
   "moduleDocumentTemplateEmpty": {
-    "message": "No published document templates yet. Create and publish one in Templates.",
+    "message": "Nessun modello di documento ancora pubblicato. Creane e pubblicane uno in Modelli.",
     "description": "Document template settings: no templates available"
   },
   "moduleDocumentTemplateGoTemplates": {
-    "message": "Go to Templates",
+    "message": "Vai a Modelli",
     "description": "Document template settings: link to Templates"
   },
   "moduleDocumentTemplateLabel": {
-    "message": "Default template",
+    "message": "Modello predefinito",
     "description": "Document template settings: select label"
   },
   "moduleDocumentTemplateAuto": {
-    "message": "Automatic (system default)",
+    "message": "Automatico (impostazione predefinita del sistema)",
     "description": "Document template settings: no explicit default selected"
   },
   "moduleDocumentTemplateHint": {
-    "message": "Used when generating documents for this module.",
+    "message": "Utilizzato durante la generazione di documenti per questo modulo.",
     "description": "Document template settings: select help text"
   },
   "moduleDocumentTemplateLoadFailed": {
-    "message": "Failed to load document template settings.",
+    "message": "Impossibile caricare le impostazioni del modello di documento.",
     "description": "Document template settings: load error"
   },
   "moduleDocumentTemplateSaved": {
-    "message": "Default template saved.",
+    "message": "Modello predefinito salvato.",
     "description": "Document template settings: save success"
   },
   "moduleDocumentTemplateSaveFailed": {
-    "message": "Failed to save the default template.",
+    "message": "Impossibile salvare il modello predefinito.",
     "description": "Document template settings: save error"
   },
   "moduleShadowParityTitle": {
-    "message": "Rendering parity",
+    "message": "Parità di rendering",
     "description": "Shadow parity panel heading"
   },
   "moduleShadowParityHelp": {
-    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "message": "Confronta i documenti del renderer legacy e del nuovo renderer della piattaforma di contenuti prima di passare.",
     "description": "Shadow parity panel description"
   },
   "moduleShadowParityModeLabel": {
-    "message": "Render mode",
+    "message": "Modalità rendering",
     "description": "Shadow parity: current render mode label"
   },
   "moduleShadowParityModeLegacy": {
-    "message": "Legacy",
+    "message": "Eredità",
     "description": "Render mode: legacy renderer only"
   },
   "moduleShadowParityModeShadow": {
-    "message": "Shadow (legacy served, platform compared)",
+    "message": "Shadow (servizio legacy, rispetto alla piattaforma)",
     "description": "Render mode: both renderers run, legacy output is used"
   },
   "moduleShadowParityModePlatform": {
-    "message": "Platform",
+    "message": "Piattaforma",
     "description": "Render mode: content platform renderer"
   },
   "moduleShadowParityMatchRate": {
-    "message": "{rate}% match",
+    "message": "Corrispondenza del {rate}%.",
     "description": "Shadow parity: percentage of matching renders"
   },
   "moduleShadowParityTotal": {
-    "message": "Total",
+    "message": "Totale",
     "description": "Shadow parity: total comparisons"
   },
   "moduleShadowParityMatched": {
-    "message": "Matched",
+    "message": "Abbinato",
     "description": "Shadow parity: matching comparisons"
   },
   "moduleShadowParityMismatched": {
-    "message": "Mismatched",
+    "message": "Non corrispondenti",
     "description": "Shadow parity: differing comparisons"
   },
   "moduleShadowParityErrors": {
-    "message": "Errors",
+    "message": "Errori",
     "description": "Shadow parity: comparisons where the platform render failed"
   },
   "moduleShadowParityRecordLabel": {
-    "message": "Record ID",
+    "message": "Identificativo della registrazione",
     "description": "Shadow parity: record to compare"
   },
   "moduleShadowParityRecordPlaceholder": {
-    "message": "Enter a record ID",
+    "message": "Inserisci un ID record",
     "description": "Shadow parity: record ID input placeholder"
   },
   "moduleShadowParityCompare": {
-    "message": "Compare",
+    "message": "Confrontare",
     "description": "Shadow parity: run comparison button"
   },
   "moduleShadowParityColWhen": {
-    "message": "When",
+    "message": "Quando",
     "description": "Shadow parity table column: time"
   },
   "moduleShadowParityColRecord": {
-    "message": "Record",
+    "message": "Documentazione",
     "description": "Shadow parity table column: record"
   },
   "moduleShadowParityColResult": {
-    "message": "Result",
+    "message": "Risultato",
     "description": "Shadow parity table column: result"
   },
   "moduleShadowParityColLegacy": {
-    "message": "Legacy checksum",
+    "message": "Checksum legacy",
     "description": "Shadow parity table column: legacy output checksum"
   },
   "moduleShadowParityColPlatform": {
-    "message": "Platform checksum",
+    "message": "Checksum della piattaforma",
     "description": "Shadow parity table column: platform output checksum"
   },
   "moduleShadowParityResultMatch": {
-    "message": "Match",
+    "message": "Incontro",
     "description": "Shadow parity result: outputs identical"
   },
   "moduleShadowParityResultMismatch": {
-    "message": "Mismatch",
+    "message": "Mancata corrispondenza",
     "description": "Shadow parity result: outputs differ"
   },
   "moduleShadowParityResultError": {
-    "message": "Error",
+    "message": "Errore",
     "description": "Shadow parity result: platform render failed"
   },
   "moduleShadowParityEmpty": {
-    "message": "No comparisons yet.",
+    "message": "Nessun confronto ancora.",
     "description": "Shadow parity: no results"
   },
   "moduleShadowParityLoadFailed": {
-    "message": "Failed to load parity results.",
+    "message": "Impossibile caricare i risultati di parità.",
     "description": "Shadow parity: load error"
   },
   "moduleShadowParityCompareMatch": {
-    "message": "Documents match.",
+    "message": "I documenti corrispondono.",
     "description": "Shadow parity: comparison matched"
   },
   "moduleShadowParityCompareMismatch": {
-    "message": "Documents differ between the legacy and platform renderers.",
+    "message": "I documenti differiscono tra i renderer legacy e quelli della piattaforma.",
     "description": "Shadow parity: comparison mismatched"
   },
   "moduleShadowParityCompareFailed": {
-    "message": "Comparison failed.",
+    "message": "Il confronto non è riuscito.",
     "description": "Shadow parity: comparison error"
   },
   "assignRulesTypeAndPressEnter": {
-    "message": "Type and press Enter to add.",
+    "message": "Digita e premi Invio per aggiungere.",
     "description": "Assignment rules: empty multi-value picker hint"
   }
 }

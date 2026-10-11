@@ -8,7 +8,7 @@
     "description": "Bulk selection count in list views"
   },
   "welcomeUser": {
-    "message": "Bienvenido, __UCI_0__",
+    "message": "Bienvenido, {name}",
     "description": "Personalized greeting with interpolation"
   },
   "assignedToUser": {
@@ -476,7 +476,7 @@
     "description": "Lookup modal refresh in progress"
   },
   "formLookupSelectTitle": {
-    "message": "Seleccione __UCI_0__",
+    "message": "Seleccione {label}",
     "description": "Lookup modal title"
   },
   "formLookupChooseOne": {
@@ -484,7 +484,7 @@
     "description": "Lookup modal subtitle"
   },
   "formLookupSearchModule": {
-    "message": "Buscar __UCI_0__...",
+    "message": "Buscar {module}...",
     "description": "Lookup modal search placeholder"
   },
   "formLookupNoMatch": {
@@ -532,7 +532,7 @@
     "description": "Filter option: no restriction"
   },
   "filterAllNamed": {
-    "message": "Todos __UCI_0__",
+    "message": "Todos {label}",
     "description": "Filter option: all values for a named field"
   },
   "filterDays": {
@@ -2244,19 +2244,19 @@
     "description": "Required field indicator (alias for settings badges)"
   },
   "listSearchModule": {
-    "message": "Buscar __UCI_0__...",
+    "message": "Buscar {module}...",
     "description": "Module list search placeholder"
   },
   "listCreateModule": {
-    "message": "Nueva __UCI_0__",
+    "message": "Nueva {module}",
     "description": "Generic module list create button"
   },
   "listViewAllModule": {
-    "message": "Todos __UCI_0__",
+    "message": "Todos {module}",
     "description": "Generic all-records list view title"
   },
   "listViewMyModule": {
-    "message": "Mi __UCI_0__",
+    "message": "Mi {module}",
     "description": "Generic assigned-to-me list view title"
   },
   "listViewCustom": {
@@ -2300,7 +2300,7 @@
     "description": "Customize list field group label"
   },
   "listParticipationApp": {
-    "message": "Participación: __UCI_0__",
+    "message": "Participación: {app}",
     "description": "Customize list participation field group label"
   },
   "listRowHeightSmall": {
@@ -2328,7 +2328,7 @@
     "description": "Default list empty state description"
   },
   "listEmptyNoModuleYet": {
-    "message": "No hay __UCI_0__ todavía",
+    "message": "No hay {module} todavía",
     "description": "Module list empty state title"
   },
   "listEmptyModuleWillAppear": {
@@ -2356,7 +2356,7 @@
     "description": "Button to reset list search and filters"
   },
   "listFilterAll": {
-    "message": "Todos __UCI_0__",
+    "message": "Todos {filter}",
     "description": "Filter dropdown placeholder when no value selected"
   },
   "listUnknown": {
@@ -3012,15 +3012,15 @@
     "description": "Confirm button label for discarding dirty drawer changes"
   },
   "enabled": {
-    "message": "Enabled",
+    "message": "Activado",
     "description": "Status: feature or item is turned on"
   },
   "disabled": {
-    "message": "Disabled",
+    "message": "Desactivado",
     "description": "Status: feature or item is turned off"
   },
   "approvalInboxChanges": {
-    "message": "Changes",
+    "message": "Cambios",
     "description": "Approval inbox: quote change summary label"
   }
 }

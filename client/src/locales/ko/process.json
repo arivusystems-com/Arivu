@@ -3768,15 +3768,15 @@
     "description": "Remove AI token pack row"
   },
   "controlPlaneInboundParser": {
-    "message": "Inbound Parser",
+    "message": "인바운드 파서",
     "description": "Control plane card title"
   },
   "controlPlaneInboundParserDesc": {
-    "message": "Connect CRM and parser servers (URLs, API keys). Tenants only see mailbox forwarding addresses.",
+    "message": "CRM과 파서 서버(URL, API 키)를 연결합니다. 테넌트는 사서함 전달 주소만 볼 수 있습니다.",
     "description": "Control plane inbound parser card description"
   },
   "controlPlaneConfigure": {
-    "message": "Configure",
+    "message": "구성",
     "description": "Control plane card call to action"
   }
 }

@@ -23455,19 +23455,19 @@
     "description": "Top tab for Closed Records configuration"
   },
   "invoicesSettingsTitle": {
-    "message": "Invoices",
+    "message": "Facturen",
     "description": "Invoices settings page heading"
   },
   "invoicesSettingsDesc": {
-    "message": "Choose the document template for invoices and check rendering parity.",
+    "message": "Kies de documentsjabloon voor facturen en controleer de weergavepariteit.",
     "description": "Invoices settings page subheading"
   },
   "invoicesDocumentTemplateTitle": {
-    "message": "Invoice document template",
+    "message": "Factuurdocumentsjabloon",
     "description": "Invoices settings: default template section heading"
   },
   "invoicesDocumentTemplateHelp": {
-    "message": "Select the published template used to generate invoice documents.",
+    "message": "Selecteer de gepubliceerde sjabloon die wordt gebruikt om factuurdocumenten te genereren.",
     "description": "Invoices settings: default template section help"
   },
   "invoicesBrandingNoteTitle": {
@@ -23475,63 +23475,63 @@
     "description": "Invoices settings: branding section heading"
   },
   "invoicesBrandingNoteHelp": {
-    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "message": "Facturen gebruiken hetzelfde logo, dezelfde kleuren en voettekst als offertes. Update ze in de offerte-instellingen.",
     "description": "Invoices settings: explains branding is shared with quotes"
   },
   "invoicesBrandingNoteLink": {
-    "message": "Open quote branding",
+    "message": "Open quote-branding",
     "description": "Invoices settings: link to quote branding settings"
   },
   "moduleDocumentTemplateEmpty": {
-    "message": "No published document templates yet. Create and publish one in Templates.",
+    "message": "Nog geen gepubliceerde documentsjablonen. Maak en publiceer er een in Sjablonen.",
     "description": "Document template settings: no templates available"
   },
   "moduleDocumentTemplateGoTemplates": {
-    "message": "Go to Templates",
+    "message": "Ga naar Sjablonen",
     "description": "Document template settings: link to Templates"
   },
   "moduleDocumentTemplateLabel": {
-    "message": "Default template",
+    "message": "Standaardsjabloon",
     "description": "Document template settings: select label"
   },
   "moduleDocumentTemplateAuto": {
-    "message": "Automatic (system default)",
+    "message": "Automatisch (systeemstandaard)",
     "description": "Document template settings: no explicit default selected"
   },
   "moduleDocumentTemplateHint": {
-    "message": "Used when generating documents for this module.",
+    "message": "Wordt gebruikt bij het genereren van documenten voor deze module.",
     "description": "Document template settings: select help text"
   },
   "moduleDocumentTemplateLoadFailed": {
-    "message": "Failed to load document template settings.",
+    "message": "Kan documentsjablooninstellingen niet laden.",
     "description": "Document template settings: load error"
   },
   "moduleDocumentTemplateSaved": {
-    "message": "Default template saved.",
+    "message": "Standaardsjabloon opgeslagen.",
     "description": "Document template settings: save success"
   },
   "moduleDocumentTemplateSaveFailed": {
-    "message": "Failed to save the default template.",
+    "message": "Kan de standaardsjabloon niet opslaan.",
     "description": "Document template settings: save error"
   },
   "moduleShadowParityTitle": {
-    "message": "Rendering parity",
+    "message": "Pariteit weergeven",
     "description": "Shadow parity panel heading"
   },
   "moduleShadowParityHelp": {
-    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "message": "Vergelijkt documenten van de oude renderer en de nieuwe renderer van het inhoudsplatform voordat wordt overgeschakeld.",
     "description": "Shadow parity panel description"
   },
   "moduleShadowParityModeLabel": {
-    "message": "Render mode",
+    "message": "Rendermodus",
     "description": "Shadow parity: current render mode label"
   },
   "moduleShadowParityModeLegacy": {
-    "message": "Legacy",
+    "message": "Nalatenschap",
     "description": "Render mode: legacy renderer only"
   },
   "moduleShadowParityModeShadow": {
-    "message": "Shadow (legacy served, platform compared)",
+    "message": "Schaduw (verouderd geserveerd, platform vergeleken)",
     "description": "Render mode: both renderers run, legacy output is used"
   },
   "moduleShadowParityModePlatform": {
@@ -23539,23 +23539,23 @@
     "description": "Render mode: content platform renderer"
   },
   "moduleShadowParityMatchRate": {
-    "message": "{rate}% match",
+    "message": "{rate}% overeenkomst",
     "description": "Shadow parity: percentage of matching renders"
   },
   "moduleShadowParityTotal": {
-    "message": "Total",
+    "message": "Totaal",
     "description": "Shadow parity: total comparisons"
   },
   "moduleShadowParityMatched": {
-    "message": "Matched",
+    "message": "Komt overeen",
     "description": "Shadow parity: matching comparisons"
   },
   "moduleShadowParityMismatched": {
-    "message": "Mismatched",
+    "message": "Niet passend",
     "description": "Shadow parity: differing comparisons"
   },
   "moduleShadowParityErrors": {
-    "message": "Errors",
+    "message": "Fouten",
     "description": "Shadow parity: comparisons where the platform render failed"
   },
   "moduleShadowParityRecordLabel": {
@@ -23563,7 +23563,7 @@
     "description": "Shadow parity: record to compare"
   },
   "moduleShadowParityRecordPlaceholder": {
-    "message": "Enter a record ID",
+    "message": "Voer een record-ID in",
     "description": "Shadow parity: record ID input placeholder"
   },
   "moduleShadowParityCompare": {

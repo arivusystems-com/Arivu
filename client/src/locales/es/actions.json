@@ -112,7 +112,7 @@
     "description": "Open print preview for the current record"
   },
   "yes": {
-    "message": "Yes",
+    "message": "Sí",
     "description": "Affirmative choice"
   },
   "no": {
@@ -120,7 +120,7 @@
     "description": "Negative choice"
   },
   "view": {
-    "message": "View",
+    "message": "Vista",
     "description": "Open an item to view it"
   }
 }

@@ -23455,175 +23455,175 @@
     "description": "Top tab for Closed Records configuration"
   },
   "invoicesSettingsTitle": {
-    "message": "Invoices",
+    "message": "송장",
     "description": "Invoices settings page heading"
   },
   "invoicesSettingsDesc": {
-    "message": "Choose the document template for invoices and check rendering parity.",
+    "message": "송장용 문서 템플릿을 선택하고 렌더링 패리티를 확인하세요.",
     "description": "Invoices settings page subheading"
   },
   "invoicesDocumentTemplateTitle": {
-    "message": "Invoice document template",
+    "message": "송장 문서 템플릿",
     "description": "Invoices settings: default template section heading"
   },
   "invoicesDocumentTemplateHelp": {
-    "message": "Select the published template used to generate invoice documents.",
+    "message": "송장 문서를 생성하는 데 사용되는 게시된 템플릿을 선택합니다.",
     "description": "Invoices settings: default template section help"
   },
   "invoicesBrandingNoteTitle": {
-    "message": "Branding",
+    "message": "브랜딩",
     "description": "Invoices settings: branding section heading"
   },
   "invoicesBrandingNoteHelp": {
-    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "message": "송장은 견적과 동일한 로고, 색상 및 바닥글을 사용합니다. 견적 설정에서 업데이트하세요.",
     "description": "Invoices settings: explains branding is shared with quotes"
   },
   "invoicesBrandingNoteLink": {
-    "message": "Open quote branding",
+    "message": "공개 견적 브랜딩",
     "description": "Invoices settings: link to quote branding settings"
   },
   "moduleDocumentTemplateEmpty": {
-    "message": "No published document templates yet. Create and publish one in Templates.",
+    "message": "아직 게시된 문서 템플릿이 없습니다. 템플릿에서 템플릿을 만들고 게시하세요.",
     "description": "Document template settings: no templates available"
   },
   "moduleDocumentTemplateGoTemplates": {
-    "message": "Go to Templates",
+    "message": "템플릿으로 이동",
     "description": "Document template settings: link to Templates"
   },
   "moduleDocumentTemplateLabel": {
-    "message": "Default template",
+    "message": "기본 템플릿",
     "description": "Document template settings: select label"
   },
   "moduleDocumentTemplateAuto": {
-    "message": "Automatic (system default)",
+    "message": "자동(시스템 기본값)",
     "description": "Document template settings: no explicit default selected"
   },
   "moduleDocumentTemplateHint": {
-    "message": "Used when generating documents for this module.",
+    "message": "이 모듈에 대한 문서를 생성할 때 사용됩니다.",
     "description": "Document template settings: select help text"
   },
   "moduleDocumentTemplateLoadFailed": {
-    "message": "Failed to load document template settings.",
+    "message": "문서 템플릿 설정을 로드하지 못했습니다.",
     "description": "Document template settings: load error"
   },
   "moduleDocumentTemplateSaved": {
-    "message": "Default template saved.",
+    "message": "기본 템플릿이 저장되었습니다.",
     "description": "Document template settings: save success"
   },
   "moduleDocumentTemplateSaveFailed": {
-    "message": "Failed to save the default template.",
+    "message": "기본 템플릿을 저장하지 못했습니다.",
     "description": "Document template settings: save error"
   },
   "moduleShadowParityTitle": {
-    "message": "Rendering parity",
+    "message": "렌더링 패리티",
     "description": "Shadow parity panel heading"
   },
   "moduleShadowParityHelp": {
-    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "message": "전환하기 전에 기존 렌더러와 새로운 콘텐츠 플랫폼 렌더러의 문서를 비교합니다.",
     "description": "Shadow parity panel description"
   },
   "moduleShadowParityModeLabel": {
-    "message": "Render mode",
+    "message": "렌더링 모드",
     "description": "Shadow parity: current render mode label"
   },
   "moduleShadowParityModeLegacy": {
-    "message": "Legacy",
+    "message": "유산",
     "description": "Render mode: legacy renderer only"
   },
   "moduleShadowParityModeShadow": {
-    "message": "Shadow (legacy served, platform compared)",
+    "message": "섀도우(기존 서비스, 플랫폼 비교)",
     "description": "Render mode: both renderers run, legacy output is used"
   },
   "moduleShadowParityModePlatform": {
-    "message": "Platform",
+    "message": "플랫폼",
     "description": "Render mode: content platform renderer"
   },
   "moduleShadowParityMatchRate": {
-    "message": "{rate}% match",
+    "message": "{rate}% 일치",
     "description": "Shadow parity: percentage of matching renders"
   },
   "moduleShadowParityTotal": {
-    "message": "Total",
+    "message": "총",
     "description": "Shadow parity: total comparisons"
   },
   "moduleShadowParityMatched": {
-    "message": "Matched",
+    "message": "일치함",
     "description": "Shadow parity: matching comparisons"
   },
   "moduleShadowParityMismatched": {
-    "message": "Mismatched",
+    "message": "일치하지 않음",
     "description": "Shadow parity: differing comparisons"
   },
   "moduleShadowParityErrors": {
-    "message": "Errors",
+    "message": "오류",
     "description": "Shadow parity: comparisons where the platform render failed"
   },
   "moduleShadowParityRecordLabel": {
-    "message": "Record ID",
+    "message": "레코드 ID",
     "description": "Shadow parity: record to compare"
   },
   "moduleShadowParityRecordPlaceholder": {
-    "message": "Enter a record ID",
+    "message": "레코드 ID를 입력하세요.",
     "description": "Shadow parity: record ID input placeholder"
   },
   "moduleShadowParityCompare": {
-    "message": "Compare",
+    "message": "비교하다",
     "description": "Shadow parity: run comparison button"
   },
   "moduleShadowParityColWhen": {
-    "message": "When",
+    "message": "언제",
     "description": "Shadow parity table column: time"
   },
   "moduleShadowParityColRecord": {
-    "message": "Record",
+    "message": "기록",
     "description": "Shadow parity table column: record"
   },
   "moduleShadowParityColResult": {
-    "message": "Result",
+    "message": "결과",
     "description": "Shadow parity table column: result"
   },
   "moduleShadowParityColLegacy": {
-    "message": "Legacy checksum",
+    "message": "레거시 체크섬",
     "description": "Shadow parity table column: legacy output checksum"
   },
   "moduleShadowParityColPlatform": {
-    "message": "Platform checksum",
+    "message": "플랫폼 체크섬",
     "description": "Shadow parity table column: platform output checksum"
   },
   "moduleShadowParityResultMatch": {
-    "message": "Match",
+    "message": "성냥",
     "description": "Shadow parity result: outputs identical"
   },
   "moduleShadowParityResultMismatch": {
-    "message": "Mismatch",
+    "message": "불일치",
     "description": "Shadow parity result: outputs differ"
   },
   "moduleShadowParityResultError": {
-    "message": "Error",
+    "message": "오류",
     "description": "Shadow parity result: platform render failed"
   },
   "moduleShadowParityEmpty": {
-    "message": "No comparisons yet.",
+    "message": "아직 비교가 없습니다.",
     "description": "Shadow parity: no results"
   },
   "moduleShadowParityLoadFailed": {
-    "message": "Failed to load parity results.",
+    "message": "패리티 결과를 로드하지 못했습니다.",
     "description": "Shadow parity: load error"
   },
   "moduleShadowParityCompareMatch": {
-    "message": "Documents match.",
+    "message": "문서가 일치합니다.",
     "description": "Shadow parity: comparison matched"
   },
   "moduleShadowParityCompareMismatch": {
-    "message": "Documents differ between the legacy and platform renderers.",
+    "message": "문서는 레거시 렌더러와 플랫폼 렌더러 간에 다릅니다.",
     "description": "Shadow parity: comparison mismatched"
   },
   "moduleShadowParityCompareFailed": {
-    "message": "Comparison failed.",
+    "message": "비교에 실패했습니다.",
     "description": "Shadow parity: comparison error"
   },
   "assignRulesTypeAndPressEnter": {
-    "message": "Type and press Enter to add.",
+    "message": "입력하고 Enter를 눌러 추가하세요.",
     "description": "Assignment rules: empty multi-value picker hint"
   }
 }

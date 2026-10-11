@@ -2124,7 +2124,7 @@
     "description": "Validation when Roles visibility has no role targets"
   },
   "fieldMetric": {
-    "message": "Metric",
+    "message": "Metrico",
     "description": "Widget builder: field used as the chart value"
   }
 }

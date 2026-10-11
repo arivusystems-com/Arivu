@@ -7,6 +7,7 @@
  *   node scripts/i18n/translate-locale.mjs es
  *   node scripts/i18n/translate-locale.mjs es --namespaces=actions,common
  *   node scripts/i18n/translate-locale.mjs es --dry-run
+ *   node scripts/i18n/translate-locale.mjs es --keys=common.welcomeUser,inbox.connectMailboxModalTitle
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,6 +23,8 @@ const nsArg = args.find((a) => a.startsWith('--namespaces='));
 const namespaces = nsArg
   ? nsArg.split('=')[1].split(',').map((s) => s.trim())
   : [...SHARED_NAMESPACES];
+const keysArg = args.find((a) => a.startsWith('--keys='));
+const onlyKeys = keysArg ? new Set(keysArg.slice('--keys='.length).split(',').map((s) => s.trim())) : null;
 
 const DELAY_MS = Number(process.env.I18N_TRANSLATE_DELAY_MS || 120);
 
@@ -39,10 +42,14 @@ function shouldSkipIcu(message) {
   );
 }
 
+/** `{name}` placeholders and vue-i18n literals such as `{'@'}` / `{'}'}`. */
+const PLACEHOLDER_RE = /\{'[^']*'\}|\{[^{}]+\}/g;
+
+// Digits only: word tokens get translated (es turned `__ICU_0__` into `__UCI_0__`).
 function maskPlaceholders(message) {
   const tokens = [];
-  const masked = message.replace(/\{[^}]+\}/g, (match) => {
-    const id = `__ICU_${tokens.length}__`;
+  const masked = message.replace(PLACEHOLDER_RE, (match) => {
+    const id = `__${tokens.length}__`;
     tokens.push({ id, match });
     return id;
   });
@@ -55,6 +62,14 @@ function unmaskPlaceholders(text, tokens) {
     out = out.replaceAll(id, match);
   }
   return out;
+}
+
+function placeholderSignature(message) {
+  return [...(message.match(PLACEHOLDER_RE) || [])].sort().join('\u0000');
+}
+
+function pipeCount(message) {
+  return message.replace(PLACEHOLDER_RE, '').split('|').length;
 }
 
 async function translateText(text, lang) {
@@ -77,8 +92,15 @@ async function translateMessage(message, lang) {
   if (!message?.trim() || message.length > 4500) return message;
   if (shouldSkipIcu(message)) return message;
   const { masked, tokens } = maskPlaceholders(message);
-  const translated = await translateText(masked, lang);
-  return unmaskPlaceholders(translated, tokens);
+  const translated = unmaskPlaceholders(await translateText(masked, lang), tokens);
+  if (
+    /__\d+__/.test(translated) ||
+    placeholderSignature(translated) !== placeholderSignature(message) ||
+    pipeCount(translated) !== pipeCount(message)
+  ) {
+    throw new Error(`placeholders not preserved: ${JSON.stringify(translated)}`);
+  }
+  return translated;
 }
 
 async function main() {
@@ -101,6 +123,7 @@ async function main() {
     for (const [key, entry] of Object.entries(en)) {
       const enMsg = typeof entry === 'string' ? entry : entry?.message;
       if (!enMsg) continue;
+      if (onlyKeys && !onlyKeys.has(`${ns}.${key}`)) continue;
 
       const cur = existing[key];
       const curMsg = typeof cur === 'string' ? cur : cur?.message;

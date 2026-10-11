@@ -2076,11 +2076,11 @@
     "description": "Campaign detail AI summary action"
   },
   "dashboardColOpenRate": {
-    "message": "Open rate",
+    "message": "Taux d'ouverture",
     "description": "Table column: email open rate"
   },
   "dashboardColClickRate": {
-    "message": "Click rate",
+    "message": "Taux de clic",
     "description": "Table column: email click rate"
   }
 }

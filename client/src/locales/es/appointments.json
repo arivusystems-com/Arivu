@@ -368,7 +368,7 @@
     "description": "Empty custom fields state"
   },
   "questionN": {
-    "message": "Pregunta __UCI_0__",
+    "message": "Pregunta {n}",
     "description": "Custom field index label"
   },
   "fieldLabel": {
@@ -836,7 +836,7 @@
     "description": "Tab title for personal page edit"
   },
   "tabUserBooking": {
-    "message": "__UCI_0__ · Reserva",
+    "message": "{name} · Reserva",
     "description": "Tab title for admin user configure"
   },
   "teamEyebrow": {
@@ -960,7 +960,7 @@
     "description": "Public manage header eyebrow"
   },
   "publicWithHost": {
-    "message": "con __UCI_0__",
+    "message": "con {name}",
     "description": "Public manage host line"
   },
   "publicScheduled": {

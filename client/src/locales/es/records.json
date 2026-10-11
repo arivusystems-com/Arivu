@@ -204,7 +204,7 @@
     "description": "Right pane updates tab"
   },
   "tabContentFallback": {
-    "message": "__UCI_0__ contenido",
+    "message": "{name} contenido",
     "description": "Right pane tab placeholder content"
   },
   "sectionActionFallback": {
@@ -244,11 +244,11 @@
     "description": "Record page error title"
   },
   "genericNavPrevious": {
-    "message": "Anterior __UCI_0__",
+    "message": "Anterior {singular}",
     "description": "Previous record navigation"
   },
   "genericNavNext": {
-    "message": "Siguiente __UCI_0__",
+    "message": "Siguiente {singular}",
     "description": "Next record navigation"
   },
   "genericTagsAria": {
@@ -268,7 +268,7 @@
     "description": "Send email menu action"
   },
   "genericBackTo": {
-    "message": "Volver a __UCI_0__",
+    "message": "Volver a {singular}",
     "description": "Back from expanded section"
   },
   "genericCollapseSection": {
@@ -532,7 +532,7 @@
     "description": "Empty mention search"
   },
   "commentRemoveAttachment": {
-    "message": "Quitar __UCI_0__",
+    "message": "Quitar {name}",
     "description": "Remove attachment aria-label"
   },
   "editableListboxSearchPh": {
@@ -596,7 +596,7 @@
     "description": "Deal description version retention"
   },
   "dealWeightedAmount": {
-    "message": "Ponderado __UCI_0__",
+    "message": "Ponderado {amount}",
     "description": "Deal weighted amount label"
   },
   "dealExpectedValuePh": {
@@ -5952,15 +5952,15 @@
     "description": "People record right pane tab for portal and marketing access"
   },
   "activitySystemReviewChanges": {
-    "message": "Review changes",
+    "message": "Revisar cambios",
     "description": "Activity row link to compare changes"
   },
   "quoteReviewChanges": {
-    "message": "Review changes",
+    "message": "Revisar cambios",
     "description": "Quote lines header: review changes action"
   },
   "revisionsCompare": {
-    "message": "Compare",
+    "message": "Comparar",
     "description": "Quote revisions: compare with current revision"
   }
 }

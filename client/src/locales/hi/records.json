@@ -5952,15 +5952,15 @@
     "description": "People record right pane tab for portal and marketing access"
   },
   "activitySystemReviewChanges": {
-    "message": "Review changes",
+    "message": "परिवर्तनों की समीक्षा करें",
     "description": "Activity row link to compare changes"
   },
   "quoteReviewChanges": {
-    "message": "Review changes",
+    "message": "परिवर्तनों की समीक्षा करें",
     "description": "Quote lines header: review changes action"
   },
   "revisionsCompare": {
-    "message": "Compare",
+    "message": "तुलना करना",
     "description": "Quote revisions: compare with current revision"
   }
 }

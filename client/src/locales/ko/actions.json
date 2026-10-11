@@ -112,15 +112,15 @@
     "description": "Open print preview for the current record"
   },
   "yes": {
-    "message": "Yes",
+    "message": "예",
     "description": "Affirmative choice"
   },
   "no": {
-    "message": "No",
+    "message": "아니요",
     "description": "Negative choice"
   },
   "view": {
-    "message": "View",
+    "message": "보다",
     "description": "Open an item to view it"
   }
 }

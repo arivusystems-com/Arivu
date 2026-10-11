@@ -23455,175 +23455,175 @@
     "description": "Top tab for Closed Records configuration"
   },
   "invoicesSettingsTitle": {
-    "message": "Invoices",
+    "message": "चालान",
     "description": "Invoices settings page heading"
   },
   "invoicesSettingsDesc": {
-    "message": "Choose the document template for invoices and check rendering parity.",
+    "message": "इनवॉइस के लिए दस्तावेज़ टेम्पलेट चुनें और रेंडरिंग समता की जाँच करें।",
     "description": "Invoices settings page subheading"
   },
   "invoicesDocumentTemplateTitle": {
-    "message": "Invoice document template",
+    "message": "चालान दस्तावेज़ टेम्पलेट",
     "description": "Invoices settings: default template section heading"
   },
   "invoicesDocumentTemplateHelp": {
-    "message": "Select the published template used to generate invoice documents.",
+    "message": "इनवॉइस दस्तावेज़ बनाने के लिए उपयोग किए गए प्रकाशित टेम्पलेट का चयन करें।",
     "description": "Invoices settings: default template section help"
   },
   "invoicesBrandingNoteTitle": {
-    "message": "Branding",
+    "message": "ब्रांडिंग",
     "description": "Invoices settings: branding section heading"
   },
   "invoicesBrandingNoteHelp": {
-    "message": "Invoices use the same logo, colors, and footer as quotes. Update them in quote settings.",
+    "message": "चालान उद्धरण के रूप में समान लोगो, रंग और पाद लेख का उपयोग करते हैं। उन्हें उद्धरण सेटिंग में अद्यतन करें.",
     "description": "Invoices settings: explains branding is shared with quotes"
   },
   "invoicesBrandingNoteLink": {
-    "message": "Open quote branding",
+    "message": "उद्धरण ब्रांडिंग खोलें",
     "description": "Invoices settings: link to quote branding settings"
   },
   "moduleDocumentTemplateEmpty": {
-    "message": "No published document templates yet. Create and publish one in Templates.",
+    "message": "अभी तक कोई प्रकाशित दस्तावेज़ टेम्पलेट नहीं. टेम्प्लेट में एक बनाएं और प्रकाशित करें.",
     "description": "Document template settings: no templates available"
   },
   "moduleDocumentTemplateGoTemplates": {
-    "message": "Go to Templates",
+    "message": "टेम्पलेट्स पर जाएँ",
     "description": "Document template settings: link to Templates"
   },
   "moduleDocumentTemplateLabel": {
-    "message": "Default template",
+    "message": "डिफ़ॉल्ट टेम्पलेट",
     "description": "Document template settings: select label"
   },
   "moduleDocumentTemplateAuto": {
-    "message": "Automatic (system default)",
+    "message": "स्वचालित (सिस्टम डिफ़ॉल्ट)",
     "description": "Document template settings: no explicit default selected"
   },
   "moduleDocumentTemplateHint": {
-    "message": "Used when generating documents for this module.",
+    "message": "इस मॉड्यूल के लिए दस्तावेज़ बनाते समय उपयोग किया जाता है।",
     "description": "Document template settings: select help text"
   },
   "moduleDocumentTemplateLoadFailed": {
-    "message": "Failed to load document template settings.",
+    "message": "दस्तावेज़ टेम्पलेट सेटिंग लोड करने में विफल.",
     "description": "Document template settings: load error"
   },
   "moduleDocumentTemplateSaved": {
-    "message": "Default template saved.",
+    "message": "डिफ़ॉल्ट टेम्पलेट सहेजा गया.",
     "description": "Document template settings: save success"
   },
   "moduleDocumentTemplateSaveFailed": {
-    "message": "Failed to save the default template.",
+    "message": "डिफ़ॉल्ट टेम्पलेट सहेजने में विफल.",
     "description": "Document template settings: save error"
   },
   "moduleShadowParityTitle": {
-    "message": "Rendering parity",
+    "message": "समता का प्रतिपादन",
     "description": "Shadow parity panel heading"
   },
   "moduleShadowParityHelp": {
-    "message": "Compares documents from the legacy renderer and the new content platform renderer before switching over.",
+    "message": "स्विच करने से पहले पुराने रेंडरर और नए कंटेंट प्लेटफ़ॉर्म रेंडरर के दस्तावेज़ों की तुलना करता है।",
     "description": "Shadow parity panel description"
   },
   "moduleShadowParityModeLabel": {
-    "message": "Render mode",
+    "message": "रेंडर मोड",
     "description": "Shadow parity: current render mode label"
   },
   "moduleShadowParityModeLegacy": {
-    "message": "Legacy",
+    "message": "परंपरा",
     "description": "Render mode: legacy renderer only"
   },
   "moduleShadowParityModeShadow": {
-    "message": "Shadow (legacy served, platform compared)",
+    "message": "छाया (विरासत की सेवा, मंच की तुलना)",
     "description": "Render mode: both renderers run, legacy output is used"
   },
   "moduleShadowParityModePlatform": {
-    "message": "Platform",
+    "message": "प्लैटफ़ॉर्म",
     "description": "Render mode: content platform renderer"
   },
   "moduleShadowParityMatchRate": {
-    "message": "{rate}% match",
+    "message": "{rate}% मिलान",
     "description": "Shadow parity: percentage of matching renders"
   },
   "moduleShadowParityTotal": {
-    "message": "Total",
+    "message": "कुल",
     "description": "Shadow parity: total comparisons"
   },
   "moduleShadowParityMatched": {
-    "message": "Matched",
+    "message": "मेल खाने वाले",
     "description": "Shadow parity: matching comparisons"
   },
   "moduleShadowParityMismatched": {
-    "message": "Mismatched",
+    "message": "बेमेल",
     "description": "Shadow parity: differing comparisons"
   },
   "moduleShadowParityErrors": {
-    "message": "Errors",
+    "message": "त्रुटियाँ",
     "description": "Shadow parity: comparisons where the platform render failed"
   },
   "moduleShadowParityRecordLabel": {
-    "message": "Record ID",
+    "message": "रिकॉर्ड आईडी",
     "description": "Shadow parity: record to compare"
   },
   "moduleShadowParityRecordPlaceholder": {
-    "message": "Enter a record ID",
+    "message": "एक रिकॉर्ड आईडी दर्ज करें",
     "description": "Shadow parity: record ID input placeholder"
   },
   "moduleShadowParityCompare": {
-    "message": "Compare",
+    "message": "तुलना करना",
     "description": "Shadow parity: run comparison button"
   },
   "moduleShadowParityColWhen": {
-    "message": "When",
+    "message": "कब",
     "description": "Shadow parity table column: time"
   },
   "moduleShadowParityColRecord": {
-    "message": "Record",
+    "message": "अभिलेख",
     "description": "Shadow parity table column: record"
   },
   "moduleShadowParityColResult": {
-    "message": "Result",
+    "message": "परिणाम",
     "description": "Shadow parity table column: result"
   },
   "moduleShadowParityColLegacy": {
-    "message": "Legacy checksum",
+    "message": "विरासत चेकसम",
     "description": "Shadow parity table column: legacy output checksum"
   },
   "moduleShadowParityColPlatform": {
-    "message": "Platform checksum",
+    "message": "प्लेटफार्म चेकसम",
     "description": "Shadow parity table column: platform output checksum"
   },
   "moduleShadowParityResultMatch": {
-    "message": "Match",
+    "message": "मिलान",
     "description": "Shadow parity result: outputs identical"
   },
   "moduleShadowParityResultMismatch": {
-    "message": "Mismatch",
+    "message": "बेमेल",
     "description": "Shadow parity result: outputs differ"
   },
   "moduleShadowParityResultError": {
-    "message": "Error",
+    "message": "गलती",
     "description": "Shadow parity result: platform render failed"
   },
   "moduleShadowParityEmpty": {
-    "message": "No comparisons yet.",
+    "message": "अभी तक कोई तुलना नहीं.",
     "description": "Shadow parity: no results"
   },
   "moduleShadowParityLoadFailed": {
-    "message": "Failed to load parity results.",
+    "message": "समता परिणाम लोड करने में विफल.",
     "description": "Shadow parity: load error"
   },
   "moduleShadowParityCompareMatch": {
-    "message": "Documents match.",
+    "message": "दस्तावेज़ मेल खाते हैं.",
     "description": "Shadow parity: comparison matched"
   },
   "moduleShadowParityCompareMismatch": {
-    "message": "Documents differ between the legacy and platform renderers.",
+    "message": "लीगेसी और प्लेटफ़ॉर्म रेंडरर्स के बीच दस्तावेज़ भिन्न होते हैं।",
     "description": "Shadow parity: comparison mismatched"
   },
   "moduleShadowParityCompareFailed": {
-    "message": "Comparison failed.",
+    "message": "तुलना विफल.",
     "description": "Shadow parity: comparison error"
   },
   "assignRulesTypeAndPressEnter": {
-    "message": "Type and press Enter to add.",
+    "message": "जोड़ने के लिए टाइप करें और Enter दबाएँ।",
     "description": "Assignment rules: empty multi-value picker hint"
   }
 }

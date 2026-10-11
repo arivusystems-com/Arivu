@@ -1752,7 +1752,7 @@
     "description": "Tooltip for inbox sidebar compose including keyboard shortcut"
   },
   "connectMailboxModalYourName": {
-    "message": "Your name",
+    "message": "Ihr Name",
     "description": "Connect mailbox: name field label"
   },
   "connectMailboxModalYourNamePlaceholder": {
@@ -1760,107 +1760,107 @@
     "description": "Connect mailbox: example person name"
   },
   "connectMailboxModalYourNameHelp": {
-    "message": "Shown in the inbound parser so your team can see who owns this mailbox.",
+    "message": "Wird im eingehenden Parser angezeigt, damit Ihr Team sehen kann, wem dieses Postfach gehört.",
     "description": "Connect mailbox: name field help"
   },
   "connectMailboxModalYourWorkEmail": {
-    "message": "Your work email",
+    "message": "Ihre geschäftliche E-Mail",
     "description": "Connect mailbox: work email field label"
   },
   "connectMailboxModalYourWorkEmailPlaceholder": {
-    "message": "hello{'@'}arivusystems.com",
+    "message": "hallo{'@'}arivusystems.com",
     "description": "Connect mailbox: example work email"
   },
   "connectMailboxModalYourWorkEmailHelp": {
-    "message": "The inbox you will forward from (Gmail, Outlook, etc.). Also used as the readable part of your forwarding address.",
+    "message": "Der Posteingang, von dem aus Sie weiterleiten (Gmail, Outlook usw.). Wird auch als lesbarer Teil Ihrer Weiterleitungsadresse verwendet.",
     "description": "Connect mailbox: work email help"
   },
   "connectMailboxModalCreatingPersonal": {
-    "message": "Creating your mailbox and forwarding address…",
+    "message": "Erstellen Sie Ihr Postfach und Ihre Weiterleitungsadresse…",
     "description": "Connect mailbox: personal setup in progress"
   },
   "connectMailboxModalYourForwardingAddress": {
-    "message": "Your forwarding address",
+    "message": "Ihre Weiterleitungsadresse",
     "description": "Connect mailbox: forwarding address heading"
   },
   "connectMailboxModalCopied": {
-    "message": "Copied",
+    "message": "Kopiert",
     "description": "Connect mailbox: address copied confirmation"
   },
   "connectMailboxModalCopyAddress": {
-    "message": "Copy address",
+    "message": "Adresse kopieren",
     "description": "Connect mailbox: copy forwarding address button"
   },
   "connectMailboxModalStepCopyAddress": {
-    "message": "Copy the forwarding address above.",
+    "message": "Kopieren Sie die Weiterleitungsadresse oben.",
     "description": "Connect mailbox: step 1"
   },
   "connectMailboxModalStepOpenSettings": {
-    "message": "In Gmail or Microsoft 365, open",
+    "message": "Öffnen Sie in Gmail oder Microsoft 365",
     "description": "Connect mailbox: step 2, text before settings path"
   },
   "connectMailboxModalStepSettingsPath": {
-    "message": "Settings → Forwarding",
+    "message": "Einstellungen → Weiterleitung",
     "description": "Connect mailbox: step 2, settings path (bold)"
   },
   "connectMailboxModalStepPasteAddress": {
-    "message": "and paste this address.",
+    "message": "und fügen Sie diese Adresse ein.",
     "description": "Connect mailbox: step 2, text after settings path"
   },
   "connectMailboxModalStepMailAppears": {
-    "message": "New mail appears in your Arivu inbox.",
+    "message": "Neue E-Mails werden in Ihrem Arivu-Posteingang angezeigt.",
     "description": "Connect mailbox: step 3"
   },
   "connectMailboxModalSharedInboxName": {
-    "message": "Shared inbox name",
+    "message": "Name des freigegebenen Posteingangs",
     "description": "Connect mailbox: shared inbox name label"
   },
   "connectMailboxModalSharedNamePlaceholder": {
-    "message": "Support",
+    "message": "Unterstützung",
     "description": "Connect mailbox: example shared inbox name"
   },
   "connectMailboxModalTeamEmailOptional": {
-    "message": "Team email (optional)",
+    "message": "Team-E-Mail (optional)",
     "description": "Connect mailbox: team email label"
   },
   "connectMailboxModalForwardTeamMailbox": {
-    "message": "Forward your team mailbox to this address in Gmail or Microsoft 365.",
+    "message": "Leiten Sie Ihr Teampostfach in Gmail oder Microsoft 365 an diese Adresse weiter.",
     "description": "Connect mailbox: shared forwarding instructions"
   },
   "connectMailboxModalSettingUpShared": {
-    "message": "Setting up shared mailbox…",
+    "message": "Gemeinsames Postfach einrichten…",
     "description": "Connect mailbox: shared setup in progress"
   },
   "connectMailboxModalForwardToThisAddress": {
-    "message": "Forward to this address",
+    "message": "Weiterleiten an diese Adresse",
     "description": "Connect mailbox: shared forwarding address heading"
   },
   "connectMailboxModalChooseProvider": {
-    "message": "Choose your email provider",
+    "message": "Wählen Sie Ihren E-Mail-Anbieter",
     "description": "Connect mailbox: provider picker heading"
   },
   "connectMailboxModalThenConnectGmail": {
-    "message": ", then connect Gmail.",
+    "message": ", und verbinden Sie dann Gmail.",
     "description": "Connect mailbox: suffix after \"shared team mailbox\""
   },
   "connectMailboxModalCreating": {
-    "message": "Creating…",
+    "message": "Erstellen…",
     "description": "Connect mailbox: create button busy state"
   },
   "connectMailboxModalCreateSharedMailbox": {
-    "message": "Create shared mailbox",
+    "message": "Erstellen Sie ein freigegebenes Postfach",
     "description": "Connect mailbox: create shared mailbox button"
   },
   "connectMailboxModalGoogleAppPassword": {
-    "message": "Google App Password",
+    "message": "Google App-Passwort",
     "description": "Connect mailbox: Gmail SMTP app password label"
   },
   "connectMailboxModalAppPasswordPlaceholder": {
-    "message": "16-character app password",
+    "message": "16-stelliges App-Passwort",
     "description": "Connect mailbox: app password placeholder"
   },
   "connectMailboxModalGoogleSignInNext": {
-    "message": "You’ll sign in with Google in the next step to sync Gmail.",
+    "message": "Im nächsten Schritt melden Sie sich bei Google an, um Gmail zu synchronisieren.",
     "description": "Connect mailbox: Gmail OAuth next-step hint"
   }
 }
