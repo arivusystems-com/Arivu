@@ -1054,12 +1054,13 @@ const embedStylesheetLink = computed(() => (
   `<link rel="preload" href="${embedOrigin.value}/embed/headless-blocks.css" as="style" />\n<link rel="stylesheet" href="${embedOrigin.value}/embed/headless-blocks.css" />`
 ));
 
+// `<\u002Fscript>`: a literal closing script tag ends this SFC block; lint --fix strips `<\/script>`.
 const unifiedEmbedSnippet = computed(() => (
-  `${embedStylesheetLink.value}\n<div id="arivu-blog"></div>\n<script\n  ${buildUnifiedScriptAttrs()}\n><\/script>`
+  `${embedStylesheetLink.value}\n<div id="arivu-blog"></div>\n<script\n  ${buildUnifiedScriptAttrs()}\n><\u002Fscript>`
 ));
 
 const unifiedPageSnippet = computed(() => (
-  `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>Blog</title>\n  ${embedStylesheetLink.value}\n</head>\n<body>\n  <main id="arivu-blog"></main>\n  <script\n    ${buildUnifiedScriptAttrs()}\n  ><\/script>\n</body>\n</html>`
+  `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n  <title>Blog</title>\n  ${embedStylesheetLink.value}\n</head>\n<body>\n  <main id="arivu-blog"></main>\n  <script\n    ${buildUnifiedScriptAttrs()}\n  ><\u002Fscript>\n</body>\n</html>`
 ));
 
 const advancedEmbedSnippets = computed(() => [
@@ -1067,13 +1068,13 @@ const advancedEmbedSnippets = computed(() => [
     key: 'list',
     label: t('settings.addonsBlogEmbedListSnippetLabel'),
     description: t('settings.addonsBlogEmbedListSnippetDesc'),
-    value: `${embedStylesheetLink.value}\n<div id="blog-list"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-blog-list.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-target="#blog-list"\n  data-link-prefix="${pathPrefix.value}"\n><\/script>`,
+    value: `${embedStylesheetLink.value}\n<div id="blog-list"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-blog-list.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-target="#blog-list"\n  data-link-prefix="${pathPrefix.value}"\n><\u002Fscript>`,
   },
   {
     key: 'post',
     label: t('settings.addonsBlogEmbedPostSnippetLabel'),
     description: t('settings.addonsBlogEmbedPostSnippetDesc'),
-    value: `${embedStylesheetLink.value}\n<div id="blog-post"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-blog-post.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-slug="your-post-slug"\n  data-target="#blog-post"\n  data-show-feedback-footer="false"\n  data-link-prefix="${pathPrefix.value}"\n><\/script>`,
+    value: `${embedStylesheetLink.value}\n<div id="blog-post"></div>\n<script\n  src="${embedOrigin.value}/embed/headless-blog-post.js"\n  data-api-origin="${embedOrigin.value}"\n  data-org="${embedOrgSlug.value}"\n  data-slug="your-post-slug"\n  data-target="#blog-post"\n  data-show-feedback-footer="false"\n  data-link-prefix="${pathPrefix.value}"\n><\u002Fscript>`,
   },
 ]);
 

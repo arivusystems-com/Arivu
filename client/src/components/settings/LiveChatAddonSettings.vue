@@ -362,7 +362,8 @@ const embedSnippet = computed(() => {
   if (!form.publicKey) return '';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const apiOriginAttr = origin ? `\n  data-api-origin="${origin}"` : '';
-  return `<script\n  src="${origin}/embed/chat.js"\n  data-instance="${form.publicKey}"\n  data-position="right"\n  data-theme="light"${apiOriginAttr}\n><\/script>`;
+  // `<\u002Fscript>`: a literal closing script tag ends this SFC block; lint --fix strips `<\/script>`.
+  return `<script\n  src="${origin}/embed/chat.js"\n  data-instance="${form.publicKey}"\n  data-position="right"\n  data-theme="light"${apiOriginAttr}\n><\u002Fscript>`;
 });
 
 function snapshotForm() {
