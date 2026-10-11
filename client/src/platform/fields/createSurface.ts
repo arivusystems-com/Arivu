@@ -44,11 +44,11 @@ type CompositeAnchor = {
 
 const COMPOSITE_ANCHORS: Record<string, CompositeAnchor[]> = {
   people: [
-    { id: 'app_participation', afterSectionId: 'assignment', afterFieldSectionIndex: 2 }
+    { id: 'app_participation', afterSectionId: 'basic', afterFieldSectionIndex: 0 }
   ],
   organizations: [
-    { id: 'app_participation', afterSectionId: 'contact', afterFieldSectionIndex: 1 },
-    { id: 'vendor_catalog', afterSectionId: 'contact', afterFieldSectionIndex: 1 }
+    { id: 'app_participation', afterSectionId: 'basic', afterFieldSectionIndex: 0 },
+    { id: 'vendor_catalog', afterSectionId: 'basic', afterFieldSectionIndex: 0 }
   ],
   deals: [
     { id: 'deal_relationships', afterSectionId: 'pipeline', afterFieldSectionIndex: 1 },

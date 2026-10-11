@@ -4,7 +4,7 @@ import { buildCreateSurfaceBlocks, getModuleCompositeAnchors } from '@/platform/
 const t = (key: string) => key;
 
 describe('createSurface', () => {
-  it('orders people field sections with app participation after assignment', () => {
+  it('orders people field sections with app participation after basic (legacy contact/assignment collapsed)', () => {
     const blocks = buildCreateSurfaceBlocks({
       moduleKey: 'people',
       fields: [
@@ -22,11 +22,13 @@ describe('createSurface', () => {
 
     expect(blocks.map((b) => (b.type === 'fields' ? b.sectionId : b.id))).toEqual([
       'basic',
-      'contact',
-      'assignment',
       'app_participation',
       'additional'
     ]);
+    const basic = blocks.find((b) => b.type === 'fields' && b.sectionId === 'basic');
+    expect(basic && basic.type === 'fields' && basic.fields.map((f) => f.key)).toEqual(
+      expect.arrayContaining(['first_name', 'email', 'assignedTo'])
+    );
     const additional = blocks.find((b) => b.type === 'fields' && b.sectionId === 'additional');
     expect(additional && additional.type === 'fields' && additional.fields.map((f) => f.key)).toEqual([
       'tags'
@@ -78,6 +80,26 @@ describe('createSurface', () => {
     expect(getModuleCompositeAnchors('organizations').map((a) => a.id)).toEqual([
       'app_participation',
       'vendor_catalog'
+    ]);
+  });
+
+  it('clusters org participation then vendor catalog after basic', () => {
+    const blocks = buildCreateSurfaceBlocks({
+      moduleKey: 'organizations',
+      fields: [
+        { key: 'name', sectionId: 'basic', order: 0, owner: 'core' },
+        { key: 'customField', sectionId: 'additional', order: 1, owner: 'core' }
+      ],
+      fieldLayout: null,
+      t,
+      includeComposites: ['app_participation', 'vendor_catalog']
+    });
+
+    expect(blocks.map((b) => (b.type === 'fields' ? b.sectionId : b.id))).toEqual([
+      'basic',
+      'app_participation',
+      'vendor_catalog',
+      'additional'
     ]);
   });
 });
