@@ -96,7 +96,7 @@
     "description": "Status"
   },
   "achievedOfTarget": {
-    "message": "__UCI_0__ de __UCI_1__",
+    "message": "{achieved} de {target}",
     "description": "Progress label"
   },
   "periodLabel": {

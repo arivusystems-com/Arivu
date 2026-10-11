@@ -232,7 +232,7 @@
     "description": "Timeline domain event description"
   },
   "eventDescGeneric": {
-    "message": "Evento: __UCI_0__",
+    "message": "Evento: {eventType}",
     "description": "Fallback timeline event description"
   },
   "processListTitle": {
@@ -736,23 +736,23 @@
     "description": "Zero duration display"
   },
   "durationMinutes": {
-    "message": "__UCI_0__m",
+    "message": "{minutes}m",
     "description": "Duration in minutes"
   },
   "durationHoursMinutes": {
-    "message": "__UCI_0__h __UCI_1__m",
+    "message": "{hours}h {minutes}m",
     "description": "Duration hours and minutes"
   },
   "durationHours": {
-    "message": "__UCI_0__h",
+    "message": "{hours}h",
     "description": "Duration in hours only"
   },
   "durationDaysHours": {
-    "message": "__UCI_0__d __UCI_1__h",
+    "message": "{days}d {hours}h",
     "description": "Duration days and hours"
   },
   "durationDays": {
-    "message": "__UCI_0__d",
+    "message": "{days}d",
     "description": "Duration in days only"
   },
   "designerPageTitle": {
@@ -880,7 +880,7 @@
     "description": "Unknown module label"
   },
   "designerWebhookSecret": {
-    "message": "Secreto del webhook (copiar ahora; se muestra una vez):\n\n__UCI_0__",
+    "message": "Secreto del webhook (copiar ahora; se muestra una vez):\n\n{secret}",
     "description": "Webhook secret alert"
   },
   "designerInvalidConnection": {
@@ -1164,7 +1164,7 @@
     "description": "Review status guard block"
   },
   "wizardReviewCondition": {
-    "message": "Si __UCI_0__ __UCI_1__ __UCI_2__",
+    "message": "Si {field} {operator} {value}",
     "description": "Review optional condition line"
   },
   "wizardCreating": {
@@ -1244,7 +1244,7 @@
     "description": "Review action create task"
   },
   "wizardActionNotify": {
-    "message": "Notificar a __UCI_0__",
+    "message": "Notificar a {recipient}",
     "description": "Review action notify"
   },
   "wizardActionNotifyOwner": {
@@ -1988,7 +1988,7 @@
     "description": "Untitled task in summary"
   },
   "summaryNotifyTo": {
-    "message": "Para: __UCI_0__",
+    "message": "Para: {recipient}",
     "description": "Notify action summary"
   },
   "summaryNotifyUserFallback": {
@@ -1996,7 +1996,7 @@
     "description": "Notify recipient fallback"
   },
   "summaryStartProcess": {
-    "message": "Proceso: __UCI_0__",
+    "message": "Proceso: {processId}",
     "description": "Start process summary"
   },
   "summaryProcessUnknown": {
@@ -2148,7 +2148,7 @@
     "description": "Process node execution status label"
   },
   "execCompletedDuration": {
-    "message": "__UCI_0__ · __UCI_1__ms",
+    "message": "{status} · {durationMs}ms",
     "description": "Completed execution status with duration"
   },
   "inspectorSelectStep": {
@@ -2224,7 +2224,7 @@
     "description": "Hint for wiring condition branches"
   },
   "inspectorModulePrefix": {
-    "message": "Módulo: __UCI_0__",
+    "message": "Módulo: {module}",
     "description": "Field rule module scope line"
   },
   "inspectorDefaultValuePh": {
@@ -2496,7 +2496,7 @@
     "description": "Record picker search loading state"
   },
   "recordPickerSelected": {
-    "message": "Seleccionado: __UCI_0__",
+    "message": "Seleccionado: {name}",
     "description": "Record picker selected record line"
   },
   "recordPickerSearchPh": {
@@ -2524,7 +2524,7 @@
     "description": "Test modal JSON state heading"
   },
   "testModalSampleJsonPh": {
-    "message": "'__UCI_0__'",
+    "message": "{'{'} \"stage\": \"Negotiation\", \"amount\": 500000 {'}'}",
     "description": "Test modal JSON textarea placeholder"
   },
   "testModalRunSimulation": {
@@ -2564,7 +2564,7 @@
     "description": "Execution version and status line"
   },
   "insightRunStatus": {
-    "message": "Estado: __UCI_0__",
+    "message": "Estado: {status}",
     "description": "Execution status without version"
   },
   "insightRunUnknownTime": {
@@ -2572,7 +2572,7 @@
     "description": "Fallback when execution start time missing"
   },
   "insightRunOption": {
-    "message": "__UCI_0__ · __UCI_1__",
+    "message": "{status} · {startedAt}",
     "description": "Execution select option label"
   },
   "designerAppSales": {
@@ -2740,7 +2740,7 @@
     "description": "Process scope summary when watching specific field"
   },
   "designerScopeGeneric": {
-    "message": "Proceso para __UCI_0__",
+    "message": "Proceso para {module}",
     "description": "Fallback process scope summary"
   },
   "designerModuleRecordFallback": {

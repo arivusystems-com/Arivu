@@ -132,7 +132,7 @@
     "description": "Channel section global toggle aria-label"
   },
   "channelOptionAria": {
-    "message": "__UCI_0__ notificaciones",
+    "message": "{channel} notificaciones",
     "description": "Channel checkbox aria-label in rule builder"
   },
   "assignToMe": {
@@ -220,7 +220,7 @@
     "description": "Remove condition button aria-label"
   },
   "ruleSelectEvent": {
-    "message": "Seleccione __UCI_0__",
+    "message": "Seleccione {event}",
     "description": "Select event type radio aria-label"
   },
   "ruleChannels": {
@@ -264,7 +264,7 @@
     "description": "Mark grouped notifications read aria-label"
   },
   "countInGroupAria": {
-    "message": "__UCI_0__ notificaciones",
+    "message": "{count} notificaciones",
     "description": "Notification group count aria-label"
   },
   "groupEntryAria": {

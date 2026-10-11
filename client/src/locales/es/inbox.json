@@ -700,11 +700,11 @@
     "description": "Provider card"
   },
   "inboxProviderNotAvailableTitle": {
-    "message": "__UCI_0__ — no disponible",
+    "message": "{name} — no disponible",
     "description": "Provider card"
   },
   "inboxProviderConnectTitle": {
-    "message": "Conectar __UCI_0__",
+    "message": "Conectar {name}",
     "description": "Provider card"
   },
   "inboxIntegrationComingSoon": {

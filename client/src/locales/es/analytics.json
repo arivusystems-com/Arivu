@@ -424,11 +424,11 @@
     "description": "Recent activity just now label"
   },
   "homeHoursAgo": {
-    "message": "Hace __UCI_0__h",
+    "message": "Hace {count}h",
     "description": "Recent activity hours ago label"
   },
   "homeDaysAgo": {
-    "message": "Hace __UCI_0__d",
+    "message": "Hace {count}d",
     "description": "Recent activity days ago label"
   },
   "assetType_report": {
@@ -1296,11 +1296,11 @@
     "description": "Report builder column picker clear selection action"
   },
   "builderColumnsSelectedCount": {
-    "message": "__UCI_0__ seleccionado",
+    "message": "{count} seleccionado",
     "description": "Report builder column picker selected count label"
   },
   "builderStepLabel": {
-    "message": "Paso __UCI_0__",
+    "message": "Paso {step}",
     "description": "Report builder panel step label"
   },
   "builderBackToReports": {
@@ -1728,7 +1728,7 @@
     "description": "Collapse expanded matrix row"
   },
   "matrixRowRecords": {
-    "message": "__UCI_0__ registros",
+    "message": "{count} registros",
     "description": "Record count in expanded matrix row"
   },
   "builderNamePlaceholder": {

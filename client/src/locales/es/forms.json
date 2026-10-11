@@ -80,15 +80,15 @@
     "description": "Rating bucket label"
   },
   "analyticsTooltipCompliance": {
-    "message": "Cumplimiento: __UCI_0__%",
+    "message": "Cumplimiento: {value}%",
     "description": "Compliance chart tooltip"
   },
   "analyticsTooltipResponses": {
-    "message": "__UCI_0__ respuestas",
+    "message": "{count} respuestas",
     "description": "Chart tooltip response count"
   },
   "analyticsTooltipScore": {
-    "message": "Puntuación: __UCI_0__%",
+    "message": "Puntuación: {value}%",
     "description": "Section score chart tooltip"
   },
   "analyticsTopFailedQuestions": {
@@ -424,7 +424,7 @@
     "description": "Evidence requirement required"
   },
   "builderEvidenceRuleNumber": {
-    "message": "Regla __UCI_0__",
+    "message": "Regla {number}",
     "description": "Evidence rule heading"
   },
   "builderEvidenceRulesHint": {
@@ -484,7 +484,7 @@
     "description": "Canvas title when nothing selected"
   },
   "builderOptionNumber": {
-    "message": "Opción __UCI_0__",
+    "message": "Opción {number}",
     "description": "Dropdown option placeholder"
   },
   "builderOptions": {
@@ -596,7 +596,7 @@
     "description": "Question type display: Yes-No"
   },
   "builderQuestionFallback": {
-    "message": "Pregunta __UCI_0__",
+    "message": "Pregunta {number}",
     "description": "Fallback label for unnamed question in dropdown"
   },
   "builderQuestionId": {
@@ -608,7 +608,7 @@
     "description": "Question ID hint"
   },
   "builderQuestionIndex": {
-    "message": "Pregunta __UCI_0__",
+    "message": "Pregunta {number}",
     "description": "Selected question index label"
   },
   "builderQuestionSettings": {
@@ -668,7 +668,7 @@
     "description": "Section name placeholder"
   },
   "builderSectionNumber": {
-    "message": "Sección __UCI_0__ ·",
+    "message": "Sección {number} ·",
     "description": "Section index prefix in structure tree"
   },
   "builderSectionSettings": {
@@ -1440,7 +1440,7 @@
     "description": "Form detail load error"
   },
   "hubKpiCompliance": {
-    "message": "Cumplimiento: __UCI_0__%",
+    "message": "Cumplimiento: {value}%",
     "description": "Response KPI cell"
   },
   "hubKpiPassRate": {
@@ -1448,7 +1448,7 @@
     "description": "Response KPI cell"
   },
   "hubKpiRating": {
-    "message": "Clasificación: __UCI_0__/5",
+    "message": "Clasificación: {value}/5",
     "description": "Response KPI cell"
   },
   "hubLinkedContact": {
@@ -1580,7 +1580,7 @@
     "description": "Pass rate KPI help text"
   },
   "hubResponseDetailQuestionScore": {
-    "message": "Puntuación: __UCI_0__",
+    "message": "Puntuación: {score}",
     "description": "Question score in response body"
   },
   "hubResponseDetailRejected": {
@@ -1596,7 +1596,7 @@
     "description": "Reviewer-only actions hint"
   },
   "hubResponseDetailSectionScore": {
-    "message": "Puntuación: __UCI_0__%",
+    "message": "Puntuación: {score}%",
     "description": "Section score in response body"
   },
   "hubResponseDetailSectionsNav": {
@@ -1624,7 +1624,7 @@
     "description": "Response submission timestamp line"
   },
   "hubResponseDetailSubsectionPrefix": {
-    "message": "└ __UCI_0__",
+    "message": "└ {label}",
     "description": "Subsection option prefix in mobile nav"
   },
   "hubResponseDetailTabResponse": {
@@ -1700,7 +1700,7 @@
     "description": "Forms list KPI label"
   },
   "hubSubtitleForm": {
-    "message": "__UCI_0__ • __UCI_1__",
+    "message": "{typeLabel} • {status}",
     "description": "Form detail summary subtitle"
   },
   "hubTabDuplicateForm": {
@@ -1708,7 +1708,7 @@
     "description": "Tab title when duplicating a form"
   },
   "hubTabEditForm": {
-    "message": "Editar: __UCI_0__",
+    "message": "Editar: {name}",
     "description": "Tab title when editing a form"
   },
   "hubTabFormBuilder": {
@@ -1720,11 +1720,11 @@
     "description": "Tab title for form detail view"
   },
   "hubTabNewForm": {
-    "message": "Nueva __UCI_0__",
+    "message": "Nueva {type}",
     "description": "Tab title when creating a form"
   },
   "hubTabResponsesTitle": {
-    "message": "__UCI_0__ - Respuestas",
+    "message": "{name} - Respuestas",
     "description": "Tab title for form responses list"
   },
   "hubTitle": {
@@ -2732,7 +2732,7 @@
     "description": "Performance trends preview description"
   },
   "rbpPeriodInline": {
-    "message": "(período: __UCI_0__)",
+    "message": "(período: {period})",
     "description": "Period inline in preview"
   },
   "rbpSampleAuditId": {
@@ -3196,7 +3196,7 @@
     "description": "Default template suffix in dropdown"
   },
   "rtTemplateDuplicateName": {
-    "message": "__UCI_0__ (Copia)",
+    "message": "{name} (Copia)",
     "description": "Duplicated template name"
   },
   "rtTemplateNamePh": {
@@ -3568,7 +3568,7 @@
     "description": "Form create wizard outcomes step validation"
   },
   "hubCreateValidationFixPrefix": {
-    "message": "Solucione los siguientes problemas antes de guardar:\n\n__UCI_0__",
+    "message": "Solucione los siguientes problemas antes de guardar:\n\n{issues}",
     "description": "Form create final save validation alert prefix"
   },
   "hubCreateDraftSaved": {
@@ -3608,7 +3608,7 @@
     "description": "Form create visibility option (external)"
   },
   "hubCreateSubsectionDefault": {
-    "message": "Subsección __UCI_0__",
+    "message": "Subsección {number}",
     "description": "Default subsection name on save"
   },
   "hubFillLoadingSubtext": {
@@ -3648,7 +3648,7 @@
     "description": "Form fill header progress"
   },
   "hubFillPercentComplete": {
-    "message": "__UCI_0__% completado",
+    "message": "{percent}% completado",
     "description": "Form fill completion percentage"
   },
   "hubFillAutoSaveSaved": {
@@ -3660,7 +3660,7 @@
     "description": "Form fill section progress"
   },
   "hubFillSectionFallback": {
-    "message": "Sección __UCI_0__",
+    "message": "Sección {number}",
     "description": "Form fill unnamed section title"
   },
   "hubFillCriticalBadge": {
@@ -3676,7 +3676,7 @@
     "description": "Form fill required question tooltip"
   },
   "hubFillScoringPts": {
-    "message": "__UCI_0__ puntos",
+    "message": "{points} puntos",
     "description": "Form fill question scoring weight"
   },
   "hubFillNumberPh": {
@@ -3736,7 +3736,7 @@
     "description": "Public form header form id"
   },
   "hubPublicTypeLabel": {
-    "message": "Tipo: __UCI_0__",
+    "message": "Tipo: {type}",
     "description": "Public form header type"
   },
   "hubPublicThankYou": {

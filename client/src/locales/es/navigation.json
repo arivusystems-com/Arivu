@@ -172,7 +172,7 @@
     "description": "Fallback display name in search"
   },
   "globalSearchLinkModule": {
-    "message": "Enlace __UCI_0__",
+    "message": "Enlace {module}",
     "description": "Link drawer title when module name capitalized"
   },
   "userAccountFallback": {
@@ -180,7 +180,7 @@
     "description": "User menu display name fallback"
   },
   "userStatusLabel": {
-    "message": "Estado: __UCI_0__",
+    "message": "Estado: {label}",
     "description": "User menu status dot aria-label"
   },
   "userClearStatus": {
@@ -332,7 +332,7 @@
     "description": "Audit dashboard tab title"
   },
   "appDashboard": {
-    "message": "__UCI_0__ Panel de control",
+    "message": "{app} Panel de control",
     "description": "App-scoped dashboard tab title"
   },
   "tabDemoRequests": {
@@ -408,11 +408,11 @@
     "description": "Form response detail tab title"
   },
   "tabRecordNamed": {
-    "message": "__UCI_0__: __UCI_1__",
+    "message": "{module}: {name}",
     "description": "Record tab with entity name"
   },
   "tabRecordDetail": {
-    "message": "__UCI_0__ Detalle",
+    "message": "{module} Detalle",
     "description": "Record detail tab title without name"
   },
   "tabPage": {
