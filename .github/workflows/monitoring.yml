@@ -33,11 +33,18 @@ jobs:
           fi
       
       - name: Check Instance Registry
+        env:
+          HEALTH_DETAILS_TOKEN: ${{ secrets.HEALTH_DETAILS_TOKEN }}
         run: |
           MASTER_URL="https://${{ secrets.MASTER_DOMAIN }}"
           
+          if [ -z "$HEALTH_DETAILS_TOKEN" ]; then
+            echo "⚠️  HEALTH_DETAILS_TOKEN secret not set; /health/status is operator-only, skipping instance statistics"
+            exit 0
+          fi
+          
           echo "📊 Fetching instance statistics..."
-          STATS=$(curl -s $MASTER_URL/health/status)
+          STATS=$(curl -sf -H "X-Health-Token: $HEALTH_DETAILS_TOKEN" "$MASTER_URL/health/status")
           
           echo "$STATS" | jq '.instances'
           
