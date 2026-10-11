@@ -19,11 +19,11 @@ describe('commercialPlatformParticipation', () => {
     ).toBe(true);
   });
 
-  it('grants commercial visibility when only Inventory is entitled', () => {
+  it('denies commercial visibility when only Inventory is entitled', () => {
     const allowed = new Set(['INVENTORY']);
     expect(
       hasCommercialPlatformEntitlement(allowed, true, () => false)
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('denies commercial visibility without participating apps', () => {
