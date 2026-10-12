@@ -23,7 +23,7 @@ Kubernetes is **not** part of this design.
 
 Click-by-click OCI steps, instance pools, and verification are in [OCI_VM_DEPLOYMENT.md](./OCI_VM_DEPLOYMENT.md).
 
-API process: `node server.js` with `ENABLE_BULL_IN_WEB=false`, `ENABLE_SCHEDULED_JOBS=false`, `PORT=5000`, `EXPRESS_TRUST_PROXY=1`, and `PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable`. Worker process: `node worker.js`. The Worker does not set `PORT`, `ENABLE_BULL_IN_WEB`, `ENABLE_SCHEDULED_JOBS`, or `PUPPETEER_EXECUTABLE_PATH`. Both use the same `MONGODB_URI` (`authSource=admin&replicaSet=rs0&retryWrites=true`), the same `REDIS_URL`, and the same Object Storage block including `STORAGE_FORCE_PATH_STYLE=true`. Readiness is `GET /health/ready` with `REDIS_HEALTH_BLOCKS_READY=true`. Vault contents are in the OCI runbook, not in `server/.env.production.example`.
+API process: `node server.js` with `ENABLE_BULL_IN_WEB=false`, `ENABLE_SCHEDULED_JOBS=false`, `PORT=5000`, `EXPRESS_TRUST_PROXY=1`, and `PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable`. Worker process: `node worker.js`. The Worker does not set `PORT`, `ENABLE_BULL_IN_WEB`, `ENABLE_SCHEDULED_JOBS`, or `PUPPETEER_EXECUTABLE_PATH`. Both use the same `MONGODB_URI` (`authSource=admin&replicaSet=rs0&retryWrites=true`), the same `REDIS_URL`, and the same Object Storage block including `STORAGE_FORCE_PATH_STYLE=true`. Readiness is `GET /health/ready` with `REDIS_HEALTH_BLOCKS_READY=true`. Vault contents are in the OCI runbook. There is no production env template in git (`server/.env.example` is the development template).
 
 ## Frontend (Vercel)
 

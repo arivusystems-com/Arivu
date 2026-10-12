@@ -14,25 +14,28 @@ Replace every `<…>` placeholder before you run a command or save a secret. Do 
 
 ## Recommended order
 
-Create the compartment first (section 0). Then:
+Numbers are section numbers.
 
+0. Compartment and SSH key
 1. OCI network
 2. Bastion
 3. MongoDB 8 replica set `rs0` (initiate the set before any API or Worker starts)
 4. Redis
 5. Object Storage
 6. Vault/secrets
-7. API pool size 1
-8. Worker pool size 1
-9. Load balancer
-10. DNS
-11. Production smoke tests
-12. Legacy quote/invoice migration
-13. Increase API pool to 2
-14. Increase Worker pool to 2
-15. Consider autoscaling later
+7. Startup script
+8. Env file contents
+9. API pool size 1
+10. Worker pool size 1
+11. Load balancer
+12. DNS
+13. Production smoke tests
+14. Legacy quote/invoice migration
+15. Increase API pool to 2
+16. Increase Worker pool to 2
+17. Consider autoscaling later
 
-Do not raise the API pool above 1 until step 12 has finished. `server/.env.production.example` is not the complete production environment. Paste the Vault files in section 8.
+Do not raise the API pool above 1 until section 14 has finished. There is no production env template in git (`server/.env.example` is the development template). Section 8 is the complete production environment.
 
 ## What you are building
 
@@ -56,7 +59,7 @@ An instance pool is a group that keeps a chosen number of identical VMs running.
 
 | Word | Meaning |
 |------|---------|
-| Region | The data-center area. Pick one, for example `ap-mumbai-1`, and create every resource in it. |
+| Region | The data-center area. Arivu uses `ap-hyderabad-1` (India South, Hyderabad). Create every resource in it. |
 | Compartment | A folder for resources. Everything in this runbook goes in `arivu-production`. |
 | VCN | Your private network. |
 | Subnet | A slice of that network. Public subnet: load balancer and bastion. Private subnet: MongoDB, Redis, API, Worker. |
@@ -78,11 +81,11 @@ Write these down as you create them. Later steps refer to them by these names.
 
 | Name | Example | Where it comes from |
 |------|---------|---------------------|
-| Region | `ap-mumbai-1` | You choose it in section 1 |
-| Compartment | `arivu-production` | Section 1 |
-| API env secret OCID | `ocid1.vaultsecret.oc1...` | Section 7 |
-| Worker env secret OCID | `ocid1.vaultsecret.oc1...` | Section 7 |
-| Git deploy key secret OCID | `ocid1.vaultsecret.oc1...` | Section 7 |
+| Region | `ap-hyderabad-1` | Fixed. Select it in section 1 |
+| Compartment | `arivu-production` | Section 0 |
+| API env secret OCID | `ocid1.vaultsecret.oc1...` | Section 6 |
+| Worker env secret OCID | `ocid1.vaultsecret.oc1...` | Section 6 |
+| Git deploy key secret OCID | `ocid1.vaultsecret.oc1...` | Section 6 |
 | Git SSH URL | `git@github.com:<org>/<repo>.git` | Your git host |
 | Release tag | `v1.2.3` | The tag you are deploying |
 
@@ -111,7 +114,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/arivu_oci -C "arivu-oci"
 
 ## 1. Network
 
-1. In the console header, select the region, for example **India West (Mumbai)**.
+1. In the console header, select the region **India South (Hyderabad)** (`ap-hyderabad-1`). If it is not listed, subscribe to it first (header region menu → **Manage regions**).
 2. Navigation menu → **Networking** → **Virtual cloud networks**.
 3. Confirm the compartment is `arivu-production`.
 4. **Start VCN Wizard** → **Create VCN with Internet Connectivity** → **Start VCN Wizard**.
@@ -127,13 +130,13 @@ Confirm the private subnet route table has both of these routes. Open the VCN �
 | Destination | Target |
 |-------------|--------|
 | `0.0.0.0/0` | NAT gateway |
-| `All <region> Services in Oracle Services Network` | Service gateway |
+| `All HYD Services In Oracle Services Network` | Service gateway |
 
 The public route table has `0.0.0.0/0` → internet gateway.
 
 ### Network security groups
 
-Open the VCN → **Network Security Groups** → **Create Network Security Group**. Create five groups in `arivu-production`. Add the rules after each group exists (a rule can name another group only after that group exists).
+Open the VCN → **Network Security Groups** → **Create Network Security Group**. Create six groups in `arivu-production`. Add the rules after each group exists (a rule can name another group only after that group exists).
 
 | NSG | Ingress |
 |-----|---------|
@@ -164,7 +167,7 @@ Egress for `nsg-api` and `nsg-worker`: TCP 27017 to `nsg-mongo`, TCP 6379 to `ns
 4. CIDR block allowlist: your current public IP with `/32`, for example `203.0.113.10/32`. This is who may open a session. It is not the VM’s firewall.
 5. Create.
 
-You will create a session later, after a VM exists. A session lasts at most 3 hours. When it expires, create another one. The VM keeps running.
+You will create a session later, after a VM exists. A **Managed SSH session** requires the Oracle Cloud Agent **Bastion** plugin to be enabled and running on the target VM (instance → **Oracle Cloud Agent** tab). Enable it on every VM you create, and in the instance configurations in sections 9 and 10. If the plugin is not available on the image, use a **SSH port forwarding session** to port 22 instead. A session lasts at most 3 hours. When it expires, create another one. The VM keeps running.
 
 ### Open SSH to a private VM
 
@@ -187,7 +190,7 @@ Private IP example used below: `10.0.1.10`. Use the private IP the console shows
 
 1. Navigation menu → **Compute** → **Instances** → **Create instance**.
 2. Name: `arivu-mongo`. Compartment: `arivu-production`.
-3. Placement: the only availability domain, unless the region lists more than one. Pick any fault domain.
+3. Placement: `ap-hyderabad-1` has a single availability domain (`AD-1`). Pick any fault domain.
 4. Image: **Canonical Ubuntu 24.04**.
 5. Shape: **Change shape** → **Ampere** is the wrong family. Choose an AMD flexible shape. Set **2 OCPU** and **16 GB** memory.
 6. Networking: VCN `arivu-vcn`, subnet the **private** subnet. Select **Do not assign a public IPv4 address**.
@@ -230,7 +233,14 @@ sudo chown -R mongodb:mongodb /var/lib/mongodb
 
 ### Config
 
-`/etc/mongod.conf` must set the private IP, authentication, and a single-member replica set. `retryWrites` in the app requires a replica set even with one member.
+`/etc/mongod.conf` must set the private IP, authentication, and a single-member replica set. `retryWrites` in the app requires a replica set even with one member. A replica set with authorization also requires a key file, even with one member. Without it `mongod` refuses to start (`security.keyFile is required when authorization is enabled with replica sets`).
+
+```bash
+sudo mkdir -p /etc/mongodb
+openssl rand -base64 756 | sudo tee /etc/mongodb/keyfile >/dev/null
+sudo chown mongodb:mongodb /etc/mongodb/keyfile
+sudo chmod 400 /etc/mongodb/keyfile
+```
 
 ```yaml
 storage:
@@ -244,6 +254,7 @@ net:
   bindIp: 127.0.0.1,10.0.1.10
 security:
   authorization: enabled
+  keyFile: /etc/mongodb/keyfile
 replication:
   replSetName: rs0
 processManagement:
@@ -256,14 +267,22 @@ sudo systemctl enable --now mongod
 
 ### Users and replica set
 
-Connect once on localhost before the replica set is initiated (localhost exception still applies on a fresh install):
+Connect on localhost. On a fresh install with no users, the localhost exception allows `rs.initiate` and exactly one `createUser`. After the first user exists, every later command must be authenticated. Initiate the set first, then create the admin user, authenticate, and create the other users.
 
 ```bash
 mongosh
 ```
 
 ```javascript
+rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "10.0.1.10:27017" }] })
+```
+
+Wait until the prompt shows `rs0 [direct: primary]` (a few seconds), then:
+
+```javascript
 use admin
+db.createUser({ user: "admin", pwd: passwordPrompt(), roles: [{ role: "root", db: "admin" }] })
+db.auth("admin", passwordPrompt())
 db.createUser({
   user: "arivu",
   pwd: passwordPrompt(),
@@ -272,20 +291,21 @@ db.createUser({
     { role: "dbAdminAnyDatabase", db: "admin" }
   ]
 })
-rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "10.0.1.10:27017" }] })
+db.createUser({ user: "arivu_backup", pwd: passwordPrompt(), roles: [{ role: "backup", db: "admin" }] })
 ```
 
-`readWriteAnyDatabase` is required because the API uses `arivu_master` plus one database per tenant. The replica-set host must be the private IP the API will dial, not `localhost`.
+`admin` is for operators only. It never goes into an env file. `arivu` is the application user. `readWriteAnyDatabase` is required because the API uses `arivu_master` plus one database per tenant. `arivu_backup` is used only by the `mongodump` cron. The replica-set host must be the private IP the API will dial, not `localhost`.
 
 `rs.initiate` for `rs0` must succeed before you start the API or the Worker. `retryWrites=true` fails on a standalone `mongod`. Do not create the API or Worker pools until `rs.status()` shows `rs0` / `PRIMARY`.
 
-Exit, then confirm auth and the set:
+Exit, then confirm auth and the set. `rs.status()` needs a cluster role, so use `admin` here:
 
 ```bash
-mongosh "mongodb://arivu@10.0.1.10:27017/admin?authSource=admin" --quiet --eval 'rs.status().ok'
+mongosh "mongodb://admin@10.0.1.10:27017/admin?authSource=admin" --quiet --eval 'rs.status().ok'
+mongosh "mongodb://arivu@10.0.1.10:27017/arivu_master?authSource=admin&replicaSet=rs0" --quiet --eval 'db.runCommand({ ping: 1 }).ok'
 ```
 
-Expected: `1`.
+Expected: `1` from both.
 
 Application URI. The query string must include `authSource=admin`, `replicaSet=rs0`, and `retryWrites=true`. Password is URL-encoded. `<PRIVATE_MONGO_IP>` is the MongoDB VM private IP (`10.0.1.10` in the example above):
 
@@ -307,23 +327,33 @@ sudo tee /usr/local/bin/arivu-mongo-backup.sh >/dev/null <<'EOF'
 set -euo pipefail
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 OUT="/var/backups/mongodb/arivu-${STAMP}.archive.gz"
-mongodump --uri="$MONGODB_URI" --archive="$OUT" --gzip
-oci os object put --bucket-name "$BUCKET" --name "backups/mongo/arivu-${STAMP}.archive.gz" --file "$OUT" --auth instance_principal
+mongodump --uri="$MONGODB_BACKUP_URI" --archive="$OUT" --gzip
+/root/bin/oci os object put --bucket-name "$BUCKET" --name "backups/mongo/arivu-${STAMP}.archive.gz" --file "$OUT" --auth instance_principal
 find /var/backups/mongodb -type f -mtime +2 -delete
 EOF
 sudo chmod 750 /usr/local/bin/arivu-mongo-backup.sh
 ```
 
-Put `MONGODB_URI` and `BUCKET` in `/etc/arivu/mongo-backup.env` (`chmod 600`). Cron as root, daily:
-
-```cron
-15 2 * * * . /etc/arivu/mongo-backup.env && /usr/local/bin/arivu-mongo-backup.sh >> /var/log/arivu-mongo-backup.log 2>&1
-```
-
-The `oci` command in that script needs the CLI and a dynamic group that matches only `arivu-mongo`. Create that group the same way as section 6, with a defined tag `arivu.role=mongo` on this VM, and a policy that allows `manage objects` in `arivu-production` where `target.bucket.name='arivu-production'` and the object name is under `backups/mongo/`. Install the CLI on this VM with:
+Create `/etc/arivu/mongo-backup.env` (`sudo mkdir -p /etc/arivu`, then `chmod 600` the file). Quote both values. The file is read by the shell, and an unquoted `&` in the URI would cut it short. The URI has no database name. With a database in the URI, `mongodump` dumps only that database and skips every tenant database.
 
 ```bash
-bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install.sh)" -- --accept-all-defaults
+MONGODB_BACKUP_URI='mongodb://arivu_backup:<PASSWORD>@10.0.1.10:27017/?authSource=admin&replicaSet=rs0'
+BUCKET='arivu-production'
+```
+
+Cron as root, daily:
+
+```cron
+15 2 * * * set -a && . /etc/arivu/mongo-backup.env && set +a && /usr/local/bin/arivu-mongo-backup.sh >> /var/log/arivu-mongo-backup.log 2>&1
+```
+
+`set -a` exports the sourced values. Without it the script does not see them and exits on the unset variable.
+
+The `oci` command in that script needs the CLI and a dynamic group that matches only `arivu-mongo`. Create that group the same way as section 6, with a defined tag `arivu.role=mongo` on this VM, and a policy that allows `manage objects` in `arivu-production` where `target.bucket.name='arivu-production'` and the object name is under `backups/mongo/`. Install the CLI as root on this VM, so it lands at `/root/bin/oci` where the root cron calls it:
+
+```bash
+sudo -H bash -c "$(curl -fsSL https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install.sh)" -- --accept-all-defaults
+sudo /root/bin/oci --version
 ```
 
 Restore drill once before go-live: `mongorestore --uri=... --archive=... --gzip --drop` onto a throwaway database, or restore the block volume to a new VM and run `rs.status()`.
@@ -418,8 +448,8 @@ Put `arivu-storage` in a group `arivu-storage-group` first (Domains → Groups �
 
 ```text
 IMPORT_STORAGE_DRIVER=oci
-STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
-STORAGE_REGION=<region>
+STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.ap-hyderabad-1.oraclecloud.com
+STORAGE_REGION=ap-hyderabad-1
 STORAGE_BUCKET=arivu-production
 STORAGE_ACCESS_KEY=<customer-secret-access-key>
 STORAGE_SECRET_KEY=<customer-secret-key>
@@ -428,20 +458,20 @@ STORAGE_FORCE_PATH_STYLE=true
 
 Both the API Vault secret and the Worker Vault secret must contain this whole block. `STORAGE_FORCE_PATH_STYLE=true` is required. The app turns on path-style requests only when that value is the string `true`. OCI’s S3-compatible endpoint does not work with the default (path-style off).
 
-`server/.env.production.example` is not the complete production environment. It omits `STORAGE_FORCE_PATH_STYLE`. Do not paste that file into Vault. Use section 8.
+Do not paste `server/.env.example` into Vault. Use section 8.
 
 Smoke test from a laptop that has the keys:
 
 ```bash
 aws s3api put-object \
-  --endpoint-url "https://<namespace>.compat.objectstorage.<region>.oraclecloud.com" \
-  --region "<region>" \
+  --endpoint-url "https://<namespace>.compat.objectstorage.ap-hyderabad-1.oraclecloud.com" \
+  --region "ap-hyderabad-1" \
   --bucket arivu-production \
   --key healthchecks/oci-put.txt \
   --body ./oci-put.txt
 ```
 
-Then delete `healthchecks/oci-put.txt`. Return to the MongoDB VM and install the `mongodump` cron now that the bucket exists.
+Then delete `healthchecks/oci-put.txt`. Install the `mongodump` cron on the MongoDB VM after section 6, once its instance principal exists.
 
 ## 6. Vault, tag, and instance principal
 
@@ -539,7 +569,7 @@ write_files:
       ROLE="api"
       RELEASE_TAG="<release-tag>"
       REPO_URL="git@github.com:<org>/<repo>.git"
-      REGION="<region>"
+      REGION="ap-hyderabad-1"
       API_ENV_SECRET_OCID="<ocid1.vaultsecret...>"
       WORKER_ENV_SECRET_OCID="<ocid1.vaultsecret...>"
       GIT_KEY_SECRET_OCID="<ocid1.vaultsecret...>"
@@ -652,7 +682,7 @@ Make a second copy for the Worker. In that copy set `ROLE="worker"` and leave th
 
 These are the secret values, not files in git. Paste them into the Vault secrets from section 6.
 
-Do not copy `server/.env.production.example` into Vault. That file is a short subset. It does not include `STORAGE_FORCE_PATH_STYLE`.
+Do not copy `server/.env.example` into Vault. It is the development template.
 
 `rs0` must already be PRIMARY. API and Worker use the same `MONGODB_URI`, the same `REDIS_URL`, the same Object Storage block, the same `CLIENT_URL`, and the same `JWT_SECRET`.
 
@@ -666,15 +696,15 @@ Object Storage on **both** secrets. `STORAGE_FORCE_PATH_STYLE=true` is required:
 
 ```text
 IMPORT_STORAGE_DRIVER=oci
-STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
-STORAGE_REGION=<region>
+STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.ap-hyderabad-1.oraclecloud.com
+STORAGE_REGION=ap-hyderabad-1
 STORAGE_BUCKET=arivu-production
 STORAGE_ACCESS_KEY=<secret>
 STORAGE_SECRET_KEY=<secret>
 STORAGE_FORCE_PATH_STYLE=true
 ```
 
-`arivu-api-env` (API only adds the five lines marked below):
+`arivu-api-env` (the API-only lines are listed after the block):
 
 ```bash
 NODE_ENV=production
@@ -691,8 +721,8 @@ ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE=fail-closed
 RATE_LIMIT_REDIS_REQUIRED=true
 EXPRESS_TRUST_PROXY=1
 IMPORT_STORAGE_DRIVER=oci
-STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
-STORAGE_REGION=<region>
+STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.ap-hyderabad-1.oraclecloud.com
+STORAGE_REGION=ap-hyderabad-1
 STORAGE_BUCKET=arivu-production
 STORAGE_ACCESS_KEY=<secret>
 STORAGE_SECRET_KEY=<secret>
@@ -739,8 +769,8 @@ ROUTE_RATE_LIMIT_REDIS_FAILURE_MODE=fail-closed
 RATE_LIMIT_REDIS_REQUIRED=true
 EXPRESS_TRUST_PROXY=1
 IMPORT_STORAGE_DRIVER=oci
-STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
-STORAGE_REGION=<region>
+STORAGE_ENDPOINT=https://<namespace>.compat.objectstorage.ap-hyderabad-1.oraclecloud.com
+STORAGE_REGION=ap-hyderabad-1
 STORAGE_BUCKET=arivu-production
 STORAGE_ACCESS_KEY=<secret>
 STORAGE_SECRET_KEY=<secret>
@@ -765,8 +795,9 @@ The pool starts at **size 1**. This is API #1. Do not start it until MongoDB `rs
 4. Networking: VCN `arivu-vcn`, subnet the **private** subnet, **Do not assign a public IPv4 address**, NSG `nsg-api`.
 5. SSH key: paste `~/.ssh/arivu_oci.pub`.
 6. Show advanced options → **Management** → paste the API cloud-init script (the copy with `ROLE="api"`).
-7. Show tagging options → tag namespace `arivu`, key `role`, value `api`.
-8. Create.
+7. Show advanced options → **Oracle Cloud Agent** → enable the **Bastion** plugin.
+8. Show tagging options → tag namespace `arivu`, key `role`, value `api`.
+9. Create.
 
 ### Instance pool
 
@@ -850,7 +881,7 @@ There is no port to curl. The Worker does not listen for HTTP. Chrome is not ins
    - Health check: protocol HTTP, port 5000, URL path `/health/ready`, status code 200. Interval 10000 ms, timeout 5000 ms.
    - Session persistence: none.
 8. Create the load balancer. Wait until it is **Active**. Copy its **public IP**.
-9. Open the load balancer → the backend set `arivu-api` → **Backend set configuration** or **Details** → set the **idle timeout** to **3600** seconds. The default 60 seconds kills inbox, notification, internal chat, and telephony SSE.
+9. Open the load balancer → **Listeners** → `https-443` → **Edit** → set the **idle timeout** to **3600** seconds. Idle timeout is a listener setting, not a backend set setting. The default 60 seconds kills the SSE and streaming routes listed below.
 10. Leave HTTP/1.1 on the path to Node so `Upgrade` works for WebSocket `/api/astra/studio/ws`.
 
 ### Attach the API pool
@@ -872,6 +903,9 @@ SSE routes that must stay open through the balancer:
 - `/api/internal-chat/stream`
 - `/api/telephony/stream`
 - `/api/live-chat/sessions/:sessionId/stream`
+- `/api/embed/chat/sessions/:sessionId/stream` and `/embed/chat/sessions/:sessionId/stream`
+- `/api/ai/echo/stream`
+- `/api/ai/v2/ask/stream`
 
 WebSocket:
 
@@ -918,7 +952,7 @@ The load balancer probe is `GET /health/ready` (and liveness is `GET /health/liv
 | Redis from API | Readiness stays 200. Stop Redis briefly: readiness becomes 503 (`REDIS_HEALTH_BLOCKS_READY=true`). Start Redis again before continuing. |
 | MongoDB | API log shows master DB connected. `rs.status()` still PRIMARY. A write from the app (sign-in or a settings read) succeeds. |
 | Object Storage | Upload a file in the app (import CSV or a document). Object appears under the bucket. `IMPORT_STORAGE_DRIVER=oci` is set on both API and Worker. |
-| Worker | `systemctl is-active arivu-worker`. Logs show email, inbound, and import consumers. |
+| Worker | `systemctl is-active arivu-worker`. Logs show the email, inbound email, import, campaign, and analytics consumers. |
 | Queues | Trigger one outbound email. Worker log shows the email Bull job. API log does not say the web consumer is running. |
 | WebSocket | Browser or `wscat` to `wss://api.arivusystems.com/api/astra/studio/ws`. The balancer must complete the upgrade. An application auth error after the upgrade still means the socket passed the balancer. |
 | SSE | Open the app inbox or notifications while watching the connection. It must still be open after 60 seconds. |
@@ -932,17 +966,25 @@ Required before the API pool goes from 1 to 2. Do this only after section 13 is 
 
 Older quote and invoice PDFs were written under `server/public` on the machine that generated them (`/api/quote-documents/...` and `/api/invoice-documents/...`, `storageProvider` not `oci`). `express.static` serves those files from that disk. API #2 does not have them. New PDFs already go to Object Storage and do not need this step.
 
-Run the script on a machine that still has those files under `server/public`, from `/opt/arivu/src/server`, with the API env loaded so `MONGODB_URI` and the `STORAGE_*` variables are set. A new API VM does not have PDFs that were written on an older host. Copy that `server/public` tree onto the machine first, or run the script on the old host with the production URI and Object Storage variables. Dry run first. It prints what it would copy and does not upload.
+Run the script on a machine that still has those files under `server/public`, from `/opt/arivu/src/server`, with the API env loaded so `MONGODB_URI` and the `STORAGE_*` variables are set. A new API VM does not have PDFs that were written on an older host. Copy that `server/public` tree onto the machine first, or run the script on the old host with the production URI and Object Storage variables in `/etc/arivu/api.env`. Dry run first. It prints what it would copy and does not upload.
+
+Load the env through systemd, the same way the service does. Do not `source` `api.env` in a shell: the unquoted `&` in `MONGODB_URI` cuts the value short.
 
 ```bash
-sudo -u arivu bash -lc 'set -a && . /etc/arivu/api.env && set +a && cd /opt/arivu/src/server && node scripts/migrateLegacyQuoteInvoiceDocuments.js'
+sudo systemd-run --pipe --wait --quiet --uid=arivu --gid=arivu \
+  -p EnvironmentFile=/etc/arivu/api.env -p WorkingDirectory=/opt/arivu/src/server \
+  /usr/bin/node scripts/migrateLegacyQuoteInvoiceDocuments.js
 ```
 
 Then apply. The script uploads to Object Storage and updates the rows. It does not delete the local files.
 
 ```bash
-sudo -u arivu bash -lc 'set -a && . /etc/arivu/api.env && set +a && cd /opt/arivu/src/server && node scripts/migrateLegacyQuoteInvoiceDocuments.js --apply'
+sudo systemd-run --pipe --wait --quiet --uid=arivu --gid=arivu \
+  -p EnvironmentFile=/etc/arivu/api.env -p WorkingDirectory=/opt/arivu/src/server \
+  /usr/bin/node scripts/migrateLegacyQuoteInvoiceDocuments.js --apply
 ```
+
+Legacy general uploads have the same problem, and no script exists for them. Older attachments, logos, and media stored as `/api/uploads/<orgId>/...` are served by `express.static(server/uploads)` from the disk of the host that received them. New uploads go to Object Storage (`oci://`). Before cutover, check on the old host whether `server/uploads` has files that are still referenced. If it does, those links return 404 on every OCI API instance until the files are moved to Object Storage and the records are updated.
 
 If the dry run lists no documents, there is nothing to upload. Continue to section 15. If it lists documents, confirm one of those PDFs still downloads through the app after `--apply`. Leave the API pool at size 1 until that download works. The local files under `server/public` stay on disk.
 
