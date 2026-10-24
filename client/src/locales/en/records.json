@@ -5962,5 +5962,65 @@
   "revisionsCompare": {
     "message": "Compare",
     "description": "Quote revisions: compare with current revision"
+  },
+  "metricDefaultName": {
+    "message": "Metric",
+    "description": "Default name for a new record metric before the user renames it"
+  },
+  "metricLabelCaption": {
+    "message": "Label",
+    "description": "Caption for the metric name field in the metrics configurator"
+  },
+  "metricLeadScore": {
+    "message": "Lead Score",
+    "description": "Default people lead metric"
+  },
+  "metricDaysSinceCreation": {
+    "message": "Days Since Creation",
+    "description": "Default people lead metric"
+  },
+  "metricSourceChannel": {
+    "message": "Source Channel",
+    "description": "Default people lead metric"
+  },
+  "metricLastContacted": {
+    "message": "Last Contacted",
+    "description": "Default people metric"
+  },
+  "metricTotalDealsValue": {
+    "message": "Total Deals Value",
+    "description": "Default people metric"
+  },
+  "metricTotalOpenDeals": {
+    "message": "Total Open Deals",
+    "description": "Default organization metric"
+  },
+  "metricOpenInvoices": {
+    "message": "Open Invoices",
+    "description": "Default organization metric"
+  },
+  "metricActiveCases": {
+    "message": "Active Cases",
+    "description": "Default organization metric"
+  },
+  "metricAccountManager": {
+    "message": "Account Manager",
+    "description": "Default organization metric"
+  },
+  "metricDealValue": {
+    "message": "Deal Value",
+    "description": "Default deal metric"
+  },
+  "metricProbability": {
+    "message": "Probability %",
+    "description": "Default deal metric"
+  },
+  "metricDaysInStage": {
+    "message": "Days in Stage",
+    "description": "Default deal metric"
+  },
+  "metricLtv": {
+    "message": "LTV",
+    "description": "Default people metric"
   }
 }

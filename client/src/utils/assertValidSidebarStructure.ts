@@ -44,7 +44,7 @@ export function assertValidSidebarStructure(structure: SidebarStructure): void {
   ];
 
   for (const item of allItems) {
-    invariant(ALLOWED_KINDS.has(item.kind), `Invalid sidebar item kind: ${(item as any).kind}`);
+    invariant(ALLOWED_KINDS.has(item.kind), `Invalid sidebar item kind: ${item.kind}`);
   }
 
   // Core Modules: must be coreModule kind items.

@@ -157,6 +157,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { AcademicCapIcon } from '@heroicons/vue/24/outline';
 import apiClient from '@/utils/apiClient';
+import { formatUserDate } from '@/utils/localeFormat';
 import { useAuthStore } from '@/stores/auth';
 import { useOnboarding } from '@/composables/useOnboarding';
 import { isAiSuiteEntitled } from '@/utils/aiSuiteEntitlement';
@@ -207,8 +208,8 @@ function homeCardMeta(row) {
     if (!Number.isNaN(d.getTime())) {
       parts.push(
         row.overdue
-          ? t('learning.dueOverdue', { date: d.toLocaleDateString() })
-          : t('learning.dueOn', { date: d.toLocaleDateString() })
+          ? t('learning.dueOverdue', { date: formatUserDate(d) })
+          : t('learning.dueOn', { date: formatUserDate(d) })
       );
     }
   }
@@ -217,7 +218,7 @@ function homeCardMeta(row) {
 
 function formatHomeDue(dueAt) {
   const d = new Date(dueAt);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString();
+  return Number.isNaN(d.getTime()) ? '' : formatUserDate(d);
 }
 
 function aiRecommendMeta(row) {

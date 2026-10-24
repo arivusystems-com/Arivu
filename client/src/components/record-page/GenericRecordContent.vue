@@ -2786,8 +2786,8 @@ async function syncRelatedRecordsForLookupField(fieldKey, value) {
 const genericAdapter = computed(() => {
   if (!record.value || !moduleDefinition.value) return null;
   // Track related-record context so main-area RelatedSection re-renders on link/unlink.
-  genericRelatedGroupsFromContext.value;
-  contextRevision.value;
+  const _relatedGroupsRevision = genericRelatedGroupsFromContext.value;
+  const _contextRevision = contextRevision.value;
   const adapterFactory = moduleKeyLower.value === 'forms'
     ? createFormRecordAdapter
     : moduleKeyLower.value === 'items'
@@ -3877,6 +3877,10 @@ function getRecordLeftPaneScrollEl() {
 
 function handleSectionUpdated(event) {
   const payload = event?.payload;
+  if (payload?.type === 'record-field' && record.value && payload.field) {
+    record.value[payload.field] = payload.value;
+    return;
+  }
 
   if (moduleKeyLower.value === 'sales_orders' && record.value) {
     if (payload?.type === 'soft-refresh') {

@@ -72,6 +72,7 @@ import { useI18n } from 'vue-i18n';
 import { CheckIcon } from '@heroicons/vue/24/solid';
 import AvatarInitials from '@/components/ui/AvatarInitials.vue';
 import { computeSeenZone, memberDisplayName } from '@/utils/internalChatSeenZone';
+import { formatTime } from '@/utils/localeFormat';
 
 const props = defineProps({
   mode: { type: String, default: 'private' },
@@ -118,7 +119,7 @@ const tooltipText = computed(() => {
   if (!z.seenBy.length) return t('internalChat.seenZoneNotYet');
   if (z.variant === 'dm' && z.allSeen && z.seenBy[0]?.lastReadAt) {
     try {
-      const when = new Date(z.seenBy[0].lastReadAt).toLocaleString(undefined, {
+      const when = formatTime(z.seenBy[0].lastReadAt, {
         hour: 'numeric',
         minute: '2-digit',
       });

@@ -81,6 +81,7 @@
 
                             <div v-if="enabledFields[field.key]" class="mt-3 pl-7">
                               <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                                 :field="{ ...field, label: '' }"
                                 :value="fieldValues[field.key]"
                                 :module-key="moduleKey"
@@ -129,11 +130,16 @@ import { useI18n } from 'vue-i18n';
 import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 import HeadlessCheckbox from '@/components/ui/HeadlessCheckbox.vue';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import WorkspaceScopedDrawerShell from '@/components/common/WorkspaceScopedDrawerShell.vue';
 import { fetchModuleDefinitionCached } from '@/utils/tenantSchemaApiCache';
 import { getMassEditableFields } from '@/utils/massEditFieldPolicy';
 import { getFieldDisplayLabel } from '@/utils/fieldDisplay';
 import { resolveFieldLabel as resolveModuleFieldLabel } from '@/utils/fieldLabelResolver';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },

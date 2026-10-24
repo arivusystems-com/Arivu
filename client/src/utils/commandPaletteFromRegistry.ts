@@ -1,4 +1,3 @@
-import type { Router } from 'vue-router';
 import type { CommandItem, CommandCategory } from '@/types/command.types';
 import type { DashboardDefinition } from '@/types/dashboard.types';
 import type { AppRegistry } from '@/types/sidebar.types';
@@ -21,7 +20,7 @@ const NAV_REGISTRY_CATEGORIES = new Set<CommandCategory>([
   'settings'
 ]);
 
-function mapPaletteCategory(item: CommandItem): PaletteCategory {
+function mapPaletteCategory(_item: CommandItem): PaletteCategory {
   return 'navigation';
 }
 

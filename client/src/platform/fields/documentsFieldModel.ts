@@ -8,7 +8,6 @@ import type {
   BaseFieldMetadata,
   BaseFieldOwner,
   BaseFieldScope,
-  BaseFilterType,
 } from './BaseFieldModel';
 import {
   validateBaseFieldMetadata,

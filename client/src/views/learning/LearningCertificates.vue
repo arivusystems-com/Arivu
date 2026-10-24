@@ -30,6 +30,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { TrophyIcon } from '@heroicons/vue/24/outline';
 import apiClient from '@/utils/apiClient';
+import { formatUserDate } from '@/utils/localeFormat';
 import LearningPageHeader from './components/LearningPageHeader.vue';
 
 const { t } = useI18n();
@@ -39,7 +40,7 @@ const rows = ref([]);
 function formatDate(d) {
   if (!d) return '—';
   try {
-    return new Date(d).toLocaleDateString();
+    return formatUserDate(d);
   } catch {
     return String(d);
   }

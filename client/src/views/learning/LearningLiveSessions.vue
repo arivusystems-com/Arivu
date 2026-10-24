@@ -112,6 +112,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
+import { formatUserDateTime } from '@/utils/localeFormat';
 import { useAuthStore } from '@/stores/auth';
 import { useNotifications } from '@/composables/useNotifications';
 import { useLearningRole } from '@/composables/useLearningRole';
@@ -153,7 +154,7 @@ function formatWhen(value) {
   try {
     return d(new Date(value), 'long');
   } catch {
-    return new Date(value).toLocaleString();
+    return formatUserDateTime(value);
   }
 }
 

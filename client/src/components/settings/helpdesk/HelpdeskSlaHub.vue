@@ -58,13 +58,13 @@ const props = defineProps({
   slaPolicyOptions: { type: Object, required: true },
   caseTypeLabel: { type: Function, required: true },
   priorityLabel: { type: Function, required: true },
-  notifications: { type: Object, required: true },
   recalculatingSlas: { type: Boolean, default: false },
   recalculateMessage: { type: String, default: '' }
 });
 
 defineEmits(['recalculate']);
 
+const notifications = defineModel('notifications', { type: Object, required: true });
 const standardTargets = defineModel('standardTargets', { type: Object, required: true });
 const businessHours = defineModel('businessHours', { type: Object, required: true });
 const enabledCaseTypes = defineModel('enabledCaseTypes', { type: Array, required: true });
@@ -83,16 +83,16 @@ const standardPolicyMeta = computed(() => ({
   name: t('settings.slaPolicyStandardName'),
   description: '',
   caseTypes: enabledCaseTypes.value,
-  notifyOnSlaWarning: props.notifications.notifyOnSlaWarning,
-  notifyOnSlaBreach: props.notifications.notifyOnSlaBreach,
+  notifyOnSlaWarning: notifications.value.notifyOnSlaWarning,
+  notifyOnSlaBreach: notifications.value.notifyOnSlaBreach,
   alerts: buildStandardAlerts()
 }));
 
 function buildStandardAlerts() {
   const types = props.slaPolicyOptions?.alertTypes || [];
   const alerts = [];
-  if (props.notifications.notifyOnSlaWarning && types.includes('warning')) alerts.push({ type: 'warning' });
-  if (props.notifications.notifyOnSlaBreach && types.includes('breach')) alerts.push({ type: 'breach' });
+  if (notifications.value.notifyOnSlaWarning && types.includes('warning')) alerts.push({ type: 'warning' });
+  if (notifications.value.notifyOnSlaBreach && types.includes('breach')) alerts.push({ type: 'breach' });
   return alerts;
 }
 
@@ -190,8 +190,11 @@ function applyPayload(payload) {
   if (editingPolicyId.value === SLA_STANDARD_POLICY_ID || payload.key === SLA_STANDARD_POLICY_ID) {
     syncDisplayFromPriorityTargets(payload.priorityTargets);
     if (payload.isDefault) defaultPolicyKey.value = '';
-    props.notifications.notifyOnSlaWarning = payload.alerts?.some((a) => a.type === 'warning') ?? props.notifications.notifyOnSlaWarning;
-    props.notifications.notifyOnSlaBreach = payload.alerts?.some((a) => a.type === 'breach') ?? props.notifications.notifyOnSlaBreach;
+    notifications.value = {
+      ...notifications.value,
+      notifyOnSlaWarning: payload.alerts?.some((a) => a.type === 'warning') ?? notifications.value.notifyOnSlaWarning,
+      notifyOnSlaBreach: payload.alerts?.some((a) => a.type === 'breach') ?? notifications.value.notifyOnSlaBreach,
+    };
     enabledCaseTypes.value = [...payload.caseTypes];
     return;
   }

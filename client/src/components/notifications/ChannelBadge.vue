@@ -36,6 +36,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   BellAlertIcon,
   BellIcon,
@@ -45,6 +46,8 @@ import {
 } from '@heroicons/vue/20/solid';
 
 defineEmits(['click']);
+
+const { t } = useI18n();
 
 const props = defineProps({
   channel: {
@@ -66,30 +69,30 @@ const props = defineProps({
   }
 });
 
-const channelConfig = {
+const channelConfig = computed(() => ({
   inApp: {
-    label: 'In-App',
+    label: t('notifications.channelInApp'),
     icon: BellAlertIcon
   },
   email: {
-    label: 'Email',
+    label: t('notifications.channelEmail'),
     icon: EnvelopeIcon
   },
   push: {
-    label: 'Push',
+    label: t('notifications.channelPush'),
     icon: BellIcon
   },
   whatsapp: {
-    label: 'WhatsApp',
+    label: t('notifications.channelWhatsApp'),
     icon: ChatBubbleLeftIcon
   },
   sms: {
-    label: 'SMS',
+    label: t('notifications.channelSms'),
     icon: DevicePhoneMobileIcon
   }
-};
+}));
 
-const config = computed(() => channelConfig[props.channel] || channelConfig.inApp);
+const config = computed(() => channelConfig.value[props.channel] || channelConfig.value.inApp);
 const label = computed(() => config.value.label);
 const iconComponent = computed(() => config.value.icon);
 
@@ -104,12 +107,13 @@ const badgeClasses = computed(() => {
 });
 
 const tooltip = computed(() => {
+  const channel = label.value;
   if (!props.available) {
-    return `${label.value} notifications are not available`;
+    return t('notifications.channelUnavailableTooltip', { channel });
   }
   if (props.enabled) {
-    return `${label.value} notifications are enabled`;
+    return t('notifications.channelEnabledTooltip', { channel });
   }
-  return `${label.value} notifications are disabled`;
+  return t('notifications.channelDisabledTooltip', { channel });
 });
 </script>

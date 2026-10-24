@@ -32,13 +32,13 @@ export type PlatformContractErrorType =
  */
 export class PlatformContractError extends Error {
   public readonly type: PlatformContractErrorType;
-  public readonly context?: Record<string, any>;
+  public readonly context?: Record<string, unknown>;
   public readonly timestamp: number;
 
   constructor(
     type: PlatformContractErrorType,
     message: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'PlatformContractError';
@@ -47,8 +47,9 @@ export class PlatformContractError extends Error {
     this.timestamp = Date.now();
     
     // Maintains proper stack trace for where our error was thrown (only available on V8)
-    const captureStackTrace: undefined | ((target: object, constructorOpt?: Function) => void) =
-      (Error as any).captureStackTrace;
+    const captureStackTrace = (
+      Error as { captureStackTrace?: (target: object, constructorOpt?: abstract new (...args: never[]) => unknown) => void }
+    ).captureStackTrace;
     if (typeof captureStackTrace === 'function') {
       captureStackTrace(this, PlatformContractError);
     }
@@ -61,7 +62,7 @@ export class PlatformContractError extends Error {
     name: string;
     type: PlatformContractErrorType;
     message: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     timestamp: number;
     stack?: string;
   } {
@@ -81,7 +82,7 @@ export class PlatformContractError extends Error {
  */
 export function createRegistryError(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): PlatformContractError {
   return new PlatformContractError('REGISTRY_INVALID', message, context);
 }
@@ -91,7 +92,7 @@ export function createRegistryError(
  */
 export function createPermissionError(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): PlatformContractError {
   return new PlatformContractError('PERMISSION_INVALID', message, context);
 }
@@ -101,7 +102,7 @@ export function createPermissionError(
  */
 export function createContractMismatchError(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): PlatformContractError {
   return new PlatformContractError('CONTRACT_MISMATCH', message, context);
 }
@@ -111,7 +112,7 @@ export function createContractMismatchError(
  */
 export function createBuilderError(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): PlatformContractError {
   return new PlatformContractError('BUILDER_ERROR', message, context);
 }
@@ -121,7 +122,7 @@ export function createBuilderError(
  */
 export function createValidationError(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): PlatformContractError {
   return new PlatformContractError('VALIDATION_ERROR', message, context);
 }

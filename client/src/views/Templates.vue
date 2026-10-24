@@ -54,11 +54,11 @@
         <span class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ formatTypeLabel(value) }}</span>
       </template>
 
-      <template #cell-paperSize="{ value, row }">
+      <template #cell-paperSize="{ row }">
         <span class="text-xs text-gray-600 dark:text-gray-300">{{ formatPaperSize(row) }}</span>
       </template>
 
-      <template #cell-orientation="{ value, row }">
+      <template #cell-orientation="{ row }">
         <span class="text-xs text-gray-600 dark:text-gray-300">{{ formatOrientation(row) }}</span>
       </template>
 
@@ -112,6 +112,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'TemplatesView' });
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline';

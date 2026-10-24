@@ -62,6 +62,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'QuotesView' });
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';

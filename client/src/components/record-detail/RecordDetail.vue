@@ -26,6 +26,7 @@
     @add-relation="handleAddRelation"
     @open-related-record="handleOpenRelatedRecord"
     @record-updated="handleRecordUpdated"
+    @record-field="applyRecordField"
     ref="summaryViewRef"
   />
 
@@ -232,6 +233,10 @@ const fetchRecord = async () => {
 const handleClose = () => {
   router.push(`/${props.moduleKey}`);
 };
+
+function applyRecordField({ field, value }) {
+  if (record.value && field != null) record.value[field] = value;
+}
 
 const handleUpdate = async (updateData) => {
   try {

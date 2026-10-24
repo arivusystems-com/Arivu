@@ -17,7 +17,7 @@
       <div v-for="m in visibleMetrics" :key="m.id" class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 font-regular">{{ m.label }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 font-regular">{{ metricDisplayLabel(m) }}</p>
             <div v-if="resolveUserForMetric(m)" class="flex items-center gap-2">
               <Avatar :user="resolveUserForMetric(m)" size="md" />
               <span class="text-base font-medium text-gray-900 dark:text-white">{{ getUserDisplayName(resolveUserForMetric(m)) }}</span>
@@ -101,7 +101,8 @@
               </div>
               <div class="df-no-label">
                 <DynamicFormField
-                  :field="{ key: 'label', label: 'Label', dataType: 'Text' }"
+@picklist-option-created="onPicklistOptionCreated"
+                  :field="{ key: 'label', label: t('records.metricLabelCaption'), dataType: 'Text' }"
                   :value="m.label"
                   @update:value="val => (m.label = val)"
                   :errors="{}"
@@ -109,6 +110,7 @@
               </div>
               <div class="df-no-label">
                 <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                   :field="{ key: 'source', label: 'Source', dataType: 'Picklist', options: [
                     { value: 'record', label: 'Record Field' },
                     { value: 'stats', label: 'Stats' }
@@ -120,6 +122,7 @@
               </div>
               <div class="df-no-label">
                 <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                   :field="{ key: 'field', label: 'Field', dataType: 'Picklist', options: availableFields.map(f => ({ value: f.key, label: f.label })) }"
                   :value="m.field"
                   @update:value="val => (m.field = val)"
@@ -128,6 +131,7 @@
               </div>
               <div class="df-no-label">
                 <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                   :field="{ key: 'agg', label: 'Aggregation', dataType: 'Picklist', options: [
                     { value: 'value', label: 'Value' },
                     { value: 'sum', label: 'Sum' },
@@ -165,15 +169,67 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+const DEFAULT_METRIC_LABELS = {
+  newMetric: 'Metric',
+  lead_score: 'Lead Score',
+  days_since_creation: 'Days Since Creation',
+  source_channel: 'Source Channel',
+  last_contacted: 'Last Contacted',
+  owner: 'Owner',
+  total_deals_value: 'Total Deals Value',
+  active_deals_count: 'Open Deals',
+  ltv: 'LTV',
+  total_active_deals: 'Total Open Deals',
+  open_invoices_value: 'Open Invoices',
+  active_cases: 'Active Cases',
+  account_manager: 'Account Manager',
+  deal_value: 'Deal Value',
+  expected_close: 'Expected Close',
+  probability: 'Probability %',
+  days_in_stage: 'Days in Stage'
+};
+
+const DEFAULT_METRIC_LABEL_KEYS = {
+  lead_score: 'records.metricLeadScore',
+  days_since_creation: 'records.metricDaysSinceCreation',
+  source_channel: 'records.metricSourceChannel',
+  last_contacted: 'records.metricLastContacted',
+  owner: 'people.sysFieldOwner',
+  total_deals_value: 'records.metricTotalDealsValue',
+  active_deals_count: 'deals.listStatOpenDeals',
+  ltv: 'records.metricLtv',
+  total_active_deals: 'records.metricTotalOpenDeals',
+  open_invoices_value: 'records.metricOpenInvoices',
+  active_cases: 'records.metricActiveCases',
+  account_manager: 'records.metricAccountManager',
+  deal_value: 'records.metricDealValue',
+  expected_close: 'deals.dealDetailExpectedClose',
+  probability: 'records.metricProbability',
+  days_in_stage: 'records.metricDaysInStage'
+};
+
+function metricDisplayLabel(metric) {
+  const canonical = DEFAULT_METRIC_LABELS[metric?.id];
+  const key = DEFAULT_METRIC_LABEL_KEYS[metric?.id];
+  if (canonical && key && metric.label === canonical) return t(key);
+  if (metric?.label === DEFAULT_METRIC_LABELS.newMetric) return t('records.metricDefaultName');
+  return metric?.label || '';
+}
 import CardWidget from '@/components/common/CardWidget.vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { XMarkIcon, Cog6ToothIcon, TrashIcon, PlusIcon, Bars3Icon } from '@heroicons/vue/24/outline';
 import Avatar from '@/components/common/Avatar.vue';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import apiClient from '@/utils/apiClient';
 import { useAuthStore } from '@/stores/authRegistry';
 import { formatCurrencyValue, resolveCurrencyCodeForField } from '@/utils/currencyOptions';
 import { formatUserDate } from '@/utils/localeFormat';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const props = defineProps({
   record: { type: Object, default: null },
@@ -200,7 +256,7 @@ const loadUsersForAssignment = async () => {
 
 const openConfig = () => { showConfig.value = true; };
 const closeConfig = () => { showConfig.value = false; };
-const addMetric = () => { metrics.value.push({ id: cryptoRandomId(), label: 'Metric', source: 'record', field: '', agg: 'value' }); };
+const addMetric = () => { metrics.value.push({ id: cryptoRandomId(), label: DEFAULT_METRIC_LABELS.newMetric, source: 'record', field: '', agg: 'value' }); };
 const removeMetric = (idx) => { metrics.value.splice(idx, 1); };
 
 // Drag-and-drop reorder state and handlers
@@ -259,37 +315,37 @@ function defaultMetricsForContext() {
     const ownerKey = userFieldKeyForRecord(record);
     if (isLead) {
       const base = [
-        { id: 'lead_score', label: 'Lead Score', source: 'record', field: 'lead_score', agg: 'ai_score', icon: 'AI' },
-        { id: 'days_since_creation', label: 'Days Since Creation', source: 'record', field: 'createdAt', agg: 'days_since', icon: 'D' },
-        { id: 'source_channel', label: 'Source Channel', source: 'record', field: 'source', agg: 'value', icon: 'S' },
-        { id: 'last_contacted', label: 'Last Contacted', source: 'record', field: 'last_contacted_at', agg: 'value', icon: 'L' }
+        { id: 'lead_score', label: DEFAULT_METRIC_LABELS.lead_score, source: 'record', field: 'lead_score', agg: 'ai_score', icon: 'AI' },
+        { id: 'days_since_creation', label: DEFAULT_METRIC_LABELS.days_since_creation, source: 'record', field: 'createdAt', agg: 'days_since', icon: 'D' },
+        { id: 'source_channel', label: DEFAULT_METRIC_LABELS.source_channel, source: 'record', field: 'source', agg: 'value', icon: 'S' },
+        { id: 'last_contacted', label: DEFAULT_METRIC_LABELS.last_contacted, source: 'record', field: 'last_contacted_at', agg: 'value', icon: 'L' }
       ];
-      if (ownerKey) base.unshift({ id: 'owner', label: 'Owner', source: 'record', field: ownerKey, agg: 'value', icon: 'U' });
+      if (ownerKey) base.unshift({ id: 'owner', label: DEFAULT_METRIC_LABELS.owner, source: 'record', field: ownerKey, agg: 'value', icon: 'U' });
       return base;
     }
     const base = [
-      { id: 'total_deals_value', label: 'Total Deals Value', source: 'stats', field: 'totalDealsValue', agg: 'sum', icon: '$' },
-      { id: 'active_deals_count', label: 'Open Deals', source: 'stats', field: 'activeDealsCount', agg: 'count', icon: '#' },
-      { id: 'last_contacted', label: 'Last Contacted', source: 'record', field: 'last_contacted_at', agg: 'value', icon: 'L' },
-      { id: 'ltv', label: 'LTV', source: 'stats', field: 'ltv', agg: 'sum', icon: '$' }
+      { id: 'total_deals_value', label: DEFAULT_METRIC_LABELS.total_deals_value, source: 'stats', field: 'totalDealsValue', agg: 'sum', icon: '$' },
+      { id: 'active_deals_count', label: DEFAULT_METRIC_LABELS.active_deals_count, source: 'stats', field: 'activeDealsCount', agg: 'count', icon: '#' },
+      { id: 'last_contacted', label: DEFAULT_METRIC_LABELS.last_contacted, source: 'record', field: 'last_contacted_at', agg: 'value', icon: 'L' },
+      { id: 'ltv', label: DEFAULT_METRIC_LABELS.ltv, source: 'stats', field: 'ltv', agg: 'sum', icon: '$' }
     ];
-    if (ownerKey) base.unshift({ id: 'owner', label: 'Owner', source: 'record', field: ownerKey, agg: 'value', icon: 'U' });
+    if (ownerKey) base.unshift({ id: 'owner', label: DEFAULT_METRIC_LABELS.owner, source: 'record', field: ownerKey, agg: 'value', icon: 'U' });
     return base;
   }
   if (type === 'organizations') {
     return [
-      { id: 'total_active_deals', label: 'Total Open Deals', source: 'stats', field: 'activeDealsCount', agg: 'count', icon: '#' },
-      { id: 'open_invoices_value', label: 'Open Invoices', source: 'stats', field: 'openInvoicesValue', agg: 'sum', icon: '$' },
-      { id: 'active_cases', label: 'Active Cases', source: 'stats', field: 'activeTickets', agg: 'count', icon: '#' },
-      { id: 'account_manager', label: 'Account Manager', source: 'record', field: 'accountManagerName', agg: 'value', icon: 'AM' }
+      { id: 'total_active_deals', label: DEFAULT_METRIC_LABELS.total_active_deals, source: 'stats', field: 'activeDealsCount', agg: 'count', icon: '#' },
+      { id: 'open_invoices_value', label: DEFAULT_METRIC_LABELS.open_invoices_value, source: 'stats', field: 'openInvoicesValue', agg: 'sum', icon: '$' },
+      { id: 'active_cases', label: DEFAULT_METRIC_LABELS.active_cases, source: 'stats', field: 'activeTickets', agg: 'count', icon: '#' },
+      { id: 'account_manager', label: DEFAULT_METRIC_LABELS.account_manager, source: 'record', field: 'accountManagerName', agg: 'value', icon: 'AM' }
     ];
   }
   if (type === 'deals') {
     return [
-      { id: 'deal_value', label: 'Deal Value', source: 'record', field: 'value', agg: 'value', icon: '$' },
-      { id: 'expected_close', label: 'Expected Close', source: 'record', field: 'expectedCloseDate', agg: 'value', icon: '⏲' },
-      { id: 'probability', label: 'Probability %', source: 'record', field: 'probability', agg: 'value', icon: '%' },
-      { id: 'days_in_stage', label: 'Days in Stage', source: 'record', field: 'stageChangedAt', agg: 'days_since', icon: 'D' }
+      { id: 'deal_value', label: DEFAULT_METRIC_LABELS.deal_value, source: 'record', field: 'value', agg: 'value', icon: '$' },
+      { id: 'expected_close', label: DEFAULT_METRIC_LABELS.expected_close, source: 'record', field: 'expectedCloseDate', agg: 'value', icon: '⏲' },
+      { id: 'probability', label: DEFAULT_METRIC_LABELS.probability, source: 'record', field: 'probability', agg: 'value', icon: '%' },
+      { id: 'days_in_stage', label: DEFAULT_METRIC_LABELS.days_in_stage, source: 'record', field: 'stageChangedAt', agg: 'days_since', icon: 'D' }
     ];
   }
   return [];

@@ -75,6 +75,8 @@ const props = defineProps({
   context: { type: Object, default: () => ({}) }
 });
 
+const emit = defineEmits(['updated']);
+
 const { t } = useI18n();
 const summary = ref(null);
 const allocations = ref([]);
@@ -100,7 +102,11 @@ async function loadDetail() {
       invoiceMongoId: row.invoiceMongoId || null
     }));
     if (props.record && res.data?.payment) {
-      props.record.maxRefundable = res.data.refundEligibility?.maxRefundable;
+      emit('updated', {
+        type: 'record-field',
+        field: 'maxRefundable',
+        value: res.data.refundEligibility?.maxRefundable
+      });
     }
   } catch {
     allocations.value = [];

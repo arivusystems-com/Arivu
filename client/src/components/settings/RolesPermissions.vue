@@ -108,7 +108,7 @@
         </p>
 
         <RolesListTable
-          v-if="viewMode === 'list'"
+          v-if="viewMode === 'list' && (filteredRoles.length > 0 || !searchQuery)"
           :roles="filteredRoles"
           @edit="openEditRoleModal"
           @users="viewRoleUsers"

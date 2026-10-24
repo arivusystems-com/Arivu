@@ -23,6 +23,14 @@
     "message": "Status",
     "description": "Standard status / lifecycle field label across CRM modules"
   },
+  "columnName": {
+    "message": "Name",
+    "description": "Generic table column label"
+  },
+  "columnEmail": {
+    "message": "Email",
+    "description": "Generic table column label"
+  },
   "localeDevTitle": {
     "message": "Localization QA",
     "description": "Developer settings section for i18n tools"

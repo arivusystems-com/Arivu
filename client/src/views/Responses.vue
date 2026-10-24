@@ -369,6 +369,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'ResponsesView' });
 import { useI18n } from 'vue-i18n';
 
 import { useNotifications } from '@/composables/useNotifications';

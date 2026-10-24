@@ -373,8 +373,8 @@ const emit = defineEmits<{
 const loading = ref(false);
 const error = ref<string | null>(null);
 const validationErrors = ref<Record<string, string>>({});
-/** Dynamic participation form: v-model requires non-unknown values */
-const formData = ref<Record<string, any>>({});
+type ParticipationFormValue = string | number | null | string[];
+const formData = ref<Record<string, ParticipationFormValue>>({});
 /** HELPDESK: role-only attach (tenant types from API / usePeopleTypes) */
 const attachRoleStandalone = ref('');
 
@@ -873,10 +873,10 @@ const clearDefaultTracking = (fieldName: string): void => {
 
 /** Typed HeadlessSelect handlers — avoids implicit-`any` on `@update:model-value` in templates (vue-tsc). */
 const bindStateListboxValue = (fieldName: string) => (v: string | number | null | undefined) => {
-  formData.value[fieldName] = v;
+  formData.value[fieldName] = v ?? '';
 };
 const bindDetailListboxValue = (fieldName: string) => (v: string | number | null | undefined) => {
-  formData.value[fieldName] = v;
+  formData.value[fieldName] = v ?? '';
   clearDefaultTracking(fieldName);
 };
 

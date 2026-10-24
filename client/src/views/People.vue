@@ -288,6 +288,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'PeopleView' });
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';

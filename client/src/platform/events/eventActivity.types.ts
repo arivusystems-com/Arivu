@@ -50,5 +50,5 @@ export interface EventActivity {
     name?: string;
     appKey?: string;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

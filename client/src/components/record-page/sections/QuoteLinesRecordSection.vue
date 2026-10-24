@@ -1472,7 +1472,7 @@ import {
 } from '@/utils/quoteSectionDisplay';
 import { useQuoteLinesSession, clearQuoteLinesSession } from '@/composables/useQuoteLinesSession';
 import { useQuoteLinesStickyColumns, updateQuoteLinesTableScrollHints } from '@/composables/useQuoteLinesStickyColumns';
-import { formatUserDate } from '@/utils/localeFormat';
+import { formatDate, formatUserDate } from '@/utils/localeFormat';
 
 const props = defineProps({
   record: { type: Object, default: null },
@@ -1553,7 +1553,7 @@ function catalogLastPurchaseLabel(line) {
   let dateLabel = '—';
   if (e.lastDate) {
     try {
-      dateLabel = new Date(e.lastDate).toLocaleDateString(undefined, {
+      dateLabel = formatDate(e.lastDate, {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
@@ -1656,7 +1656,7 @@ function poLastPurchaseLabel(hit) {
   let dateLabel = '—';
   if (date) {
     try {
-      dateLabel = new Date(date).toLocaleDateString(undefined, {
+      dateLabel = formatDate(date, {
         day: '2-digit',
         month: 'short',
         year: 'numeric'

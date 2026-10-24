@@ -17,7 +17,7 @@
 export interface ProfileData {
   core?: {
     fields?: {
-      [key: string]: any;
+      [key: string]: unknown;
     };
   };
   apps?: {
@@ -25,7 +25,7 @@ export interface ProfileData {
       fields?: {
         sales_type?: string;
         type?: string;
-        [key: string]: any;
+        [key: string]: unknown;
       };
     };
   };

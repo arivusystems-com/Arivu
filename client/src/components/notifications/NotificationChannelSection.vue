@@ -185,14 +185,14 @@ const emit = defineEmits(['toggle']);
 
 const isOpen = ref(props.defaultOpen);
 
-const channelConfig = {
-  push: { label: 'Push', icon: BellIcon },
-  whatsapp: { label: 'WhatsApp', icon: ChatBubbleLeftIcon },
-  sms: { label: 'SMS', icon: DevicePhoneMobileIcon },
-  email: { label: 'Email', icon: EnvelopeIcon }
-};
+const channelConfig = computed(() => ({
+  push: { label: t('notifications.channelPush'), icon: BellIcon },
+  whatsapp: { label: t('notifications.channelWhatsApp'), icon: ChatBubbleLeftIcon },
+  sms: { label: t('notifications.channelSms'), icon: DevicePhoneMobileIcon },
+  email: { label: t('notifications.channelEmail'), icon: EnvelopeIcon }
+}));
 
-const config = computed(() => channelConfig[props.channel] || channelConfig.email);
+const config = computed(() => channelConfig.value[props.channel] || channelConfig.value.email);
 const channelLabel = computed(() => config.value.label);
 const iconComponent = computed(() => config.value.icon);
 

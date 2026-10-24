@@ -14,7 +14,62 @@
  * ============================================================================
  */
 
-import type { EventActivity, EventActivityType, EventActivitySource } from './eventActivity.types';
+import type { EventActivity, EventActivityType } from './eventActivity.types';
+
+interface ActivityUserRef {
+  _id?: string;
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  appKey?: string;
+}
+
+interface ActivityAuditEntry {
+  timestamp?: unknown;
+  action?: unknown;
+  from?: unknown;
+  to?: unknown;
+  performedBy?: unknown;
+}
+
+interface ActivityCheckPoint {
+  timestamp?: unknown;
+  userId?: unknown;
+  location?: unknown;
+}
+
+interface ActivityEvent {
+  _id?: unknown;
+  id?: unknown;
+  createdAt?: unknown;
+  startDateTime?: unknown;
+  createdBy?: unknown;
+  assignedTo?: unknown;
+  executionStartTime?: unknown;
+  executionStartedBy?: unknown;
+  executionEndTime?: unknown;
+  completedAt?: unknown;
+  completedBy?: unknown;
+  cancelledAt?: unknown;
+  cancelledBy?: unknown;
+  cancellationReason?: unknown;
+  auditHistory?: ActivityAuditEntry[] | null;
+  checkIn?: ActivityCheckPoint | null;
+  checkOut?: ActivityCheckPoint | null;
+  submittedAt?: unknown;
+  submittedBy?: unknown;
+  eventType?: string;
+}
+
+function asDateInput(value: unknown): string | number | Date {
+  if (typeof value === 'string' || typeof value === 'number' || value instanceof Date) return value;
+  return String(value ?? '');
+}
+
+function definedValue(value: unknown): unknown {
+  if (value == null || value === '') return undefined;
+  return value;
+}
 
 /**
  * Normalize event data into canonical activity list
@@ -30,7 +85,7 @@ import type { EventActivity, EventActivityType, EventActivitySource } from './ev
  * @param event - Event object (any shape, normalized from existing fields)
  * @returns Array of EventActivity objects, sorted by timestamp ASC
  */
-export function normalizeEventActivities(event: any): EventActivity[] {
+export function normalizeEventActivities(event: ActivityEvent | null | undefined): EventActivity[] {
   if (!event) return [];
   
   const activities: EventActivity[] = [];
@@ -43,7 +98,7 @@ export function normalizeEventActivities(event: any): EventActivity[] {
     activities.push({
       type: 'EVENT_CREATED',
       source: 'SYSTEM',
-      timestamp: new Date(createdAt).toISOString(),
+      timestamp: new Date(asDateInput(createdAt)).toISOString(),
       actor: extractActor(event.createdBy || event.assignedTo),
       metadata: {}
     });
@@ -58,7 +113,7 @@ export function normalizeEventActivities(event: any): EventActivity[] {
     activities.push({
       type: 'EXECUTION_STARTED',
       source: 'USER',
-      timestamp: new Date(event.executionStartTime).toISOString(),
+      timestamp: new Date(asDateInput(event.executionStartTime)).toISOString(),
       actor: extractActor(event.executionStartedBy),
       metadata: {}
     });
@@ -70,7 +125,7 @@ export function normalizeEventActivities(event: any): EventActivity[] {
     activities.push({
       type: 'EXECUTION_COMPLETED',
       source: 'USER',
-      timestamp: new Date(completedAt).toISOString(),
+      timestamp: new Date(asDateInput(completedAt)).toISOString(),
       actor: extractActor(event.completedBy),
       metadata: {}
     });
@@ -81,10 +136,10 @@ export function normalizeEventActivities(event: any): EventActivity[] {
     activities.push({
       type: 'EXECUTION_CANCELLED',
       source: 'USER',
-      timestamp: new Date(event.cancelledAt).toISOString(),
+      timestamp: new Date(asDateInput(event.cancelledAt)).toISOString(),
       actor: extractActor(event.cancelledBy),
       metadata: {
-        reason: event.cancellationReason || undefined
+        reason: definedValue(event.cancellationReason)
       }
     });
   }
@@ -95,11 +150,10 @@ export function normalizeEventActivities(event: any): EventActivity[] {
   
   // Use auditHistory array if available (preferred source)
   if (event.auditHistory && Array.isArray(event.auditHistory) && event.auditHistory.length > 0) {
-    event.auditHistory.forEach((entry: any) => {
-      if (!entry || !entry.timestamp) return;
-      
-      // Map audit history actions to activity types
-      const action = String(entry.action || '').toLowerCase();
+    event.auditHistory.forEach((entry) => {
+      if (!entry || !Boolean(entry.timestamp)) return;
+
+      const action = String(entry.action ?? '').toLowerCase();
       let activityType: EventActivityType | null = null;
       
       if (action.includes('check') || action.includes('check_in')) {
@@ -110,7 +164,7 @@ export function normalizeEventActivities(event: any): EventActivity[] {
         activityType = 'AUDIT_APPROVED';
       } else if (action.includes('reject')) {
         activityType = 'AUDIT_REJECTED';
-      } else if (entry.from || entry.to) {
+      } else if (Boolean(entry.from) || Boolean(entry.to)) {
         // State transition
         activityType = 'STATUS_CHANGED';
       }
@@ -119,12 +173,12 @@ export function normalizeEventActivities(event: any): EventActivity[] {
         activities.push({
           type: activityType,
           source: 'WORKFLOW',
-          timestamp: new Date(entry.timestamp).toISOString(),
+          timestamp: new Date(asDateInput(entry.timestamp)).toISOString(),
           actor: extractActor(entry.performedBy),
           metadata: {
-            from: entry.from || undefined,
-            to: entry.to || undefined,
-            action: entry.action || undefined
+            from: definedValue(entry.from),
+            to: definedValue(entry.to),
+            action: definedValue(entry.action)
           }
         });
       }
@@ -134,20 +188,21 @@ export function normalizeEventActivities(event: any): EventActivity[] {
   // Fallback: Map individual audit fields if auditHistory not available
   // Check-in
   if (event.checkIn && event.checkIn.timestamp) {
+    const checkIn = event.checkIn;
     // Only add if not already in auditHistory
     const hasCheckInInHistory = activities.some(
       a => a.type === 'AUDIT_CHECK_IN' && 
-      new Date(a.timestamp).getTime() === new Date(event.checkIn.timestamp).getTime()
+      new Date(a.timestamp).getTime() === new Date(asDateInput(checkIn.timestamp)).getTime()
     );
     
     if (!hasCheckInInHistory) {
       activities.push({
         type: 'AUDIT_CHECK_IN',
         source: 'WORKFLOW',
-        timestamp: new Date(event.checkIn.timestamp).toISOString(),
-        actor: extractActor(event.checkIn.userId),
+        timestamp: new Date(asDateInput(checkIn.timestamp)).toISOString(),
+        actor: extractActor(checkIn.userId),
         metadata: {
-          location: event.checkIn.location || undefined
+          location: definedValue(checkIn.location)
         }
       });
     }
@@ -157,14 +212,14 @@ export function normalizeEventActivities(event: any): EventActivity[] {
   if (event.submittedAt) {
     const hasSubmittedInHistory = activities.some(
       a => a.type === 'AUDIT_SUBMITTED' && 
-      new Date(a.timestamp).getTime() === new Date(event.submittedAt).getTime()
+      new Date(a.timestamp).getTime() === new Date(asDateInput(event.submittedAt)).getTime()
     );
     
     if (!hasSubmittedInHistory) {
       activities.push({
         type: 'AUDIT_SUBMITTED',
         source: 'WORKFLOW',
-        timestamp: new Date(event.submittedAt).toISOString(),
+        timestamp: new Date(asDateInput(event.submittedAt)).toISOString(),
         actor: extractActor(event.submittedBy),
         metadata: {}
       });
@@ -177,22 +232,23 @@ export function normalizeEventActivities(event: any): EventActivity[] {
   
   // Check-in location
   if (event.checkIn && event.checkIn.location && event.checkIn.timestamp) {
+    const checkIn = event.checkIn;
     // Only add GEO_CAPTURED if location data exists and it's not already represented
     const hasGeoCheckIn = activities.some(
       a => a.type === 'GEO_CAPTURED' && 
       a.metadata?.checkType === 'checkIn' &&
-      new Date(a.timestamp).getTime() === new Date(event.checkIn.timestamp).getTime()
+      new Date(a.timestamp).getTime() === new Date(asDateInput(checkIn.timestamp)).getTime()
     );
     
     if (!hasGeoCheckIn) {
       activities.push({
         type: 'GEO_CAPTURED',
         source: 'SYSTEM',
-        timestamp: new Date(event.checkIn.timestamp).toISOString(),
-        actor: extractActor(event.checkIn.userId),
+        timestamp: new Date(asDateInput(checkIn.timestamp)).toISOString(),
+        actor: extractActor(checkIn.userId),
         metadata: {
           checkType: 'checkIn',
-          location: event.checkIn.location
+          location: checkIn.location
         }
       });
     }
@@ -200,14 +256,15 @@ export function normalizeEventActivities(event: any): EventActivity[] {
   
   // Check-out location
   if (event.checkOut && event.checkOut.location && event.checkOut.timestamp) {
+    const checkOut = event.checkOut;
     activities.push({
       type: 'GEO_CAPTURED',
       source: 'SYSTEM',
-      timestamp: new Date(event.checkOut.timestamp).toISOString(),
-      actor: extractActor(event.checkOut.userId),
+      timestamp: new Date(asDateInput(checkOut.timestamp)).toISOString(),
+      actor: extractActor(checkOut.userId),
       metadata: {
         checkType: 'checkOut',
-        location: event.checkOut.location
+        location: checkOut.location
       }
     });
   }
@@ -275,27 +332,28 @@ export function normalizeEventActivities(event: any): EventActivity[] {
  * @param userRef - User reference (any format)
  * @returns Actor object or undefined
  */
-function extractActor(userRef: any): EventActivity['actor'] | undefined {
+function extractActor(userRef: unknown): EventActivity['actor'] | undefined {
   if (!userRef) return undefined;
-  
-  // Populated user object
-  if (typeof userRef === 'object' && userRef.firstName) {
-    const name = `${userRef.firstName} ${userRef.lastName || ''}`.trim();
+
+  if (typeof userRef === 'string') {
+    return { id: userRef, name: undefined, appKey: undefined };
+  }
+
+  if (typeof userRef !== 'object') return undefined;
+
+  const user = userRef as ActivityUserRef;
+  if (user.firstName) {
+    const name = `${user.firstName} ${user.lastName || ''}`.trim();
     return {
-      id: userRef._id || userRef.id,
+      id: user._id || user.id,
       name: name || undefined,
-      appKey: userRef.appKey || undefined
+      appKey: user.appKey || undefined
     };
   }
-  
-  // ObjectId or string ID
-  if (userRef._id || userRef.id || typeof userRef === 'string') {
-    return {
-      id: userRef._id || userRef.id || userRef,
-      name: undefined,
-      appKey: undefined
-    };
+
+  if (user._id || user.id) {
+    return { id: user._id || user.id, name: undefined, appKey: undefined };
   }
-  
+
   return undefined;
 }

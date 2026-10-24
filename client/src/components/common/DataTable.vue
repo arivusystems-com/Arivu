@@ -357,7 +357,7 @@
 
             <!-- Data Columns -->
             <td
-              v-for="(column, colIndex) in visibleColumns"
+              v-for="column in visibleColumns"
               :key="column.key"
               :class="[
                 'px-6 py-4 text-sm text-gray-900 dark:text-white table-cell-truncate',
@@ -504,7 +504,6 @@ import { matchesAnySearchTerm, sortBySearchRelevance } from '@/utils/searchRelev
 
 function dtDbg(...args) {
   if (import.meta.env.DEV) {
-    // eslint-disable-next-line no-console -- dev-only diagnostics
     console.log(...args);
   }
 }

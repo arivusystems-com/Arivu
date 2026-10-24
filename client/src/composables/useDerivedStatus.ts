@@ -17,7 +17,7 @@
  * ============================================================================
  */
 
-import { computed, ref } from 'vue';
+import { computed, ref, type Ref } from 'vue';
 import apiClient from '@/utils/apiClient';
 
 /**
@@ -28,7 +28,11 @@ import apiClient from '@/utils/apiClient';
  * @param appKey - Optional app key (defaults to 'SALES')
  * @returns {Object} - { isStatusReadOnly, hasConfig, isLoading }
  */
-export function useDerivedStatus(record: any, entity: 'people' | 'organization' | 'deal', appKey: string = 'SALES') {
+export function useDerivedStatus(
+  record: Ref<{ derivedStatus?: unknown } | null | undefined>,
+  entity: 'people' | 'organization' | 'deal',
+  appKey: string = 'SALES'
+) {
   const isLoading = ref(false);
   const configExists = ref<boolean | null>(null);
 

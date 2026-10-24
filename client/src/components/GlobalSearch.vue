@@ -137,7 +137,7 @@
                     v-else
                     :value="row.value"
                     as="template"
-                    v-slot="{ active: _comboboxActive }"
+                    v-slot="{}"
                   >
                     <li
                       :class="comboboxRowClass(isPaletteRowActive(row.index))"
@@ -338,6 +338,22 @@ import OrganizationQuickCreateDrawer from '@/components/organizations/Organizati
 import PeopleQuickCreateDrawer from '@/components/people/PeopleQuickCreateDrawer.vue';
 import EventQuickCreateDrawer from '@/components/events/EventQuickCreateDrawer.vue';
 
+interface RecordLinkContext {
+  organizationId?: string;
+  personId?: string;
+  contactId?: string;
+  relatedType?: string;
+}
+
+interface SavedRecordRef {
+  _id?: string;
+  name?: string;
+  title?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}
+
 type GroupKey = 'people' | 'organizations' | 'work' | 'configuration';
 
 type SearchResultItem = {
@@ -349,7 +365,7 @@ type SearchResultItem = {
   avatar?: string | null;
   first_name?: string;
   last_name?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type BackendSearchResults = {
@@ -452,7 +468,7 @@ const hasUsedCommandTrigger = ref(false);
 const showLinkDrawer = ref(false);
 const linkDrawerModuleKey = ref('');
 const linkDrawerTitle = ref('');
-const linkDrawerContext = ref<Record<string, any>>({});
+const linkDrawerContext = ref<RecordLinkContext>({});
 const linkDrawerAllowCreate = ref(false);
 
 // Create drawer state (for create action commands)
@@ -461,10 +477,10 @@ const showPeopleDrawer = ref(false);
 const peopleDrawerContextAppKey = ref<string | null>(null);
 const showEventDrawer = ref(false);
 const createDrawerModuleKey = ref('');
-const createDrawerInitialData = ref<Record<string, any>>({});
+const createDrawerInitialData = ref<Record<string, unknown>>({});
 const createDrawerTitle = ref('');
 const createDrawerLockedFields = ref<string[]>([]);
-const createDrawerAutoLinkContext = ref<Record<string, any> | null>({});
+const createDrawerAutoLinkContext = ref<RecordLinkContext | null>({});
 
 // Confirmation state for destructive commands
 // See: docs/architecture/command-palette-invariants.md
@@ -946,7 +962,7 @@ const handlePeopleDrawerClose = () => {
   peopleDrawerContextAppKey.value = null;
 };
 
-const handlePeopleDrawerSaved = (person: any) => {
+const handlePeopleDrawerSaved = (person: unknown) => {
   showPeopleDrawer.value = false;
   
   // Dispatch global event to refresh list views
@@ -971,7 +987,7 @@ const handleEventDrawerClose = () => {
   showEventDrawer.value = false;
 };
 
-const handleEventDrawerSaved = (event: any) => {
+const handleEventDrawerSaved = (event: unknown) => {
   showEventDrawer.value = false;
   
   // Dispatch global event to refresh calendar/list views
@@ -1030,7 +1046,7 @@ const performSearch = async (query: string) => {
       searchResults.value = null;
     }
   } catch (error: unknown) {
-    const searchError = error as any;
+    const searchError = error as { message?: string; status?: number; stack?: string };
     console.error('[GlobalSearch] Error searching:', error);
     console.error('[GlobalSearch] Error details:', {
       message: searchError?.message,
@@ -1586,9 +1602,10 @@ watch(selectablePaletteRows, (rows) => {
 function createNavigationUtilities(): NavigationUtilities {
   const performNavigation = async (target: string | { path: string; query: Record<string, string> }) => {
     try {
-      await router.push(target as any);
-    } catch (err: any) {
-      if (err?.name !== 'NavigationDuplicated') {
+      await router.push(target);
+    } catch (err: unknown) {
+      const name = err && typeof err === 'object' && 'name' in err ? err.name : undefined;
+      if (name !== 'NavigationDuplicated') {
         console.warn('[GlobalSearch] Navigation error:', err);
       }
     }
@@ -1683,7 +1700,7 @@ const handleLinkDrawerCreate = () => {
   }
   
   // For other modules, use standard create drawer
-  const initialData: Record<string, any> = {};
+  const initialData: Record<string, unknown> = {};
   
   // Auto-assign tasks to current user
   if (moduleKey === 'tasks' && authStore.user?._id) {
@@ -1717,7 +1734,7 @@ const handleCreateDrawerClose = () => {
 /**
  * Handle create drawer saved event
  */
-const handleCreateDrawerSaved = async (savedRecord?: any) => {
+const handleCreateDrawerSaved = async (savedRecord?: SavedRecordRef) => {
   // ARCHITECTURAL INTENT: Organization Quick Create handles auto-linking internally
   // This handler is for other modules or fallback cases
   const moduleKey = createDrawerModuleKey.value;
@@ -1838,7 +1855,7 @@ const fetchRecordsByIds = async (moduleKey: string, ids: string[]) => {
     }
   };
   
-  const getRecordDisplayName = (rec: any) => {
+  const getRecordDisplayName = (rec: SavedRecordRef | null | undefined) => {
     return rec?.name || rec?.title || `${rec?.first_name || ''} ${rec?.last_name || ''}`.trim() || rec?.email || rec?._id || '';
   };
   
@@ -1859,7 +1876,7 @@ const fetchRecordsByIds = async (moduleKey: string, ids: string[]) => {
 /**
  * Helper: Add activity log to a record
  */
-const addActivityLog = async (recordId: string, recordType: string, action: string, details: any = null) => {
+const addActivityLog = async (recordId: string, recordType: string, action: string, details: unknown = null) => {
   if (!recordId) {
     console.warn('[GlobalSearch] Cannot add activity log: recordId is missing');
     return;
@@ -1886,14 +1903,14 @@ const addActivityLog = async (recordId: string, recordType: string, action: stri
     } else {
       console.warn('[GlobalSearch] Activity log API returned non-success:', response);
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[GlobalSearch] Error adding activity log:', e);
     console.error('[GlobalSearch] Error details:', {
       endpoint,
       recordId,
       recordType,
       action,
-      error: e.message || e
+      error: e instanceof Error ? e.message : e
     });
     // Non-blocking - activity log failure shouldn't prevent linking
   }
@@ -1905,7 +1922,7 @@ const addActivityLog = async (recordId: string, recordType: string, action: stri
  * Performs the actual linking via API based on context.
  * This matches the logic from SummaryView.vue.
  */
-const handleLinkDrawerLinked = async ({ moduleKey, ids, context }: { moduleKey: string; ids: string[]; context: Record<string, any> }) => {
+const handleLinkDrawerLinked = async ({ moduleKey, ids, context }: { moduleKey: string; ids: string[]; context: RecordLinkContext }) => {
   try {
     if (context.organizationId && moduleKey === 'people') {
       // Link contacts to organization by updating each contact's organization field

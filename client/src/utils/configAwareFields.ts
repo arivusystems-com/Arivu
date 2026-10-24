@@ -17,6 +17,19 @@
 
 import apiClient from '@/utils/apiClient';
 
+interface ConfigStatusMapping {
+  sourceStatusField?: string;
+}
+
+interface ConfigLifecycle {
+  statusMappings?: ConfigStatusMapping[];
+}
+
+interface ConfigEntityType {
+  key?: string;
+  lifecycles?: ConfigLifecycle[];
+}
+
 /**
  * Get visible fields for an entity based on config registry
  * 
@@ -41,9 +54,10 @@ export async function getVisibleFieldsForEntity(
     }
     
     // Find matching entity type
-    const entityType = response.data.entityTypes.find(
-      (et: any) => et.key === type?.toLowerCase()
-    );
+    const entityTypes: ConfigEntityType[] = Array.isArray(response.data.entityTypes)
+      ? response.data.entityTypes
+      : [];
+    const entityType = entityTypes.find((et) => et.key === type?.toLowerCase());
     
     if (!entityType || !entityType.lifecycles || entityType.lifecycles.length === 0) {
       return [];

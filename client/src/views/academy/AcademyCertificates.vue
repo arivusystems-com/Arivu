@@ -24,6 +24,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
+import { formatUserDate } from '@/utils/localeFormat';
 
 const { t } = useI18n();
 const loading = ref(true);
@@ -32,7 +33,7 @@ const certs = ref([]);
 function formatDate(d) {
   if (!d) return '';
   try {
-    return new Date(d).toLocaleDateString();
+    return formatUserDate(d);
   } catch {
     return '';
   }

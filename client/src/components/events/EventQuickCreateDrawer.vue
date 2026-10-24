@@ -46,7 +46,7 @@ const handleClose = () => {
   emit('close');
 };
 
-const handleSaved = (event: any) => {
+const handleSaved = (event: unknown) => {
   emit('saved', event);
 };
 </script>

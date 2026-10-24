@@ -3,14 +3,13 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './stores/auth'
-// @ts-ignore: no declaration file for './router'
+// @ts-expect-error JS router module has no declaration file
 import router, { initializeDynamicRoutes } from './router'
 import App from './App.vue'
-// @ts-ignore: no declaration file for './composables/useColorMode'
+// @ts-expect-error JS color-mode composable has no declaration file
 import { useColorMode } from './composables/useColorMode'
 import { installFetchApiBase } from './config/installFetchApiBase'
 import { i18n, initI18n } from './i18n'
-// @ts-ignore: no declaration file for './utils/standaloneRoutes'
 import { isAuthLifecyclePublicRoute } from './utils/standaloneRoutes'
 
 const shouldEnableVerboseConsole = () => {

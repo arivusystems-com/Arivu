@@ -35,6 +35,7 @@
 
             <div v-else class="space-y-4">
               <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                 v-for="field in fields"
                 :key="field.key"
                 :field="field"
@@ -74,7 +75,12 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 import DynamicFormField from './DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import { getFieldDependencyState } from '@/utils/dependencyEvaluation';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const props = defineProps({
   isOpen: {

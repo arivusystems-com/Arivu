@@ -242,6 +242,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'CasesView' });
 import { ref, watch, onMounted, onActivated, nextTick, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -309,7 +310,7 @@ const kanbanSettingsVersion = ref(0);
 const refreshKanbanSettings = () => { kanbanSettingsVersion.value++; };
 
 const kanbanCardSize = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -321,7 +322,7 @@ const kanbanCardSize = computed(() => {
 });
 
 const kanbanStackFields = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -333,7 +334,7 @@ const kanbanStackFields = computed(() => {
 });
 
 const kanbanShowEmptyFields = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -345,7 +346,7 @@ const kanbanShowEmptyFields = computed(() => {
 });
 
 const kanbanCollapseEmptyColumns = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -357,7 +358,7 @@ const kanbanCollapseEmptyColumns = computed(() => {
 });
 
 const kanbanShownFieldKeys = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_FIELDS_KEY);
     if (raw) {

@@ -14,7 +14,7 @@
     <!-- Momentum Signals -->
     <div v-if="signals.length > 0" class="space-y-3">
       <MomentumSignal
-        v-for="(signal, index) in visibleSignals"
+        v-for="signal in visibleSignals"
         :key="signal.id"
         :severity="signal.severity"
         :message="signal.message"

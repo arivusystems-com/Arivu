@@ -73,22 +73,22 @@ export function useLocale() {
 
   const authStore = useAuthStore();
 
-  const orgSettings = computed(() => authStore.organization?.settings ?? {});
+  const orgSettings = computed(() => authStore.organization?.settings);
   const userPrefs = computed(() => authStore.user ?? {});
 
   const locale = computed(() =>
-    resolveLocaleTag(language.value, orgSettings.value?.locale as string | undefined)
+    resolveLocaleTag(language.value, orgSettings.value?.locale)
   );
 
   const timeZone = computed(() => {
     const userTz = (userPrefs.value as { timeZone?: string | null })?.timeZone;
-    const orgTz = orgSettings.value?.timeZone as string | undefined;
+    const orgTz = orgSettings.value?.timeZone;
     return normalizeIanaTimezone(userTz || orgTz || 'UTC') || 'UTC';
   });
 
   const dateFormat = computed(() => {
     const userFmt = (userPrefs.value as { dateFormat?: string | null })?.dateFormat;
-    const orgFmt = orgSettings.value?.dateFormat as string | undefined;
+    const orgFmt = orgSettings.value?.dateFormat;
     return String(userFmt || orgFmt || 'MM/DD/YYYY').trim() || 'MM/DD/YYYY';
   });
 
@@ -192,7 +192,7 @@ export function useLocale() {
     } catch {
       /* ignore */
     }
-    const orgLang = (orgSettings.value?.language as string) || DEFAULT_LANGUAGE;
+    const orgLang = orgSettings.value?.language || DEFAULT_LANGUAGE;
     await setI18nLanguage(orgLang as I18nLanguage);
   }
 

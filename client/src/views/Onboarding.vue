@@ -1,4 +1,5 @@
 <script setup>
+defineOptions({ name: 'OnboardingView' });
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';

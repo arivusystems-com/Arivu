@@ -7,10 +7,12 @@
 
 export type FilterType = 'text' | 'select' | 'multi-select' | 'boolean' | 'user' | 'entity' | 'date';
 
+export type FilterValue = string | number | boolean | null | string[];
+
 export interface FilterConfig {
   key: string;
   filterType: FilterType;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -18,10 +20,10 @@ export interface FilterConfig {
  * Converts UI filter values to API-compatible values
  */
 export function normalizeFiltersForAPI(
-  filters: Record<string, any>,
+  filters: Record<string, FilterValue | undefined>,
   filterConfigs: FilterConfig[],
   currentUserId?: string
-): Record<string, any> {
+): Record<string, FilterValue | undefined> {
   const normalized = { ...filters };
 
   filterConfigs.forEach(filterConfig => {
@@ -90,10 +92,10 @@ export function normalizeFiltersForAPI(
  * Converts API values back to UI-friendly values
  */
 export function normalizeFiltersForUI(
-  filters: Record<string, any>,
+  filters: Record<string, FilterValue | undefined>,
   filterConfigs: FilterConfig[],
   currentUserId?: string
-): Record<string, any> {
+): Record<string, FilterValue | undefined> {
   const normalized = { ...filters };
 
   filterConfigs.forEach(filterConfig => {

@@ -12,6 +12,7 @@
     @add-relation="handleAddRelation"
     @open-related-record="handleOpenRelatedRecord"
     @record-updated="handleRecordUpdated"
+    @record-field="applyRecordField"
     ref="summaryViewRef"
   />
 
@@ -86,6 +87,10 @@ const fetchTask = async () => {
 const goBack = () => {
   router.push('/tasks');
 };
+
+function applyRecordField({ field, value }) {
+  if (task.value && field != null) task.value[field] = value;
+}
 
 const handleUpdate = async (updateData) => {
   try {

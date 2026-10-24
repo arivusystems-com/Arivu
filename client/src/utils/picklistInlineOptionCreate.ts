@@ -121,6 +121,19 @@ export function getPicklistOptionComparableValue(option: unknown): string {
   return String(option).trim();
 }
 
+export function appendCreatedPicklistOption(
+  field: { options?: unknown } | null | undefined,
+  option: { value?: string } | null | undefined
+): void {
+  if (!field || !option?.value) return;
+  const options = field.options;
+  if (Array.isArray(options)) {
+    if (!picklistOptionExists(options, option.value)) options.push(option);
+    return;
+  }
+  field.options = [option];
+}
+
 export function picklistOptionExists(options: unknown[] | null | undefined, value: string): boolean {
   const target = String(value || '').trim().toLowerCase();
   if (!target) return false;

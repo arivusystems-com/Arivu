@@ -29,7 +29,6 @@ import type {
 } from '@/types/sidebar.types';
 import type { PermissionSnapshot } from '@/types/permission-snapshot.types';
 import { hasPermission as checkPermission } from '@/types/permission-snapshot.types';
-import { memoizeBuilder } from '@/utils/builderCache';
 import { validateAppRegistryOrThrow } from '@/utils/validateAppRegistry';
 import { assertValidSidebarStructure } from '@/utils/assertValidSidebarStructure';
 import { getActivePinia } from 'pinia';
@@ -100,14 +99,6 @@ function getLastActiveAppIdFromStorage(): string | null {
   } catch {
     return null;
   }
-}
-
-function collectAllModules(appRegistry: AppRegistry): AppRegistryModule[] {
-  const all: AppRegistryModule[] = [];
-  for (const app of Object.values(appRegistry)) {
-    for (const m of app.modules || []) all.push(m);
-  }
-  return all;
 }
 
 function listApps(appRegistry: AppRegistry): Array<{ appKey: string; label: string; dashboardRoute: string; icon?: string; order?: number; modules?: AppRegistryModule[] }> {
@@ -349,6 +340,20 @@ function buildCoreModulesFromRegistry(appRegistry: AppRegistry, snapshot: Permis
   return dedupeCoreModules(modules);
 }
 
+interface CoreModuleSettingsEntry {
+  platformOwned?: boolean;
+  moduleKey?: string;
+  order?: number;
+  icon?: string;
+  name?: string;
+  pluralLabel?: string;
+  label?: string;
+}
+
+function isCoreModuleSettingsEntry(value: unknown): value is CoreModuleSettingsEntry {
+  return typeof value === 'object' && value !== null;
+}
+
 /**
  * Fallback for older registry payloads that do not include PLATFORM modules.
  */
@@ -371,11 +376,11 @@ async function fetchCoreModulesFromSettings(snapshot: PermissionSnapshot): Promi
 
     const response = await fetchCoreModulesSettingsCached();
 
-    const modules = response?.modules || [];
+    const modules = (response?.modules || []).filter(isCoreModuleSettingsEntry);
 
     // Filter enabled modules and check permissions
     const coreModules: SidebarItem[] = modules
-      .filter((module: any) => {
+      .filter((module) => {
         // Only include platform-owned modules
         if (!module.platformOwned) return false;
 
@@ -388,7 +393,7 @@ async function fetchCoreModulesFromSettings(snapshot: PermissionSnapshot): Promi
         const permissionKey = `${moduleKey}.view`;
         return hasPermission(permissionKey, snapshot);
       })
-      .sort((a: any, b: any) => {
+      .sort((a, b) => {
         // Respect order from configuration (if available)
         // Otherwise sort by moduleKey for consistency
         if (a.order !== undefined && b.order !== undefined) {
@@ -396,7 +401,7 @@ async function fetchCoreModulesFromSettings(snapshot: PermissionSnapshot): Promi
         }
         return (a.moduleKey || '').localeCompare(b.moduleKey || '');
       })
-      .map((module: any) => {
+      .map((module) => {
         const moduleKey = module.moduleKey?.toLowerCase() || '';
         
         const route = CORE_MODULE_ROUTE_OVERRIDES[moduleKey] || `/${moduleKey}`;
@@ -626,7 +631,7 @@ function buildAppNav(appRegistry: AppRegistry, activeAppId: string, snapshot: Pe
   return { appId: activeAppId, dashboard, modules };
 }
 
-function buildPlatformGovernance(snapshot: PermissionSnapshot): SidebarItem[] {
+function buildPlatformGovernance(_snapshot: PermissionSnapshot): SidebarItem[] {
   // Sidebar footer is not for navigation or configuration.
   // Settings is accessed via the profile menu.
   // Apps is switched exclusively via the App Switcher (mode selector).

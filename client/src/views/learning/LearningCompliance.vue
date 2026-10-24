@@ -128,6 +128,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
+import { formatUserDate } from '@/utils/localeFormat';
 import LearningPageHeader from './components/LearningPageHeader.vue';
 import { captureLearningModuleVisited } from '@/config/posthogLearning';
 
@@ -172,7 +173,7 @@ function formatDue(dueAt) {
   try {
     return d(new Date(dueAt), 'short');
   } catch {
-    return new Date(dueAt).toLocaleDateString();
+    return formatUserDate(dueAt);
   }
 }
 

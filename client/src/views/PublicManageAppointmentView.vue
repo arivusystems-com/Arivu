@@ -144,6 +144,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { formatSlotTime, formatSlotDate } from '@/utils/appointmentFormatters';
+import { formatDate } from '@/utils/localeFormat';
 
 import { confirmAction } from '@/composables/useConfirmAction';
 const { t } = useI18n();
@@ -174,7 +175,7 @@ const dateOptions = computed(() => {
     d.setDate(today.getDate() + i);
     out.push({
       key: d.toISOString().slice(0, 10),
-      weekday: d.toLocaleDateString(undefined, { weekday: 'short' }),
+      weekday: formatDate(d, { weekday: 'short' }),
       day: d.getDate()
     });
   }

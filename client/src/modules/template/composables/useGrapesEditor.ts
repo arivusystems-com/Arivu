@@ -21,7 +21,7 @@ import {
   selectComponentById,
   type LayerNode
 } from '../editor/selection';
-import { getTextInsertTarget, restoreCanvasCaret } from '../editor/canvasInsertion';
+import { getTextInsertTarget } from '../editor/canvasInsertion';
 import {
   endLibraryBlockDrag,
   moveLibraryBlockDrag,

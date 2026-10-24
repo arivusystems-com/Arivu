@@ -43,7 +43,6 @@
 import type {
   BaseFieldMetadata,
   BaseFieldOwner,
-  BaseFieldIntent,
   BaseFieldScope,
   BaseFilterType,
 } from './BaseFieldModel';
@@ -590,11 +589,13 @@ export const PEOPLE_QUICK_CREATE_DEFAULT = [
  * @param module - People module definition (from /modules/people/quick-create)
  * @returns Field keys for quick create (identity creation)
  */
-export function getPeopleQuickCreateFields(module: { quickCreate?: string[] } | null | undefined): string[] {
+export function getPeopleQuickCreateFields(
+  module: { quickCreate?: Array<string | { key?: string }> } | null | undefined
+): string[] {
   const qc = module?.quickCreate;
   const keys =
     Array.isArray(qc) && qc.length > 0
-      ? qc.map((f) => (typeof f === 'string' ? f : (f as any)?.key ?? f)).filter(Boolean)
+      ? qc.map((field) => (typeof field === 'string' ? field : field?.key ?? '')).filter(Boolean)
       : [...PEOPLE_QUICK_CREATE_DEFAULT];
   // Never show platform-managed fields (e.g. source) even if still saved in Settings quickCreate
   return keys.filter((k) => k && !isGlobalSystemFieldKey(String(k)));

@@ -5,8 +5,8 @@ import pluginOxlint from 'eslint-plugin-oxlint'
 import { arivuI18nPlugin } from './eslint/plugins/arivu-i18n.js'
 
 // To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
-// import { configureVueProject } from '@vue/eslint-config-typescript'
-// configureVueProject({ scriptLangs: ['ts', 'tsx'] })
+import { configureVueProject } from '@vue/eslint-config-typescript'
+configureVueProject({ scriptLangs: ['ts', 'tsx', 'js'] })
 // More info at https://github.com/vuejs/eslint-config-typescript/#advanced-setup
 
 export default defineConfigWithVueTs(
@@ -16,11 +16,58 @@ export default defineConfigWithVueTs(
   },
 
   // public/static-sync: installer/sync scripts customers download and run in their own Node projects.
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'public/static-sync/**']),
+  globalIgnores([
+    '**/dist/**',
+    '**/dist-ssr/**',
+    '**/coverage/**',
+    '**/.vite/**',
+    'public/static-sync/**',
+    '**/.tsbuildinfo/**',
+  ]),
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
   ...pluginOxlint.configs['flat/recommended'],
+
+  {
+    name: 'app/typescript-unused-vars',
+    files: ['**/*.{ts,mts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+
+  {
+    name: 'app/vue-script-language',
+    files: ['**/*.vue'],
+    rules: {
+      'vue/block-lang': [
+        'error',
+        {
+          script: {
+            lang: ['ts', 'tsx', 'js'],
+            allowNoLang: true,
+          },
+        },
+      ],
+    },
+  },
+
+  {
+    name: 'app/vue-unused-vars',
+    files: ['**/*.vue'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
 
   {
     name: 'app/i18n-enforcement-ui',

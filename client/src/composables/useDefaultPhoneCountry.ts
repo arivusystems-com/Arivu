@@ -17,12 +17,12 @@ export function useDefaultPhoneCountry(contextSource?: MaybeRef<CountryContext>)
 
   const defaultPhoneCountry = computed(() => {
     const context = unref(contextSource);
-    const orgSettings = authStore.organization?.settings ?? {};
+    const orgSettings = authStore.organization?.settings;
     return resolveDefaultPhoneCountry({
       recordCountry: extractRecordCountry(context),
-      orgDefaultPhoneCountry: orgSettings.defaultPhoneCountry as string | undefined,
+      orgDefaultPhoneCountry: orgSettings?.defaultPhoneCountry,
       orgLocale: locale.value,
-      orgTimeZone: (orgSettings.timeZone as string | undefined) || timeZone.value,
+      orgTimeZone: orgSettings?.timeZone || timeZone.value,
       orgCurrency: currency.value,
     });
   });

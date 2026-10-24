@@ -27,8 +27,11 @@ describe('activity adapter contract', () => {
     expect(ui.arbitraryFlag).toBe(true);
 
     for (const key of ACTIVITY_UI_HANDLER_KEYS) {
-      expect(typeof ui[key]).toBe('function');
-      expect(() => ui[key]()).not.toThrow();
+      const handler = ui[key];
+      expect(typeof handler).toBe('function');
+      if (typeof handler === 'function') {
+        expect(() => handler()).not.toThrow();
+      }
     }
   });
 
@@ -178,9 +181,15 @@ describe('activity adapter contract', () => {
     expect(dealUi.value.canEditComment).toBe(canEditNote);
     expect(dealUi.value.startEditComment).toBe(startEditNote);
 
-    expect(typeof dealUi.value.toggleTaskEmailThread).toBe('function');
-    expect(typeof dealUi.value.createTaskFromEmailMessage).toBe('function');
-    expect(() => dealUi.value.toggleTaskEmailThread()).not.toThrow();
-    expect(() => dealUi.value.createTaskFromEmailMessage()).not.toThrow();
+    const toggleTaskEmailThread = dealUi.value.toggleTaskEmailThread;
+    const createTaskFromEmailMessage = dealUi.value.createTaskFromEmailMessage;
+    expect(typeof toggleTaskEmailThread).toBe('function');
+    expect(typeof createTaskFromEmailMessage).toBe('function');
+    if (typeof toggleTaskEmailThread === 'function') {
+      expect(() => toggleTaskEmailThread()).not.toThrow();
+    }
+    if (typeof createTaskFromEmailMessage === 'function') {
+      expect(() => createTaskFromEmailMessage()).not.toThrow();
+    }
   });
 });

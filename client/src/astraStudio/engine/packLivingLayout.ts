@@ -329,7 +329,7 @@ export function applyLivingGravity(
   const pinned = pinnedId ? result.get(pinnedId) : null;
 
   const colOf = (frame: WidgetFrame) => {
-    let col = Math.round((frame.x - pad) / stride);
+    const col = Math.round((frame.x - pad) / stride);
     return Math.max(0, Math.min(columns - 1, col));
   };
 

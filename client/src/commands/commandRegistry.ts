@@ -70,10 +70,9 @@
  */
 
 import type { Router } from 'vue-router';
-import type { 
-  CommandPaletteItem, 
-  CommandContext, 
-  CommandCategory,
+import type {
+  CommandPaletteItem,
+  CommandContext,
   NavigationUtilities
 } from '@/types/commandPalette.types';
 
@@ -86,9 +85,10 @@ import type {
 function createNavigationUtilities(router: Router): NavigationUtilities {
   const performNavigation = async (target: string | { path: string; query: Record<string, string> }) => {
     try {
-      await router.push(target as any);
-    } catch (err: any) {
-      if (err?.name !== 'NavigationDuplicated') {
+      await router.push(target);
+    } catch (err: unknown) {
+      const name = err && typeof err === 'object' && 'name' in err ? err.name : undefined;
+      if (name !== 'NavigationDuplicated') {
         console.warn('[CommandRegistry] Navigation error:', err);
       }
     }
@@ -101,7 +101,7 @@ function createNavigationUtilities(router: Router): NavigationUtilities {
     navigateWithQuery: async (path: string, query: Record<string, string>) => {
       await performNavigation({ path, query });
     },
-    openTab: async (path: string, options?: { title?: string; background?: boolean }) => {
+    openTab: async (path: string, _options?: { title?: string; background?: boolean }) => {
       // Note: This is a placeholder - actual tab opening is handled in GlobalSearch
       // where useTabs() is available. This ensures commands can request tab opening.
       await performNavigation(path);
@@ -131,7 +131,7 @@ function createNavigationUtilities(router: Router): NavigationUtilities {
  * Manual global commands (not inferable from registry routes alone).
  * Navigation to modules/apps comes from buildCommandsFromRegistry via useCommandPaletteCommands.
  */
-function createManualGlobalCommands(nav: NavigationUtilities): CommandPaletteItem[] {
+function createManualGlobalCommands(_nav: NavigationUtilities): CommandPaletteItem[] {
   return [
     // Creation commands
     // ARCHITECTURE NOTE: Command palette routes to intent, not raw entities.
@@ -189,7 +189,7 @@ function createManualGlobalCommands(nav: NavigationUtilities): CommandPaletteIte
         }
         
         // Build initial data with context awareness
-        const initialData: Record<string, any> = {};
+        const initialData: Record<string, string> = {};
         
         // Auto-assign to current user (will be set in GlobalSearch)
         // Auto-link to current context if present
@@ -200,11 +200,13 @@ function createManualGlobalCommands(nav: NavigationUtilities): CommandPaletteIte
         // Determine context from route
         if (routeName === 'person-detail' || (routePath.startsWith('/people/') && id && routePath !== '/people' && routePath !== '/people/create')) {
           // Person detail context - link task to person
-          initialData.contactId = id;
-          initialData.personId = id;
+          if (id) {
+            initialData.contactId = id;
+            initialData.personId = id;
+          }
         } else if (routeName === 'organization-detail' || (routePath.startsWith('/organizations/') && id && routePath !== '/organizations')) {
           // Organization detail context - link task to organization
-          initialData.organizationId = id;
+          if (id) initialData.organizationId = id;
         }
         
         if (typeof window !== 'undefined') {
@@ -274,7 +276,7 @@ function createManualGlobalCommands(nav: NavigationUtilities): CommandPaletteIte
  * Commands available when viewing Inbox surface.
  * These are actions specific to inbox context.
  */
-function createInboxContextCommands(nav: NavigationUtilities): CommandPaletteItem[] {
+function createInboxContextCommands(_nav: NavigationUtilities): CommandPaletteItem[] {
   return [
     {
       id: 'inbox-create-task',
@@ -285,9 +287,9 @@ function createInboxContextCommands(nav: NavigationUtilities): CommandPaletteIte
       context: 'inbox',
       moduleKey: 'tasks',
       kind: 'action',
-      handler: (route) => {
+      handler: (_route) => {
         // Build initial data - auto-assign to current user
-        const initialData: Record<string, any> = {};
+        const initialData: Record<string, string> = {};
         
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('arivu:open-create-drawer', {
@@ -310,7 +312,7 @@ function createInboxContextCommands(nav: NavigationUtilities): CommandPaletteIte
  * Commands available when viewing Person detail surface.
  * These are actions specific to person context.
  */
-function createPeopleContextCommands(nav: NavigationUtilities): CommandPaletteItem[] {
+function createPeopleContextCommands(_nav: NavigationUtilities): CommandPaletteItem[] {
   return [
     {
       id: 'person-ai-research',
@@ -351,7 +353,7 @@ function createPeopleContextCommands(nav: NavigationUtilities): CommandPaletteIt
         
         if (personId && typeof window !== 'undefined') {
           // Build initial data - link to person and auto-assign to current user
-          const initialData: Record<string, any> = {
+          const initialData: Record<string, string> = {
             contactId: personId,
             personId: personId
           };
@@ -441,7 +443,7 @@ function createPeopleContextCommands(nav: NavigationUtilities): CommandPaletteIt
  * Commands available when viewing Organization surface.
  * These are actions specific to organization context.
  */
-function createOrganizationContextCommands(nav: NavigationUtilities): CommandPaletteItem[] {
+function createOrganizationContextCommands(_nav: NavigationUtilities): CommandPaletteItem[] {
   return [
     {
       id: 'org-link-person',
@@ -495,7 +497,7 @@ function createOrganizationContextCommands(nav: NavigationUtilities): CommandPal
         
         if (orgId && typeof window !== 'undefined') {
           // Build initial data - prefill organization and lock it
-          const initialData: Record<string, any> = {
+          const initialData: Record<string, string> = {
             accountId: orgId
           };
           

@@ -118,6 +118,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'ItemsView' });
 import { useI18n } from 'vue-i18n';
 
 import { useNotifications } from '@/composables/useNotifications';

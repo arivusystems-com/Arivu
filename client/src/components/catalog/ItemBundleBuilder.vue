@@ -488,6 +488,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
+import { formatNumber } from '@/utils/localeFormat';
 import { unwrapCatalogApiData } from '@/utils/catalogApi';
 import { confirmAction } from '@/composables/useConfirmAction';
 import HeadlessSelect from '@/components/ui/HeadlessSelect.vue';
@@ -551,7 +552,7 @@ const pricingHint = computed(() => {
 function formatMoney(n) {
   const v = Number(n);
   if (!Number.isFinite(v)) return '—';
-  return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  return formatNumber(v, { maximumFractionDigits: 4 });
 }
 
 function toDateInput(value) {

@@ -741,7 +741,7 @@ function triggerThreadReply(replyAll = false) {
 
 function getMessageBody(body) {
   if (!body || typeof body !== 'string') return '(no content)';
-  let t = body
+  const t = body
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/div>/gi, '\n')

@@ -12,6 +12,7 @@
     @add-relation="handleAddRelation"
     @open-related-record="handleOpenRelatedRecord"
     @record-updated="handleRecordUpdated"
+    @record-field="applyRecordField"
     ref="summaryViewRef"
   />
 
@@ -81,6 +82,10 @@ const fetchOrganization = async () => {
 const goBack = () => {
   router.push('/organizations');
 };
+
+function applyRecordField({ field, value }) {
+  if (organization.value && field != null) organization.value[field] = value;
+}
 
 const handleUpdate = async (updateData) => {
   try {

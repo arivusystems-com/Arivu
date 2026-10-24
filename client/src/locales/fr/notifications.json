@@ -438,5 +438,37 @@
   "toastCategoryInternalChatMention": {
     "message": "Mentioned in chat",
     "description": "Toast category when mentioned in Internal Chat"
+  },
+  "channelInApp": {
+    "message": "In-App",
+    "description": "In-app notification channel label"
+  },
+  "channelEmail": {
+    "message": "Email",
+    "description": "Email notification channel label"
+  },
+  "channelPush": {
+    "message": "Push",
+    "description": "Push notification channel label"
+  },
+  "channelWhatsApp": {
+    "message": "WhatsApp",
+    "description": "WhatsApp notification channel label"
+  },
+  "channelSms": {
+    "message": "SMS",
+    "description": "SMS notification channel label"
+  },
+  "channelUnavailableTooltip": {
+    "message": "{channel} notifications are not available",
+    "description": "Tooltip when a notification channel is unavailable"
+  },
+  "channelEnabledTooltip": {
+    "message": "{channel} notifications are enabled",
+    "description": "Tooltip when a notification channel is enabled"
+  },
+  "channelDisabledTooltip": {
+    "message": "{channel} notifications are disabled",
+    "description": "Tooltip when a notification channel is disabled"
   }
 }

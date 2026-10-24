@@ -476,6 +476,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'DealsView' });
 import { useI18n } from 'vue-i18n';
 
 import { useNotifications } from '@/composables/useNotifications';
@@ -593,7 +594,7 @@ const getInitialStatsOpen = () => {
 const statsOpen = ref(getInitialStatsOpen());
 
 const kanbanCardSize = computed(() => {
-  kanbanSettingsVersion.value; // dependency
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -604,7 +605,7 @@ const kanbanCardSize = computed(() => {
   return 'medium';
 });
 const kanbanStackFields = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -615,7 +616,7 @@ const kanbanStackFields = computed(() => {
   return true;
 });
 const kanbanShowEmptyFields = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -626,7 +627,7 @@ const kanbanShowEmptyFields = computed(() => {
   return true;
 });
 const kanbanCollapseEmptyColumns = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_OPTIONS_KEY);
     if (raw) {
@@ -637,7 +638,7 @@ const kanbanCollapseEmptyColumns = computed(() => {
   return false;
 });
 const kanbanShownFieldKeys = computed(() => {
-  kanbanSettingsVersion.value;
+  const _kanbanSettingsDependency = kanbanSettingsVersion.value;
   try {
     const raw = localStorage.getItem(KANBAN_FIELDS_KEY);
     if (raw) {

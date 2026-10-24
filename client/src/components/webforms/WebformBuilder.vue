@@ -1315,12 +1315,15 @@ function onSelectButton(key) {
   selectedFieldId.value = '';
 }
 
+watch(selectedField, (field) => {
+  if (field && !field.visibility) {
+    field.visibility = defaultFieldVisibility();
+  }
+}, { immediate: true });
+
 const selectedFieldVisibility = computed(() => {
   if (!selectedField.value) return defaultFieldVisibility();
-  if (!selectedField.value.visibility) {
-    selectedField.value.visibility = defaultFieldVisibility();
-  }
-  return selectedField.value.visibility;
+  return selectedField.value.visibility || defaultFieldVisibility();
 });
 
 const visibilitySourceFields = computed(() => {

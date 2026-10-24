@@ -515,5 +515,25 @@
   "vendorCatalogLeadPlaceholder": {
     "message": "—",
     "description": "Empty lead time placeholder"
+  },
+  "stageProspect": {
+    "message": "Prospect",
+    "description": "Organization customer lifecycle stage when no module options are configured"
+  },
+  "stageEvaluation": {
+    "message": "Evaluation",
+    "description": "Organization customer lifecycle stage when no module options are configured"
+  },
+  "stagePotential": {
+    "message": "Potential",
+    "description": "Organization partner or vendor lifecycle stage when no module options are configured"
+  },
+  "stageDiscussing": {
+    "message": "Discussing",
+    "description": "Organization partner lifecycle stage when no module options are configured"
+  },
+  "stageEvaluating": {
+    "message": "Evaluating",
+    "description": "Organization vendor lifecycle stage when no module options are configured"
   }
 }

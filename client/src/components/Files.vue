@@ -166,6 +166,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'RecordFiles' });
 import { useI18n } from 'vue-i18n';
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';

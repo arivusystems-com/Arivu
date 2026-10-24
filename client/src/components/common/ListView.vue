@@ -1534,6 +1534,7 @@ import { formatCurrencyValue, resolveOrgCurrencyCode } from '@/utils/currencyOpt
 import { formatNumber } from '@/utils/localeFormat';
 import { isFieldExcludedFromListCustomize, buildListColumnsFromModuleFields } from '@/utils/buildListColumnsFromModuleFields';
 import { useDefaultListFilters } from '@/composables/useDefaultListFilters';
+import { getModuleListConfig } from '@/platform/modules/moduleListRegistry';
 import { useListSelection } from '@/composables/useListSelection';
 import { useBulkDeleteProgressStore } from '@/stores/bulkDeleteProgress';
 import { normalizeListPagination } from '@/utils/normalizeListPagination';
@@ -3297,8 +3298,7 @@ watch(
         let shouldBeLocked = false;
         
         try {
-          const moduleListRegistry = require('@/platform/modules/moduleListRegistry');
-          const moduleConfig = moduleListRegistry.getModuleListConfig(props.moduleKey);
+          const moduleConfig = getModuleListConfig(props.moduleKey);
           
           if (moduleConfig?.defaultColumns) {
             const defaultVisible = moduleConfig.defaultColumns.defaultVisibleColumns || [];

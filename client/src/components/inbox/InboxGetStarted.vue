@@ -93,7 +93,7 @@
           :style="carouselTrackStyle"
         >
           <article
-            v-for="(slide, index) in slides"
+            v-for="slide in slides"
             :key="slide.id"
             class="inbox-carousel-card shrink-0 rounded-2xl border border-[#EBEBEB] bg-white p-5 shadow-[0_12px_32px_rgba(0,0,0,0.14)] dark:border-gray-700 dark:bg-gray-900 dark:shadow-[0_12px_32px_rgba(0,0,0,0.4)] sm:p-6"
             :style="{ width: `${CARD_WIDTH}px` }"

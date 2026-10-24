@@ -11,6 +11,9 @@
 
 import type { PeoplePermission } from './peoplePermissions';
 
+type PeoplePermissionNode = boolean | Record<string, boolean>;
+type PeoplePermissionMap = Record<string, Record<string, PeoplePermissionNode>>;
+
 /**
  * Check if user has a specific People permission
  * 
@@ -21,7 +24,7 @@ import type { PeoplePermission } from './peoplePermissions';
 export function hasPeoplePermission(
   permissionKey: PeoplePermission,
   authStore: { 
-    user: { isOwner?: boolean; role?: string; permissions?: Record<string, Record<string, boolean>> } | null;
+    user: { isOwner?: boolean; role?: string; permissions?: PeoplePermissionMap } | null;
     hasPermission: (module: string, action: string) => boolean;
   }
 ): boolean {
@@ -58,7 +61,7 @@ export function hasPeoplePermission(
     const permissions = authStore.user.permissions;
     
     // Check if permissions.contacts exists
-    const contactsPerms: any = permissions[normalizedModule] || permissions['people'];
+    const contactsPerms = permissions[normalizedModule] || permissions['people'];
     if (contactsPerms) {
       // For app-specific permissions like 'attach.sales', check nested structure
       if (action.includes('.')) {
@@ -99,7 +102,7 @@ export function hasPeoplePermission(
  * This can be used in components that have access to useAuthStore()
  */
 export function createPeoplePermissionChecker(authStore: { 
-  user: { isOwner?: boolean; role?: string; permissions?: Record<string, Record<string, boolean>> } | null;
+  user: { isOwner?: boolean; role?: string; permissions?: PeoplePermissionMap } | null;
   hasPermission: (module: string, action: string) => boolean;
 }) {
   return (permissionKey: PeoplePermission): boolean => {

@@ -405,7 +405,7 @@
             </div>
             <div v-else class="space-y-4 p-6">
               <ReportBlock
-                v-for="(block, index) in visibleBlocks"
+                v-for="block in visibleBlocks"
                 :key="block.id"
                 :block="block"
                 :index="getVisibleBlockIndex(block.id)"

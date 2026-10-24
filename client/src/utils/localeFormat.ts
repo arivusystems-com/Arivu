@@ -169,7 +169,7 @@ export function formatNumberWithDisplayPrefs(
       : undefined;
 
   let groupSep = prefs.digitGroupingSeparator;
-  let decimalSep = prefs.decimalSeparator;
+  const decimalSep = prefs.decimalSeparator;
   if (groupSep === decimalSep) {
     groupSep = decimalSep === '.' ? ',' : '.';
   }

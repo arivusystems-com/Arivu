@@ -211,6 +211,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'EventsView' });
 import { ref, computed, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';

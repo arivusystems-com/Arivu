@@ -1,4 +1,5 @@
 <script setup>
+defineOptions({ name: 'DocumentsView' });
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import {
   fetchCustomSavedViews,

@@ -1291,12 +1291,12 @@ const isEventRecurrencePicklist = computed(() => {
   return String(props.field?.key || '').toLowerCase() === 'recurrence';
 });
 
-const EVENT_RECURRENCE_OPTIONS = [
-  { value: 'Daily', label: 'Daily' },
-  { value: 'Weekly', label: 'Weekly' },
-  { value: 'Monthly', label: 'Monthly' },
-  { value: 'Custom', label: 'Custom' },
-];
+const eventRecurrenceOptions = computed(() => [
+  { value: 'Daily', label: t('settings.assignRulesFreqDaily') },
+  { value: 'Weekly', label: t('process.designerScheduleWeekly') },
+  { value: 'Monthly', label: t('events.eventFormModalMonthly') },
+  { value: 'Custom', label: t('common.listViewCustom') },
+]);
 
 
 const isEventConferenceProviderField = computed(() => {
@@ -1535,7 +1535,7 @@ const mergedPicklistSourceOptions = computed(() => {
 
   // Events recurrence: ensure enum options even when module def has wrong type/empty options
   if (String(props.moduleKey || '').toLowerCase() === 'events' && fieldKeyNorm === 'recurrence') {
-    if (!base.length) base = EVENT_RECURRENCE_OPTIONS;
+    if (!base.length) base = eventRecurrenceOptions.value;
   }
 
   // Events status vocabulary: scope options by event type (Meeting seeds vs audit/FSB)
@@ -1938,18 +1938,11 @@ async function handleCreatePicklistOption() {
       throw new Error(response?.message || 'Failed to add picklist option');
     }
 
-    if (Array.isArray(props.field.options)) {
-      if (!picklistOptionExists(props.field.options, option.value)) {
-        props.field.options.push(option);
-      }
-    } else {
-      props.field.options = [option];
-    }
     if (!picklistOptionExists(additionalPicklistOptions.value, option.value)) {
       additionalPicklistOptions.value = [...additionalPicklistOptions.value, option];
     }
 
-    emit('picklist-option-created', { fieldKey, option });
+    emit('picklist-option-created', { field: props.field, fieldKey, option });
 
     if (props.field.dataType === 'Multi-Picklist') {
       const current = Array.isArray(props.value) ? [...props.value] : [];
@@ -2885,8 +2878,8 @@ const fetchLookupModalData = async () => {
 const generateLookupModalColumns = () => {
   if (isAssignedToField.value) {
     return [
-      { key: 'name', label: 'Name', sortable: true },
-      { key: 'email', label: 'Email', sortable: true }
+      { key: 'name', label: t('common.columnName'), sortable: true },
+      { key: 'email', label: t('common.columnEmail'), sortable: true }
     ];
   }
   

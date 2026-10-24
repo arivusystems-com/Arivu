@@ -89,10 +89,6 @@ describe('Field Visibility Contract', () => {
         { key: 'title', label: 'Title' },
       ];
       const emptyMetadata: Record<string, BaseFieldMetadata> = {};
-      const result = mergeFields(emptyMetadata, backendFields, {
-        moduleKey: 'tasks',
-        getMetadata: () => undefined,
-      });
       // With no metadata, _id has no isVisibleInConfig override - getIsVisibleInConfigBase(undefined, '_id')
       // For undefined meta, it returns true. So _id would be included! Let me check the implementation.
       // getIsVisibleInConfigBase(undefined, '_id') - if (!metadata) return true. So we'd include _id.

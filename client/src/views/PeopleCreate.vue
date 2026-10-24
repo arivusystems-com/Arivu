@@ -125,18 +125,15 @@ type AppContextResult = {
   isAmbiguous?: boolean;
   reason?: string;
   candidates?: string[];
-  [key: string]: any;
 };
 
 type AggregatedType = {
   typeKey: string;
   owningApps: string[];
-  [key: string]: any;
 };
 
 type TypesResult = {
   aggregated: AggregatedType[];
-  [key: string]: any;
 };
 
 type QuickCreateResult = {
@@ -145,8 +142,16 @@ type QuickCreateResult = {
   reason?: string;
   confidence?: string;
   candidates?: string[];
-  [key: string]: any;
 };
+
+interface PeopleCreateApiError {
+  response?: {
+    data?: {
+      errors?: Record<string, string>;
+      message?: string;
+    };
+  };
+}
 
 type PeopleCreateFormData = {
   first_name: string;
@@ -243,7 +248,7 @@ onMounted(() => {
   showCreateDrawer.value = true;
 });
 
-const handleDrawerSaved = (person: any) => {
+const handleDrawerSaved = (person: { _id?: string; id?: string }) => {
   // Navigate to the created person's detail page
   router.push(`/people/${person._id || person.id}`);
   // Reset state
@@ -435,7 +440,7 @@ const handleSubmit = async () => {
       }
     }
   } catch (err: unknown) {
-    const apiErr = err as any;
+    const apiErr = err as PeopleCreateApiError;
     console.error('Error creating person:', err);
     console.error('Error response:', apiErr?.response?.data);
     console.error('Validation errors:', apiErr?.response?.data?.errors);

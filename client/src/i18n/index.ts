@@ -7,7 +7,6 @@ import {
   type I18nLanguage,
 } from './constants';
 import {
-  ensureFullLocaleLoaded,
   loadCoreLocaleMessages,
   loadFullLocaleMessages,
   loadPublicAuthLocaleMessages,

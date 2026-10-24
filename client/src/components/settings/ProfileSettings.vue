@@ -1327,12 +1327,12 @@ const lastLoginAbsolute = computed(() => formatAbsolute(profile.value?.lastLogin
 
 // Map appKey to colors and short labels for the access cards
 const APP_PRESENTATION = {
-  SALES: { label: 'Sales', short: 'S', color: 'bg-gradient-to-br from-indigo-500 to-violet-600' },
-  HELPDESK: { label: 'Helpdesk', short: 'H', color: 'bg-gradient-to-br from-emerald-500 to-teal-600' },
-  PROJECTS: { label: 'Projects', short: 'P', color: 'bg-gradient-to-br from-amber-500 to-orange-600' },
-  AUDIT: { label: 'Audit', short: 'A', color: 'bg-gradient-to-br from-sky-500 to-blue-600' },
-  PORTAL: { label: 'Portal', short: 'Po', color: 'bg-gradient-to-br from-rose-500 to-pink-600' },
-  LMS: { label: 'Learning', short: 'L', color: 'bg-gradient-to-br from-fuchsia-500 to-purple-600' },
+  SALES: { labelKey: 'navigation.appSales', short: 'S', color: 'bg-gradient-to-br from-indigo-500 to-violet-600' },
+  HELPDESK: { labelKey: 'navigation.appHelpdesk', short: 'H', color: 'bg-gradient-to-br from-emerald-500 to-teal-600' },
+  PROJECTS: { labelKey: 'navigation.appProjects', short: 'P', color: 'bg-gradient-to-br from-amber-500 to-orange-600' },
+  AUDIT: { labelKey: 'navigation.appAudit', short: 'A', color: 'bg-gradient-to-br from-sky-500 to-blue-600' },
+  PORTAL: { labelKey: 'navigation.appPortal', short: 'Po', color: 'bg-gradient-to-br from-rose-500 to-pink-600' },
+  LMS: { labelKey: 'navigation.appLearning', short: 'L', color: 'bg-gradient-to-br from-fuchsia-500 to-purple-600' },
 };
 
 const appAccessList = computed(() => {
@@ -1346,7 +1346,7 @@ const appAccessList = computed(() => {
         return {
           appKey: key,
           roleKey: a.roleKey || '',
-          label: meta.label,
+          label: meta.labelKey ? t(meta.labelKey) : meta.label,
           short: meta.short,
           color: meta.color,
         };
@@ -1356,7 +1356,7 @@ const appAccessList = computed(() => {
   return allowed.map((k) => {
     const key = String(k).toUpperCase();
     const meta = APP_PRESENTATION[key] || { label: key, short: (key[0] || 'A').toUpperCase(), color: 'bg-gradient-to-br from-gray-500 to-gray-700' };
-    return { appKey: key, roleKey: '', label: meta.label, short: meta.short, color: meta.color };
+    return { appKey: key, roleKey: '', label: meta.labelKey ? t(meta.labelKey) : meta.label, short: meta.short, color: meta.color };
   });
 });
 

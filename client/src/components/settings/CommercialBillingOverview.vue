@@ -15,6 +15,7 @@ import { formatInrFromPaise, ANNUAL_MONTH_MULTIPLIER } from '@/utils/commercialP
 import { formatUserDate } from '@/utils/localeFormat';
 import { useNotifications } from '@/composables/useNotifications';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import HeadlessCheckbox from '@/components/ui/HeadlessCheckbox.vue';
 import {
   BILLING_COUNTRY_OPTIONS,
@@ -27,6 +28,10 @@ import {
   normalizeBillingPostalCode,
 } from '@/utils/billingGeo';
 import { isValidGstin } from '@/utils/gstin';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const emit = defineEmits(['commercial-active', 'billing-surface']);
 
@@ -1514,6 +1519,7 @@ onMounted(load);
         </p>
         <form class="mt-5 max-w-lg space-y-4" @submit.prevent="saveBillingDetails">
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             :field="companyNameField"
             :value="billTo.companyName"
             @update:value="(v) => { billTo.companyName = v; }"
@@ -1523,6 +1529,7 @@ onMounted(load);
             <span class="text-sm text-slate-700 dark:text-slate-300">{{ t('settings.billingFieldGstRegistered') }}</span>
           </label>
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             v-if="billTo.gstRegistered"
             :field="gstinField"
             :value="billTo.gstin"
@@ -1582,16 +1589,19 @@ onMounted(load);
             </button>
           </div>
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             :field="addressField"
             :value="billTo.line1"
             @update:value="(v) => { billTo.line1 = v; }"
           />
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             :field="countryField"
             :value="billTo.country"
             @update:value="(v) => { billTo.country = v; }"
           />
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             :field="stateField"
             :value="billTo.state"
             @update:value="(v) => { billTo.state = v; }"
@@ -1603,6 +1613,7 @@ onMounted(load);
               @focusout="onCitySuggestBlur"
             >
               <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                 :field="cityField"
                 :value="billTo.city"
                 @update:value="(v) => { billTo.city = v; citySuggestOpen = true; }"
@@ -1624,6 +1635,7 @@ onMounted(load);
               </ul>
             </div>
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="pincodeField"
               :value="billTo.pincode"
               :errors="billToFieldErrors"
@@ -1631,11 +1643,13 @@ onMounted(load);
             />
           </div>
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             :field="emailField"
             :value="billTo.billingEmail"
             @update:value="(v) => { billTo.billingEmail = v; }"
           />
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             :field="phoneField"
             :value="billTo.billingPhone"
             @update:value="(v) => { billTo.billingPhone = v; }"
@@ -1826,6 +1840,7 @@ onMounted(load);
           <p class="text-xs text-slate-500">{{ t('settings.billingSubscribeBillToHint') }}</p>
           <div class="space-y-4">
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="companyNameField"
               :value="billTo.companyName"
               @update:value="(v) => { billTo.companyName = v; }"
@@ -1835,6 +1850,7 @@ onMounted(load);
               <span class="text-sm text-slate-700 dark:text-slate-300">{{ t('settings.billingFieldGstRegistered') }}</span>
             </label>
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               v-if="billTo.gstRegistered"
               :field="gstinField"
               :value="billTo.gstin"
@@ -1894,16 +1910,19 @@ onMounted(load);
               </button>
             </div>
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="addressField"
               :value="billTo.line1"
               @update:value="(v) => { billTo.line1 = v; }"
             />
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="countryField"
               :value="billTo.country"
               @update:value="(v) => { billTo.country = v; }"
             />
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="stateField"
               :value="billTo.state"
               @update:value="(v) => { billTo.state = v; }"
@@ -1915,6 +1934,7 @@ onMounted(load);
                 @focusout="onCitySuggestBlur"
               >
                 <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                   :field="cityField"
                   :value="billTo.city"
                   @update:value="(v) => { billTo.city = v; citySuggestOpen = true; }"
@@ -1936,6 +1956,7 @@ onMounted(load);
                 </ul>
               </div>
               <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                 :field="pincodeField"
                 :value="billTo.pincode"
                 :errors="billToFieldErrors"
@@ -1943,11 +1964,13 @@ onMounted(load);
               />
             </div>
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="emailField"
               :value="billTo.billingEmail"
               @update:value="(v) => { billTo.billingEmail = v; }"
             />
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               :field="phoneField"
               :value="billTo.billingPhone"
               @update:value="(v) => { billTo.billingPhone = v; }"

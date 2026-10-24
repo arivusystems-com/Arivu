@@ -49,7 +49,6 @@
 import type {
   BaseFieldMetadata,
   BaseFieldOwner,
-  BaseFieldIntent,
   BaseFieldScope,
   BaseFilterType,
 } from './BaseFieldModel';
@@ -1372,4 +1371,4 @@ export const ORGANIZATION_FIELDS: OrganizationFieldMetadata[] = Object.entries(O
     ...metadata,
     fieldKey: fieldName,
   } as OrganizationFieldMetadata & { fieldKey: string }))
-  .map(({ fieldKey, ...metadata }) => metadata as OrganizationFieldMetadata);
+  .map(({ fieldKey: _fieldKey, ...metadata }) => metadata as OrganizationFieldMetadata);

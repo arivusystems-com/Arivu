@@ -416,10 +416,10 @@ const supportedConditions = computed(() => {
 const availableChannels = computed(() => {
   const avail = channelAvailability.value;
   return [
-    { key: 'inApp', label: 'In-App', available: avail.inApp },
-    { key: 'email', label: 'Email', available: avail.email },
-    { key: 'push', label: 'Push', available: avail.push },
-    { key: 'whatsapp', label: 'WhatsApp', available: avail.whatsapp },
+    { key: 'inApp', label: t('notifications.channelInApp'), available: avail.inApp },
+    { key: 'email', label: t('notifications.channelEmail'), available: avail.email },
+    { key: 'push', label: t('notifications.channelPush'), available: avail.push },
+    { key: 'whatsapp', label: t('notifications.channelWhatsApp'), available: avail.whatsapp },
     { key: 'sms', label: 'SMS', available: avail.sms }
   ];
 });

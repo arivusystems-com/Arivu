@@ -37,7 +37,7 @@ export interface ProfileData {
     fields?: {
       do_not_contact?: boolean;
       updatedAt?: string | Date;
-      [key: string]: any;
+      [key: string]: unknown;
     };
   };
   apps?: {
@@ -49,11 +49,11 @@ export interface ProfileData {
         contact_status?: string;
         status?: string;
         updatedAt?: string | Date;
-        [key: string]: any;
+        [key: string]: unknown;
       };
       metadata?: {
         detachedAt?: string | Date;
-        [key: string]: any;
+        [key: string]: unknown;
       };
     };
   };

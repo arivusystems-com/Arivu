@@ -528,6 +528,9 @@
       @discard="discardActionModal"
       @save="saveActionModal"
       @remove="handleActionModalRemove"
+      @patch-action="patchPlaybookAction"
+      @patch-assignment="patchPlaybookAssignment"
+      @patch-trigger="patchPlaybookTrigger"
       @refresh-key="actionModalStage && actionModalAction && refreshDraftActionKey(actionModalStage, actionModalAction)"
       @trigger-type-change="handleTriggerTypeChange"
       @trigger-delay-amount="updateTriggerDelayAmount"
@@ -709,6 +712,24 @@ const {
   addActionResource,
   removeActionResource
 } = usePlaybookStageActions(currentPipeline);
+
+function patchPlaybookAction(partial) {
+  const action = actionModalAction.value;
+  if (!action || !partial) return;
+  Object.assign(action, partial);
+}
+
+function patchPlaybookAssignment(partial) {
+  const action = actionModalAction.value;
+  if (!action?.assignment || !partial) return;
+  Object.assign(action.assignment, partial);
+}
+
+function patchPlaybookTrigger(partial) {
+  const action = actionModalAction.value;
+  if (!action?.trigger || !partial) return;
+  Object.assign(action.trigger, partial);
+}
 
 const quickAddActionTypes = computed(() =>
   playbookActionTypes.value.filter(option => QUICK_ADD_ACTION_TYPES.includes(option.value))

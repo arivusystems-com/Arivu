@@ -347,7 +347,7 @@ const persistTags = async (cleaned: string[]) => {
   emit('update:modelValue', cleaned);
 };
 
-const tagState = useRecordTags(draftRecord as any, {
+const tagState = useRecordTags(draftRecord, {
   tagStorageKey,
   canEdit,
   persistTags,

@@ -8,45 +8,311 @@ declare module '@/stores/appShell' {
   };
 }
 
-declare module '@/stores/authRegistry' {
-  // JS Pinia store (no TS declarations yet)
-  export function useAuthStore(pinia?: unknown): any;
+declare module '@/stores/auth' {
+  interface AuthAppAccess {
+    appKey?: string;
+    roleKey?: string;
+    status?: string;
+  }
+
+  interface AuthUser {
+    _id?: string;
+    id?: string;
+    token?: string;
+    email?: string;
+    name?: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    role?: string;
+    roleId?: string;
+    roles?: string[];
+    isOwner?: boolean;
+    isPlatformAdmin?: boolean;
+    userType?: string;
+    organizationId?: string;
+    organization?: { _id?: string; name?: string } | null;
+    permissions?: Record<string, Record<string, boolean | Record<string, boolean>>>;
+    allowedApps?: string[];
+    appAccess?: Array<AuthAppAccess | null>;
+    emailVerifiedAt?: string | null;
+    requiresPortalSelection?: boolean;
+    portals?: Array<{ name?: string; id?: string } | null>;
+    activeExternalRoleId?: string | null;
+    activePortal?: { name?: string } | null;
+    timeZone?: string | null;
+    dateFormat?: string | null;
+    timeFormat?: string | null;
+    entitledAddons?: { live_chat?: boolean; ai?: boolean; cpq?: boolean };
+    fieldPermissions?: import('@/utils/fieldRbacPermission').FieldPermissionsMap;
+    fieldPermissionAppKey?: string | null;
+  }
+
+  interface AuthOrgSettings {
+    locale?: string;
+    timeZone?: string;
+    dateFormat?: string;
+    language?: string;
+    rbacV2Enabled?: boolean;
+    defaultPhoneCountry?: string;
+    portalFrameworkV1Enabled?: boolean;
+  }
+
+  interface AuthOrganization {
+    _id?: string;
+    name?: string;
+    enabledModules?: string[];
+    enabledApps?: Array<string | AuthAppAccess>;
+    capabilities?: { inventory?: boolean; portalFrameworkV1?: boolean };
+    settings?: AuthOrgSettings;
+    address?: string;
+    subscription?: {
+      status?: string;
+      tier?: string;
+      trialEndDate?: string | null;
+      trialExtensionUsed?: boolean;
+    } | null;
+  }
+
+  export interface AuthStore {
+    user: AuthUser | null;
+    organization: AuthOrganization | null;
+    lastLoginResult: unknown;
+    lastTrialSyncAt: number;
+    loading: boolean;
+    error: string | null;
+    sessionLimit: unknown;
+    isAuthenticated: boolean;
+    isOwner: boolean;
+    userRole: string | null;
+    isAdminLike: boolean;
+    hasPermission: (module: string, action: string) => boolean;
+    isTrialActive: boolean;
+    isTrialExpired: boolean;
+    hasUsedTrialExtension: boolean;
+    subscriptionTier: string;
+    enabledModules: string[];
+    inventoryEnabled: boolean;
+    isMasterOrganization: boolean;
+    isPlatformAdmin: boolean;
+    isExternalUser: boolean;
+    needsPortalSelection: boolean;
+    hasMultiplePortals: boolean;
+    activePortalLabel: string | null;
+    requiresEmailVerification: boolean;
+    hasAppAccess: (appKey: string) => boolean;
+    hasAssignedAppAccess: (appKey: string) => boolean;
+    resolveAllowedApps: (
+      userData?: Record<string, unknown>,
+      options?: Record<string, unknown>
+    ) => string[];
+    setUser: (userData: AuthUser | null) => void;
+    markEmailVerified: () => void;
+    updateOnboardingSummary: (summary: Record<string, unknown>) => void;
+    syncI18nFromOrganization: () => Promise<void>;
+    clearUser: () => void;
+    buildSessionTransferPayload: () => unknown;
+    applySessionTransferPayload: (encodedPayload: string) => boolean;
+    applySessionTransferFromLocationHash: () => boolean;
+    applyGoogleSessionLimitFromLocationHash: () => boolean;
+    authenticate: (endpoint: string, credentials: Record<string, unknown>) => Promise<unknown>;
+    register: (userData: Record<string, unknown>) => Promise<unknown>;
+    login: (credentials: Record<string, unknown>) => Promise<unknown>;
+    continueLoginAfterSessionRevoke: () => Promise<unknown>;
+    revokeLoginSession: (sessionId: string) => Promise<unknown>;
+    clearSessionLimit: () => void;
+    canContinueAfterSessionLimit: () => boolean;
+    getSessionLimitUsage: () => unknown;
+    getRecommendedSessionToRevoke: () => unknown;
+    resolvePostLoginRoute: () => { name: string };
+    applyPortalSession: (data: Record<string, unknown>) => void;
+    portalSessionRequest: (method: string, path: string, body?: unknown) => Promise<unknown>;
+    selectPortal: (roleId: string) => Promise<unknown>;
+    switchPortal: (roleId: string) => Promise<unknown>;
+    setDefaultExternalRole: (roleId: string) => Promise<unknown>;
+    refreshPortals: () => Promise<unknown>;
+    logout: () => Promise<void>;
+    can: (module: string, action: string) => boolean;
+    hasModule: (moduleName: string) => boolean;
+    refreshOrganization: () => Promise<unknown>;
+    syncTrialSubscription: (options?: Record<string, unknown>) => Promise<unknown>;
+    refreshUser: (options?: Record<string, unknown>) => Promise<unknown>;
+  }
+
+  export function useAuthStore(pinia?: unknown): AuthStore;
 }
 
-declare module '@/stores/auth' {
-  // JS Pinia store (no TS declarations yet)
-  export function useAuthStore(pinia?: unknown): any;
+declare module '@/stores/authRegistry' {
+  import type { AuthStore } from '@/stores/auth';
+  export function useAuthStore(pinia?: unknown): AuthStore;
 }
 
 declare module '@/stores/notifications' {
-  // JS Pinia store (no TS declarations yet)
-  export function useNotificationStore(): any;
+  interface NotificationEntity {
+    type?: string;
+    id?: string;
+    [extra: string]: unknown;
+  }
+
+  interface NotificationItem {
+    id: string;
+    appKey?: string;
+    eventType?: string;
+    title?: string;
+    body?: string;
+    priority?: string;
+    entity?: NotificationEntity | null;
+    readAt?: string | null;
+    createdAt?: string;
+    [extra: string]: unknown;
+  }
+
+  interface NotificationListOptions {
+    unreadOnly?: boolean;
+    limit?: number;
+    cursor?: string | null;
+  }
+
+  export function useNotificationStore(): {
+    items: NotificationItem[];
+    unreadCount: number;
+    hasUnread: boolean;
+    loading: boolean;
+    error: string | null;
+    nextCursor: string | null;
+    fetchUnreadPreview: (options?: { appKey?: string }) => Promise<unknown>;
+    syncIncomingNotificationsFromServer: (options?: {
+      sinceMs?: number;
+      appKeys?: string[];
+    }) => Promise<{ ingested: number }>;
+    isNotificationApiBackedOff: () => boolean;
+    beginRealtimeAlertSession: () => void;
+    primeUnreadPreviewFromCache: () => void;
+    fetchNotifications: (options?: NotificationListOptions) => Promise<unknown>;
+    markRead: (id: string) => Promise<unknown>;
+    markAllRead: () => Promise<unknown>;
+    resetState: () => void;
+    formatRelative: (date: string | number | Date | null | undefined) => string;
+    handleIncomingNotification: (notification: NotificationItem | Record<string, unknown>) => void;
+    currentAppKey: () => string;
+    isSnoozed: (id: string, appKey?: string) => boolean;
+    getSnoozedUntil: (id: string, appKey?: string) => number | null;
+    snoozeNotification: (payload: { id: string; until: number | string; label?: string }) => void;
+    isDismissed: (id: string, appKey?: string) => boolean;
+    dismissNotification: (id: string) => Promise<unknown>;
+  };
 }
 
 declare module '@/utils/apiClient' {
-  // JS API client (no TS declarations yet)
+  // Technical debt: typed API-client contract.
+  // Keep this `any` until requests can take an endpoint-specific response type.
+  // A single shared response bag failed type-check at 241 sites in 34 files.
+  // Do not replace this with one generic payload type, and do not disable the rule
+  // for the file. Remove this declaration when the client contract lands.
   const apiClient: any;
   export default apiClient;
 }
 
 declare module '@/utils/dateUtils' {
-  export function openDatePicker(target?: any): void;
-  export function format(...args: any[]): any;
-  export function fromNow(...args: any[]): any;
-  export function duration(...args: any[]): any;
+  type DateInput = string | number | Date | null;
+  export function openDatePicker(event?: { target?: EventTarget | null } | null): void;
+  export function format(date: DateInput, formatStr?: string): string;
+  export function fromNow(date: DateInput): string;
+  export function duration(end: DateInput, start: DateInput): {
+    asMinutes: () => number;
+    asHours: () => number;
+    asDays: () => number;
+  };
   const dateUtils: {
     openDatePicker: typeof openDatePicker;
     format: typeof format;
     fromNow: typeof fromNow;
     duration: typeof duration;
-    [key: string]: any;
+    startOf: (date: DateInput, unit: string) => Date;
+    endOf: (date: DateInput, unit: string) => Date;
+    add: (date: DateInput, amount: number, unit: string) => Date;
+    subtract: (date: DateInput, amount: number, unit: string) => Date;
+    isSame: (date1: DateInput, date2: DateInput, unit?: string) => boolean;
+    isBetween: (
+      date: DateInput,
+      start: DateInput,
+      end: DateInput,
+      unit?: string,
+      inclusivity?: string
+    ) => boolean;
+    isSameOrBefore: (date1: DateInput, date2: DateInput, unit?: string) => boolean;
+    clone: (date: DateInput) => Date;
+    date: (value: DateInput) => number;
+    month: (value: DateInput) => number;
+    year: (value: DateInput) => number;
+    day: (value: DateInput) => number;
+    hour: (value: DateInput) => number;
+    minute: (value: DateInput) => number;
+    toISOString: (date: DateInput) => string;
   };
   export default dateUtils;
 }
 
 declare module '@/composables/useTabs' {
-  // JS tabs composable (no TS declarations yet)
-  export function useTabs(): any;
+  interface WorkspaceTab {
+    id: string;
+    path: string;
+    title?: string;
+    titleKey?: string;
+    titleParams?: Record<string, unknown>;
+    icon?: unknown;
+    closable?: boolean;
+    params?: Record<string, unknown>;
+    [extra: string]: unknown;
+  }
+
+  interface OpenTabOptions {
+    title?: string;
+    titleKey?: string;
+    titleParams?: Record<string, unknown>;
+    id?: string;
+    icon?: string;
+    closable?: boolean;
+    params?: Record<string, unknown>;
+    insertAdjacent?: boolean;
+    background?: boolean;
+    [extra: string]: unknown;
+  }
+
+  export function useTabs(): {
+    tabs: import('vue').Ref<WorkspaceTab[]>;
+    activeTabId: import('vue').Ref<string | null>;
+    activeTab: import('vue').ComputedRef<WorkspaceTab | null | undefined>;
+    initTabs: () => void;
+    setupRouteWatcher: (route?: unknown) => void;
+    openTab: (path: string, options?: OpenTabOptions) => WorkspaceTab | undefined;
+    closeTab: (tabId: string) => Promise<void>;
+    closeOtherTabs: (keepTabId?: string) => void;
+    closeAllTabs: () => void;
+    switchToTab: (tabId: string) => void;
+    updateTabTitle: (tabId: string, newTitle: string) => void;
+    replaceActiveTab: (path: string, options?: OpenTabOptions) => WorkspaceTab | undefined;
+    reorderTabs: (fromIndex: number, toIndex: number) => void;
+    findTabById: (id: string) => WorkspaceTab | undefined;
+    findTabByPath: (path: string) => WorkspaceTab | undefined;
+    navigateLiveChatSessions: (path?: string, options?: OpenTabOptions) => void;
+    navigateLiveChatClosedSessions: (path?: string, options?: OpenTabOptions) => void;
+    navigateLiveChatVisitors: (path?: string, options?: OpenTabOptions) => void;
+    navigateLiveChatReports: (options?: OpenTabOptions) => void;
+    navigateAnnouncementsWorkspace: (path?: string, options?: OpenTabOptions) => void;
+    openLiveChatSession: (sessionId: string) => void;
+    openLiveChatClosedSession: (sessionId: string, options?: OpenTabOptions) => void;
+    openLiveChatVisitor: (visitorId: string) => void;
+    markHelpdeskTabAlertForCase: (caseId: string, kind?: string) => void;
+    markHelpdeskTabAlertForNewCase: (caseId: string, kind?: string) => void;
+    markLiveChatTabAlert: (kind?: string) => void;
+    markInternalChatTabAlert: (kind?: string) => void;
+    tabShowsHelpdeskAlert: (tab: WorkspaceTab, activeId?: string | null) => boolean;
+    clearHelpdeskTabAlert: (tabId: string) => void;
+    clearHelpdeskTabAlertForCase: (caseId: string) => void;
+    clearLiveChatMainTabAlert: () => void;
+    clearInternalChatMainTabAlert: () => void;
+  };
 }
 
 declare module '@/composables/useNotifications' {
@@ -67,8 +333,69 @@ declare module '@/composables/useNotifications' {
 }
 
 declare module '@/composables/useOnboarding' {
-  // JS onboarding composable (no TS declarations yet)
-  export function useOnboarding(): any;
+  interface OnboardingVisit {
+    moduleKey?: string;
+    appKey?: string;
+    [extra: string]: unknown;
+  }
+
+  interface OnboardingState {
+    version: number;
+    origin: string | null;
+    persona: string | null;
+    context: ({ primaryAppKey?: string } & Record<string, unknown>) | null;
+    goalKey: string | null;
+    startedAt: string | null;
+    completedAt: string | null;
+    dismissedAt: string | null;
+    redirectTo: string | null;
+    showWelcome: boolean;
+    showSetupProgress: boolean;
+    progress: { completed: number; total: number };
+    steps: unknown[];
+    orgProgress: { completed: number; total: number };
+    orgSteps: unknown[];
+    welcome: unknown;
+    trial: unknown;
+    goalOptions: unknown[];
+    moduleVisits: OnboardingVisit[];
+    pendingCoachmarks: unknown[];
+    verticalTemplate: ({ emptyStateCopyKey?: string } & Record<string, unknown>) | null;
+    sampleDataOffer: unknown;
+  }
+
+  export function useOnboarding(): {
+    loading: import('vue').Ref<boolean>;
+    error: import('vue').Ref<string | null>;
+    state: import('vue').Ref<OnboardingState>;
+    isFounder: import('vue').ComputedRef<boolean>;
+    isMember: import('vue').ComputedRef<boolean>;
+    needsOnboardingRedirect: import('vue').ComputedRef<boolean>;
+    isComplete: import('vue').ComputedRef<boolean>;
+    fetchOnboarding: (options?: { force?: boolean }) => Promise<void>;
+    patchOnboarding: (payload: Record<string, unknown>) => Promise<boolean>;
+    setGoal: (goalKey: string) => Promise<boolean>;
+    skipStep: (stepKey: string) => Promise<boolean>;
+    completeStep: (stepKey: string) => Promise<boolean>;
+    dismissWelcome: () => Promise<boolean>;
+    saveWorkspace: (workspace: Record<string, unknown>) => Promise<boolean>;
+    setPrimaryApp: (appKey: string) => Promise<boolean>;
+    createFirstContact: (contact: Record<string, unknown>) => Promise<boolean>;
+    markCoachmark: (key: string) => Promise<boolean>;
+    recordModuleVisit: (moduleKey: string, appKey?: string) => Promise<boolean>;
+    recordSettingsVisit: () => Promise<boolean>;
+    acceptSampleData: () => Promise<boolean>;
+    declineSampleData: () => Promise<boolean>;
+    hasModuleVisit: (moduleKey: string, appKey?: string) => boolean;
+    applyAuthSummary: (summary: {
+      redirectTo?: string | null;
+      persona?: string | null;
+      origin?: string | null;
+      completed?: boolean;
+      [extra: string]: unknown;
+    }) => void;
+    verticalEmptyStateCopyKey: import('vue').ComputedRef<string | null>;
+  };
 }
 
 declare module '@/composables/useColorMode' {
@@ -101,22 +428,26 @@ declare module '@/composables/usePortalBranding' {
 }
 
 declare module '@/components/activity/useRecordActivityAdapter' {
-  export function createActivityTimelineRefSetter(timelineRef: any): (instance: any) => void;
-  export function buildRecordActivityUi(moduleUi?: Record<string, any>): Record<string, any>;
+  export function createActivityTimelineRefSetter<T>(timelineRef: { value: T | null }): (instance: T | null) => void;
+  export function buildRecordActivityUi(moduleUi?: Record<string, unknown>): Record<string, unknown>;
 }
 
 declare module '@/components/activity/adapters/taskActivityUiAdapter' {
-  export function createTaskActivityUi(options: Record<string, any>): any;
+  export function createTaskActivityUi(
+    options: Record<string, unknown>
+  ): import('vue').ComputedRef<Record<string, unknown>>;
 }
 
 declare module '@/components/activity/adapters/dealActivityUiAdapter' {
-  export function createDealActivityUi(options: Record<string, any>): any;
+  export function createDealActivityUi(
+    options: Record<string, unknown>
+  ): import('vue').ComputedRef<Record<string, unknown>>;
 }
 
 declare module '@/components/activity/activityUiContract' {
-  export const ACTIVITY_UI_STATE_DEFAULTS: Record<string, any>;
+  export const ACTIVITY_UI_STATE_DEFAULTS: Record<string, unknown>;
   export const ACTIVITY_UI_HANDLER_KEYS: string[];
-  export function normalizeActivityUiContract(moduleUi?: Record<string, any>): Record<string, any>;
+  export function normalizeActivityUiContract(moduleUi?: Record<string, unknown>): Record<string, unknown>;
 }
 
 declare module '@/utils/builderMergeTagHtml' {

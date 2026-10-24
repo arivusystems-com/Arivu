@@ -198,6 +198,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'FormsView' });
 import { ref, computed, onMounted, onActivated, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';

@@ -50,7 +50,6 @@
 import type {
   BaseFieldMetadata,
   BaseFieldOwner,
-  BaseFieldIntent,
   BaseFieldScope,
   BaseFilterType,
 } from './BaseFieldModel';
@@ -885,4 +884,4 @@ export const EVENT_FIELDS: EventFieldMetadata[] = Object.entries(EVENT_FIELD_MET
     ...metadata,
     fieldKey: fieldName,
   } as EventFieldMetadata & { fieldKey: string }))
-  .map(({ fieldKey, ...metadata }) => metadata as EventFieldMetadata);
+  .map(({ fieldKey: _fieldKey, ...metadata }) => metadata as EventFieldMetadata);

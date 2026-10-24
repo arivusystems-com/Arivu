@@ -245,8 +245,8 @@ function determineRecordDetailEmptyState(
   moduleKey: string,
   appKey: string,
   hasFields: boolean,
-  snapshot: PermissionSnapshot,
-  modulePermission?: string
+  _snapshot: PermissionSnapshot,
+  _modulePermission?: string
 ): EmptyStateDefinition | undefined {
   // If no fields are visible, show NO_ACCESS
   if (!hasFields) {
@@ -339,10 +339,7 @@ export function buildRecordDetailFromRegistry(
     appKey,
     moduleKey,
     () => {
-      // Get detail configuration from module
-      // Type assertion needed because AppRegistry module type doesn't include detail
-      const moduleWithDetail = module as any;
-      const detailConfig: AppRegistryDetailEntry | undefined = moduleWithDetail.detail;
+      const detailConfig: AppRegistryDetailEntry | undefined = module.detail;
 
       let fields: DetailField[];
       let sections: DetailSection[];

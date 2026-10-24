@@ -185,15 +185,6 @@ function determineDashboardEmptyState(
   const anyEnabledModule = dashboard.modules.some(
     (m) => m.visibility === PermissionOutcome.ENABLED
   );
-  const anyEnabledAction = dashboard.actions.some(
-    (a) => a.visibility === PermissionOutcome.ENABLED
-  );
-  const anyEnabledKpi = dashboard.kpis.some(
-    (k) => k.visibility === PermissionOutcome.ENABLED
-  );
-  const anyEnabledWidget = (dashboard.widgets || []).some(
-    (w) => w.visibility === PermissionOutcome.ENABLED
-  );
 
   // Case 1: App visible but no enabled modules → NOT_CONFIGURED
   if (!anyEnabledModule) {

@@ -30,7 +30,7 @@
  * ============================================================================
  */
 
-import type { PermissionAction, PermissionScope } from '@/platform/permissions/platformPermissionVocabulary.types';
+import type { PermissionScope } from '@/platform/permissions/platformPermissionVocabulary.types';
 
 /**
  * Form Settings Configuration Actions
@@ -87,7 +87,7 @@ export interface FormSettingsPermission {
  * @param context - Optional context (not used for Form Settings, but kept for API consistency)
  * @returns Array of FormSettingsPermission objects
  */
-export function deriveFormSettingsPermissions(context?: any): FormSettingsPermission[] {
+export function deriveFormSettingsPermissions(_context?: unknown): FormSettingsPermission[] {
   const permissions: FormSettingsPermission[] = [];
   
   // ============================================================================

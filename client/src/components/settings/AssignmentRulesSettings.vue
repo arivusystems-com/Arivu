@@ -740,11 +740,11 @@ const MODULE_LABEL_KEYS = {
 };
 
 const FALLBACK_MODULES = [
-  { moduleKey: 'cases', appKey: 'HELPDESK', label: 'Cases' },
-  { moduleKey: 'people', appKey: 'SALES', label: 'People' },
-  { moduleKey: 'organizations', appKey: 'SALES', label: 'Organizations' },
-  { moduleKey: 'deals', appKey: 'SALES', label: 'Deals' },
-  { moduleKey: 'tasks', appKey: 'SALES', label: 'Tasks' }
+  { moduleKey: 'cases', appKey: 'HELPDESK', label: t('settings.assignRulesModCases') },
+  { moduleKey: 'people', appKey: 'SALES', label: t('settings.assignRulesModPeople') },
+  { moduleKey: 'organizations', appKey: 'SALES', label: t('settings.assignRulesModOrganizations') },
+  { moduleKey: 'deals', appKey: 'SALES', label: t('settings.assignRulesModDeals') },
+  { moduleKey: 'tasks', appKey: 'SALES', label: t('settings.assignRulesModTasks') }
 ];
 
 const assignmentModules = ref([...FALLBACK_MODULES]);

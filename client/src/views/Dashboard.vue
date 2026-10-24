@@ -323,6 +323,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'DashboardView' });
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();

@@ -14,12 +14,13 @@ type PermissionSnapshotUserLike = Parameters<typeof createPermissionSnapshot>[0]
 type UserLike = PermissionSnapshotUserLike & {
   userType?: string;
   organizationId?: string;
-  organization?: { _id?: string };
+  organization?: { _id?: string } | null;
   allowedApps?: string[];
   appAccess?: Array<{
     appKey?: string;
+    roleKey?: string;
     status?: string;
-  }>;
+  } | null>;
 };
 
 type OrganizationLike = { _id?: string } | null | undefined;

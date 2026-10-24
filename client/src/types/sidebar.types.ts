@@ -27,6 +27,10 @@
  * ============================================================================
  */
 
+import type { AppRegistryDashboardEntry } from './dashboard.types';
+import type { AppRegistryModuleEntry } from './module-list.types';
+import type { AppRegistryDetailEntry } from './record-detail.types';
+
 export type AppSummary = {
   /** Stable app identifier (not a domain grouping key). */
   id: string;
@@ -212,7 +216,10 @@ export interface AppRegistryModule {
    * Optional list view configuration for the module.
    * Used by registry validators and list builders.
    */
-  list?: any;
+  list?: AppRegistryModuleEntry['list'];
+
+  /** Optional record-detail configuration consumed by the detail builder. */
+  detail?: AppRegistryDetailEntry;
 }
 
 /**
@@ -243,7 +250,7 @@ export interface AppRegistryEntry {
    * Optional dashboard composition for this app (KPIs, widgets, actions).
    * Not currently required for the legacy sidebar renderer, but validated if present.
    */
-  dashboard?: any;
+  dashboard?: Partial<AppRegistryDashboardEntry>;
 }
 
 /**
