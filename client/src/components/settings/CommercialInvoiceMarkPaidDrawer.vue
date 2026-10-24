@@ -62,12 +62,14 @@
                     <div class="h-0 flex-1 overflow-y-auto">
                       <div class="space-y-5 px-4 py-6 sm:px-6">
                         <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                           :field="referenceField"
                           :value="providerReference"
                           @update:value="(v) => { providerReference = String(v ?? ''); }"
                         />
 
                         <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                           :field="notesField"
                           :value="notes"
                           @update:value="(v) => { notes = String(v ?? ''); }"
@@ -159,7 +161,12 @@ import {
 } from '@headlessui/vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import { formatInrFromPaise } from '@/utils/commercialPricingApi';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const props = defineProps({
   open: { type: Boolean, default: false },

@@ -207,7 +207,7 @@
       </template>
 
       <!-- Dynamic Picklist/Multi-Picklist cells with colors -->
-      <template v-for="field in picklistFields" :key="field.key" #[`cell-${field.key}`]="{ value, row }">
+      <template v-for="field in picklistFields" :key="field.key" #[`cell-${field.key}`]="{ value }">
         <div v-if="field.dataType === 'Picklist' || field.dataType === 'Multi-Picklist'" class="flex flex-wrap gap-1">
           <template v-if="Array.isArray(value) && value.length > 0">
             <BadgeCell 
@@ -248,6 +248,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'PeopleLegacyView' });
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authRegistry';

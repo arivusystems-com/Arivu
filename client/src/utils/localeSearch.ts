@@ -65,7 +65,7 @@ export function normalizeSearchKey(input: string): string {
   return normalizeForSearch(transliterateForSearch(input));
 }
 
-export function localeIncludes(haystack: string, needle: string, options: LocaleSearchOptions = {}): boolean {
+export function localeIncludes(haystack: string, needle: string, _options: LocaleSearchOptions = {}): boolean {
   if (!needle) return true;
   const h = normalizeSearchKey(haystack);
   const n = normalizeSearchKey(needle);

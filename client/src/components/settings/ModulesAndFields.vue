@@ -441,7 +441,7 @@
                         :key="type.key"
                         class="flex items-center justify-between p-2 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
                       >
-                        <span class="text-sm text-gray-900 dark:text-white">{{ type.label }}</span>
+                        <span class="text-sm text-gray-900 dark:text-white">{{ canonicalLabel(type.label) }}</span>
                         <button
                           v-if="!isBuiltInFormType(type.key)"
                           @click="handleRemoveCustomFormType(type.key)"
@@ -1578,7 +1578,7 @@
                                 @change="togglePopupField(di, f.key)"
                                 checkbox-class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
                               />
-                              <span>{{ f.label || f.key }}</span>
+                              <span>{{ canonicalLabel(f.label) || f.key }}</span>
                               <span class="text-xs text-gray-500 dark:text-gray-400">({{ f.dataType }})</span>
                             </label>
                           </div>
@@ -1825,7 +1825,7 @@
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
                       <span class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ field.label }}
+                        {{ canonicalLabel(field.label) }}
                       </span>
                       <span
                         :class="[
@@ -2003,7 +2003,7 @@
                     <div class="flex items-center gap-3 flex-1">
                       <div class="cursor-grab select-none text-gray-400 dark:text-gray-500" :title="t('settings.modFieldsTitleDragReorder')">⋮⋮</div>
                       <div class="flex-1">
-                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ type.label }}</div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ canonicalLabel(type.label) }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ type.description || t('settings.modFieldsItemTypeDefaultDesc') }}</div>
                       </div>
                     </div>
@@ -2056,7 +2056,7 @@
                         class="w-full px-2 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         autofocus
                       />
-                      <span v-else class="text-sm font-medium text-gray-900 dark:text-white">{{ status.label }}</span>
+                      <span v-else class="text-sm font-medium text-gray-900 dark:text-white">{{ canonicalLabel(status.label) }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                       <HeadlessSwitch
@@ -2153,7 +2153,7 @@
                     :key="type.value || index"
                     class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                   >
-                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white">{{ type.label }}</span>
+                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white">{{ canonicalLabel(type.label) }}</span>
                     <HeadlessSwitch
                       :checked="type.enabled"
                       @change="setDocumentPicklistEnabled('documentType', index, $event)"
@@ -2187,7 +2187,7 @@
                     :key="status.value || index"
                     class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                   >
-                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white">{{ status.label }}</span>
+                    <span class="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white">{{ canonicalLabel(status.label) }}</span>
                     <HeadlessSwitch
                       :checked="status.enabled"
                       @change="setDocumentPicklistEnabled('status', index, $event)"
@@ -2620,7 +2620,7 @@
                 <div class="flex items-start justify-between mb-2">
                   <div class="flex-1">
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                      {{ field.label }}
+                      {{ canonicalLabel(field.label) }}
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
                       <span
@@ -2705,7 +2705,7 @@
                 <div class="flex items-start justify-between mb-2">
                   <div class="flex-1">
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                      {{ field.label }}
+                      {{ canonicalLabel(field.label) }}
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
                       <span
@@ -2785,7 +2785,7 @@
                 <div class="flex items-start justify-between mb-2">
                   <div class="flex-1">
                     <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                      {{ field.label }}
+                      {{ canonicalLabel(field.label) }}
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
                       <span
@@ -2853,7 +2853,7 @@
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
                       <span class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ field.label }}
+                        {{ canonicalLabel(field.label) }}
                       </span>
                       <span
                         :class="[
@@ -3221,7 +3221,7 @@
                         :title="f.required ? t('settings.modFieldsTitleRequiredFieldIncluded') : ''"
                       >
                         <HeadlessCheckbox :checked="quickCreateSelected.has(f.key)" :disabled="f.required" @change="toggleQuickCreate(f.key, $event.target.checked)" @click.stop />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                       </li>
                     </ul>
                   </div>
@@ -3239,7 +3239,7 @@
                         :title="f.required ? t('settings.modFieldsTitleRequiredFieldIncluded') : ''"
                       >
                         <HeadlessCheckbox :checked="quickCreateSelected.has(f.key)" :disabled="f.required" @change="toggleQuickCreate(f.key, $event.target.checked)" @click.stop />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                       </li>
                     </ul>
                   </div>
@@ -3257,7 +3257,7 @@
                         :title="f.required ? t('settings.modFieldsTitleRequiredFieldIncluded') : ''"
                       >
                         <HeadlessCheckbox :checked="quickCreateSelected.has(f.key)" :disabled="f.required" @change="toggleQuickCreate(f.key, $event.target.checked)" @click.stop />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                       </li>
                     </ul>
                   </div>
@@ -3289,7 +3289,7 @@
                           @change="f.key?.toLowerCase() !== 'name' ? toggleQuickCreate(f.key, $event.target.checked) : null"
                           @click.stop
                         />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                         <span v-if="f.key?.toLowerCase() === 'name'" class="px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded ml-auto">{{ t('common.required') }}</span>
                         <span v-else class="px-1.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded ml-auto">{{ t('settings.modFieldsBadgeCoreField') }}</span>
                       </li>
@@ -3330,7 +3330,7 @@
                           @change="f.key?.toLowerCase() !== 'title' ? toggleQuickCreate(f.key, $event.target.checked) : null"
                           @click.stop
                         />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                         <span v-if="f.key?.toLowerCase() === 'title'" class="px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded ml-auto">{{ t('common.required') }}</span>
                         <span v-else class="px-1.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded ml-auto">{{ t('settings.modFieldsBadgeCoreField') }}</span>
                       </li>
@@ -3380,7 +3380,7 @@
                           @change="f.key?.toLowerCase() !== 'eventname' ? toggleQuickCreate(f.key, $event.target.checked) : null"
                           @click.stop
                         />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                         <span v-if="f.key?.toLowerCase() === 'eventname'" class="px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded ml-auto">{{ t('common.required') }}</span>
                         <span v-else class="px-1.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded ml-auto">{{ t('settings.modFieldsBadgeCoreField') }}</span>
                       </li>
@@ -3413,7 +3413,7 @@
                           @change="f.key?.toLowerCase() !== 'eventname' ? toggleQuickCreate(f.key, $event.target.checked) : null"
                           @click.stop
                         />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                         <span class="px-1.5 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded ml-auto">{{ appKey }}</span>
                       </li>
                     </ul>
@@ -3439,7 +3439,7 @@
                           @change="f.key?.toLowerCase() !== 'eventname' ? toggleQuickCreate(f.key, $event.target.checked) : null"
                           @click.stop
                         />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                         <span class="px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded ml-auto">{{ t('settings.modFieldsBadgeCustomField') }}</span>
                       </li>
                     </ul>
@@ -3468,7 +3468,7 @@
                         :title="f.required ? t('settings.modFieldsTitleRequiredFieldIncluded') : ''"
                       >
                         <HeadlessCheckbox :checked="quickCreateSelected.has(f.key)" :disabled="f.required" @change="toggleQuickCreate(f.key, $event.target.checked)" @click.stop />
-                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ f.label || f.key }}</span>
+                        <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ canonicalLabel(f.label) || f.key }}</span>
                       </li>
                     </ul>
                   </div>
@@ -3523,7 +3523,7 @@
                     >
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <span class="flex-1">{{ f.label || f.key }}</span>
+                    <span class="flex-1">{{ canonicalLabel(f.label) || f.key }}</span>
                     <span v-if="(isOrganizationsModule && f.key?.toLowerCase() === 'name') || (isTasksModule && f.key?.toLowerCase() === 'title') || (isEventsModule && f.key?.toLowerCase() === 'eventname')" class="px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded">{{ t('common.required') }}</span>
                   </div>
                 </div>
@@ -4369,6 +4369,47 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+
+const RELATED_TO_FIELD_LABEL = 'Related To';
+const PLAYBOOK_NEW_ACTIVITY_TITLE = 'New activity';
+const NEW_ITEM_STATUS_LABEL = 'New Status';
+const ITEM_TYPE_LABELS = {
+  Product: 'Product',
+  Service: 'Service',
+  SerializedProduct: 'Serialized Product',
+  NonStockProduct: 'Non-Stock Product',
+  Bundle: 'Bundle'
+};
+const ITEM_STATUS_LABELS = {
+  Active: 'Active',
+  Inactive: 'Inactive'
+};
+const EVENT_STATUS_LABELS = {
+  Planned: 'Planned',
+  Completed: 'Completed',
+  Cancelled: 'Cancelled'
+};
+const CANONICAL_UI_LABEL_KEYS = {
+  [RELATED_TO_FIELD_LABEL]: 'common.taskRelatedToFallback',
+  [ITEM_TYPE_LABELS.Product]: 'records.prColProduct',
+  [ITEM_TYPE_LABELS.Service]: 'settings.modFieldsItemTypeService',
+  [ITEM_TYPE_LABELS.SerializedProduct]: 'settings.modFieldsItemTypeSerializedProduct',
+  [ITEM_TYPE_LABELS.NonStockProduct]: 'settings.modFieldsItemTypeNonStockProduct',
+  [ITEM_TYPE_LABELS.Bundle]: 'records.linesAddBundleShort',
+  [ITEM_STATUS_LABELS.Active]: 'settings.pricingStatusActive',
+  [ITEM_STATUS_LABELS.Inactive]: 'settings.pricingStatusInactive',
+  [EVENT_STATUS_LABELS.Planned]: 'marketing.campaignsListColPlannedRecipients',
+  [EVENT_STATUS_LABELS.Completed]: 'marketing.campaignsStatusCompleted',
+  [EVENT_STATUS_LABELS.Cancelled]: 'marketing.campaignsStatusCancelled',
+  [NEW_ITEM_STATUS_LABEL]: 'settings.modFieldsNewStatus',
+  [PLAYBOOK_NEW_ACTIVITY_TITLE]: 'settings.modFieldsNewActivity'
+};
+
+function canonicalLabel(value) {
+  const text = value == null ? '' : String(value);
+  const key = CANONICAL_UI_LABEL_KEYS[text];
+  return key ? t(key) : text;
+}
 const notifications = useNotifications();
 
 
@@ -4901,11 +4942,11 @@ const actionModalState = reactive({
   stageKey: '',
   actionIndex: null
 });
-const pipelineStageStatusOptions = [
-  { value: 'open', label: 'Open' },
-  { value: 'won', label: 'Won (Closed)' },
-  { value: 'lost', label: 'Lost (Closed)' }
-];
+const pipelineStageStatusOptions = computed(() => [
+  { value: 'open', label: t('deals.listViewOpen') },
+  { value: 'won', label: t('settings.salesPipeStatusWon') },
+  { value: 'lost', label: t('settings.salesPipeStatusLost') }
+]);
 const DEFAULT_PIPELINE_COLOR = '#2563EB';
 const DEFAULT_STAGE_COLOR = '#6B7280';
 const DEFAULT_STAGE_COLORS = ['#6B7280', '#3B82F6', '#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444'];
@@ -5417,7 +5458,7 @@ function addStageToPipeline(pipeline) {
   if (!newStage.playbook.actions.length) {
     newStage.playbook.actions.push({
       key: slugify(`${newStage.key}-action-1`),
-      title: 'New activity',
+      title: PLAYBOOK_NEW_ACTIVITY_TITLE,
       description: '',
       actionType: 'task',
       dueInDays: 0,
@@ -5677,7 +5718,7 @@ function getActionOptions(stage, currentAction) {
   if (!stage || !Array.isArray(stage.playbook?.actions)) return [];
   return stage.playbook.actions
     .filter(action => action.key !== currentAction.key)
-    .map(action => ({ value: action.key, label: action.title }));
+    .map(action => ({ value: action.key, label: canonicalLabel(action.title) }));
 }
 
 function toggleActionDependency(stage, action, dependencyKey, checked) {
@@ -5883,7 +5924,7 @@ const normalizeTaskFieldConfigurationOrder = (moduleKey, fields = []) => {
 function ensureTaskRelatedToField(moduleKey, fields = []) {
   if (String(moduleKey || '').toLowerCase() !== 'tasks') return fields;
   const keyNorm = (k) => String(k || '').toLowerCase().replace(/-/g, '');
-  let list = fields.filter((f) => {
+  const list = fields.filter((f) => {
     const k = keyNorm(f?.key);
     return k !== 'relatedtotype' && k !== 'relatedtoid';
   });
@@ -5892,7 +5933,7 @@ function ensureTaskRelatedToField(moduleKey, fields = []) {
   const insertOrder = orderIndex >= 0 ? orderIndex : list.length;
   list.push({
     key: 'relatedTo',
-    label: 'Related To',
+    label: RELATED_TO_FIELD_LABEL,
     dataType: 'Lookup',
     required: false,
     order: insertOrder,
@@ -6146,7 +6187,7 @@ function classifyEventQuickCreateField(field) {
   const key = field?.key;
   if (!key) return 'system';
 
-  let classification = classifyEventField(key);
+  const classification = classifyEventField(key);
   if (classification !== 'system') return classification;
 
   // Nested event keys (e.g. kpiTargets.conversionRate) inherit ownership from root key.
@@ -9555,10 +9596,10 @@ const dependencyOperatorSelectOptions = computed(() => [
   { value: 'contains', label: t('settings.modFieldsOpContains') },
 ]);
 
-const dependencyCheckboxValueOptions = [
-  { value: 'true', label: 'true' },
-  { value: 'false', label: 'false' },
-];
+const dependencyCheckboxValueOptions = computed(() => [
+  { value: 'true', label: t('settings.modFieldsValueTrue') },
+  { value: 'false', label: t('settings.modFieldsValueFalse') },
+]);
 
 function dependencyPicklistValueOptions(fieldKey) {
   return getDependencyFieldOptions(fieldKey).map((opt) => ({
@@ -11695,16 +11736,16 @@ function getTaskPicklistFieldFromConfig(fieldKey) {
 
 // Items Status & Types state
 const itemTypes = ref([
-  { value: 'Product', label: 'Product', enabled: true, description: 'Physical product that can be sold' },
-  { value: 'Service', label: 'Service', enabled: true, description: 'Service that can be provided' },
-  { value: 'Serialized Product', label: 'Serialized Product', enabled: true, description: 'Product with unique serial numbers' },
-  { value: 'Non-Stock Product', label: 'Non-Stock Product', enabled: true, description: 'Product not tracked in inventory' },
-  { value: 'Bundle', label: 'Bundle', enabled: true, description: 'Kit or composite product made of other variants' }
+  { value: 'Product', label: ITEM_TYPE_LABELS.Product, enabled: true, description: 'Physical product that can be sold' },
+  { value: 'Service', label: ITEM_TYPE_LABELS.Service, enabled: true, description: 'Service that can be provided' },
+  { value: 'Serialized Product', label: ITEM_TYPE_LABELS.SerializedProduct, enabled: true, description: 'Product with unique serial numbers' },
+  { value: 'Non-Stock Product', label: ITEM_TYPE_LABELS.NonStockProduct, enabled: true, description: 'Product not tracked in inventory' },
+  { value: 'Bundle', label: ITEM_TYPE_LABELS.Bundle, enabled: true, description: 'Kit or composite product made of other variants' }
 ]);
 
 const itemStatusPicklist = ref([
-  { value: 'Active', label: 'Active', enabled: true, editing: false },
-  { value: 'Inactive', label: 'Inactive', enabled: true, editing: false }
+  { value: 'Active', label: ITEM_STATUS_LABELS.Active, enabled: true, editing: false },
+  { value: 'Inactive', label: ITEM_STATUS_LABELS.Inactive, enabled: true, editing: false }
 ]);
 
 const catalogLifecycleDescriptionKeys = {
@@ -11789,9 +11830,9 @@ const eventRolesRulesOriginalSnapshot = ref('');
 // - Are required for event execution and lifecycle management
 const EVENT_SYSTEM_STATUSES = ['Planned', 'Completed', 'Cancelled'];
 const eventStatusPicklist = ref([
-  { value: 'Planned', label: 'Planned', enabled: true, editing: false, systemLocked: true },
-  { value: 'Completed', label: 'Completed', enabled: true, editing: false, systemLocked: true },
-  { value: 'Cancelled', label: 'Cancelled', enabled: true, editing: false, systemLocked: true }
+  { value: 'Planned', label: EVENT_STATUS_LABELS.Planned, enabled: true, editing: false, systemLocked: true },
+  { value: 'Completed', label: EVENT_STATUS_LABELS.Completed, enabled: true, editing: false, systemLocked: true },
+  { value: 'Cancelled', label: EVENT_STATUS_LABELS.Cancelled, enabled: true, editing: false, systemLocked: true }
 ]);
 
 const savingEventStatus = ref(false);
@@ -12037,10 +12078,10 @@ function addItemStatusValue() {
   const newValue = `status_${Date.now()}`;
   itemStatusPicklist.value.push({
     value: newValue,
-    label: 'New Status',
+    label: NEW_ITEM_STATUS_LABEL,
     enabled: true,
     editing: true,
-    editValue: 'New Status'
+    editValue: NEW_ITEM_STATUS_LABEL
   });
 }
 
@@ -12067,7 +12108,7 @@ function cancelItemStatusEdit(index) {
   status.editing = false;
   delete status.editValue;
   // If it was a new status and user cancelled, remove it
-  if (status.value.startsWith('status_') && !status.label || status.label === 'New Status') {
+  if (status.value.startsWith('status_') && !status.label || status.label === NEW_ITEM_STATUS_LABEL) {
     itemStatusPicklist.value.splice(index, 1);
   }
 }

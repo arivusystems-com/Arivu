@@ -76,12 +76,13 @@
  * ============================================================================
  */
 
-import type { ModuleKey } from './FieldRegistry';
 import {
+  MODULE_KEYS,
   getFieldMetadataMap,
   getFilterableFieldsForModule,
+  type ModuleKey,
 } from './FieldRegistry';
-import type { BaseFieldMetadata, BaseFieldIntent, BaseFieldOwner } from './BaseFieldModel';
+import type { BaseFieldIntent, BaseFieldOwner } from './BaseFieldModel';
 
 // =============================================================================
 // CONSTANTS
@@ -336,9 +337,6 @@ export function getFilterEligibilityDetails(
 export function getDefaultFiltersForAllModules(
   options: DefaultFilterOptions = {}
 ): Record<ModuleKey, string[]> {
-  // Import MODULE_KEYS dynamically to avoid circular dependency
-  const { MODULE_KEYS } = require('./FieldRegistry');
-  
   const result: Record<string, string[]> = {};
   
   for (const moduleKey of MODULE_KEYS) {

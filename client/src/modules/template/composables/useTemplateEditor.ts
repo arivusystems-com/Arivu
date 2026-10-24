@@ -10,14 +10,11 @@ import {
   createBlankGrapesDefinition,
   hasGrapesDefinitionContent,
   hasGrapesProjectContent,
-  isEmptyGrapesDefinition,
   isGrapesDefinition,
   isGrapesDefinitionDegraded,
   type GrapesTemplateDefinition
 } from '../editor/storage';
 import {
-  attachImportSnapshot,
-  buildSnapshotFromParts,
   isEmailDefinitionDegraded,
   protectEmailDefinitionRoundTrip,
   readImportSnapshot

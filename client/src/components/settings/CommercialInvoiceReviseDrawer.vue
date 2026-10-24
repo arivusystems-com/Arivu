@@ -101,6 +101,7 @@
                           </div>
 
                           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                             class="mt-3"
                             :field="lineDiscountField(line)"
                             :value="lineDiscounts[String(line._id)]?.value ?? ''"
@@ -149,6 +150,7 @@
                           </div>
 
                           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                             class="mt-3"
                             :field="invoiceDiscountField"
                             :value="invoiceDiscount.value"
@@ -195,6 +197,7 @@
                         </div>
 
                         <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                           :field="reasonField"
                           :value="reason"
                           @update:value="(v) => { reason = String(v ?? ''); }"
@@ -243,8 +246,13 @@ import {
 } from '@headlessui/vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import { formatInrFromPaise } from '@/utils/commercialPricingApi';
 import { useNotifications } from '@/composables/useNotifications';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const props = defineProps({
   open: { type: Boolean, default: false },

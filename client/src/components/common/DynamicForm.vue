@@ -16,11 +16,10 @@
     <template v-if="useAdvancedLayout && layout && layout.rows && layout.rows.length > 0">
       <div v-for="(row, ri) in layout.rows" :key="ri" class="grid grid-cols-12 gap-4">
         <div 
-          v-for="(col, ci) in row.cols" 
-          :key="ci"
+          v-for="col in visibleLayoutCols(row)"
+          :key="col.fieldKey"
           :class="getSpanClass(col.span)"
           :data-field-key="col.fieldKey || ''"
-          v-if="col.fieldKey && getFieldByKey(col.fieldKey) && shouldShowField(getFieldByKey(col.fieldKey))"
         >
           <template v-if="props.moduleKey === 'tasks' && col.fieldKey === 'description'">
             <label :for="`field-${col.fieldKey}`" class="block text-sm font-normal text-gray-700 dark:text-gray-300 mb-1.5">
@@ -36,6 +35,7 @@
             <p v-if="errors[col.fieldKey]" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors[col.fieldKey] }}</p>
           </template>
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             v-else
             :field="getFieldByKey(col.fieldKey)"
             :value="localFormData[col.fieldKey]"
@@ -62,7 +62,7 @@
       <!-- Full mode: Field Configuration sections + composite slots -->
       <template v-if="useFieldLayoutFullForm">
         <div class="flex flex-col gap-8">
-          <template v-for="(block, blockIdx) in createSurfaceBlocks" :key="block.type === 'fields' ? `fields-${block.sectionId}` : `composite-${block.id}`">
+          <template v-for="block in createSurfaceBlocks" :key="block.type === 'fields' ? `fields-${block.sectionId}` : `composite-${block.id}`">
             <CreateDrawerCollapsibleSection
               v-if="block.type === 'fields'"
               :title="block.label"
@@ -108,6 +108,7 @@
                     />
                   </template>
                   <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                     v-else
                     :field="field"
                     :value="localFormData[field.key]"
@@ -187,6 +188,7 @@
               />
             </template>
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               v-else
               :field="field"
               :value="localFormData[field.key]"
@@ -251,6 +253,7 @@
               />
             </template>
             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
               v-else
               :field="field"
               :value="localFormData[field.key]"
@@ -314,6 +317,7 @@
             />
           </template>
           <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
             v-else
             :field="field"
             :value="localFormData[field.key]"
@@ -345,6 +349,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 import DynamicFormField from './DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import CreateDrawerCollapsibleSection from './CreateDrawerCollapsibleSection.vue';
 
 // Lazy-load to avoid circular chunk-settings ↔ record-activity init (production TDZ on _export_sfc).
@@ -398,6 +403,10 @@ import {
 import { getAllowedStatusesForOrganizationStatusField } from '@/platform/organizations/organizationIntents';
 import { useOrganizationTypes } from '@/composables/useOrganizationTypes';
 import { organizationTypeDefsToPicklistOptions } from '@/utils/organizationTypeConfig';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const _c = globalThis.console;
 function formDbg(...args) {
@@ -557,6 +566,14 @@ const fieldMap = computed(() => {
 });
 
 // Helper function to get field by key (case-insensitive)
+function visibleLayoutCols(row) {
+  return (row?.cols || []).filter((col) => {
+    if (!col?.fieldKey) return false;
+    const field = getFieldByKey(col.fieldKey);
+    return Boolean(field && shouldShowField(field));
+  });
+}
+
 const getFieldByKey = (key) => {
   if (!key || !moduleDefinition.value?.fields) return null;
   const keyLower = key.toLowerCase();

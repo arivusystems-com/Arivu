@@ -15,7 +15,7 @@
  * ============================================================================
  */
 
-import type { EventActionPermission, EventAction } from './eventPermissions.types';
+import type { EventActionPermission } from './eventPermissions.types';
 import type { EventTypeDefinition } from '@/types/eventSettings.types';
 
 /**
@@ -23,12 +23,20 @@ import type { EventTypeDefinition } from '@/types/eventSettings.types';
  */
 type ExecutionState = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
-function deriveExecutionState(event: any): ExecutionState {
+interface PermissionEvent {
+  status?: string | null;
+  executionStartTime?: unknown;
+  executionStartedAt?: unknown;
+  auditState?: string;
+  submittedAt?: unknown;
+}
+
+function deriveExecutionState(event: PermissionEvent | null | undefined): ExecutionState {
   if (!event) return 'NOT_STARTED';
   
   if (event.status === 'Cancelled' || event.status === 'CANCELLED') return 'CANCELLED';
   if (event.status === 'Completed' || event.status === 'COMPLETED') return 'COMPLETED';
-  if (event.executionStartTime || event.executionStartedAt) return 'IN_PROGRESS';
+  if (Boolean(event.executionStartTime) || Boolean(event.executionStartedAt)) return 'IN_PROGRESS';
   
   return 'NOT_STARTED';
 }
@@ -43,8 +51,8 @@ function deriveExecutionState(event: any): ExecutionState {
  * @returns Array of EventActionPermission objects
  */
 export function deriveEventPermissions(params: {
-  event: any;
-  currentUser: any;
+  event: PermissionEvent | null | undefined;
+  currentUser: unknown;
   eventTypeDefinition: EventTypeDefinition | null;
 }): EventActionPermission[] {
   const { event, eventTypeDefinition } = params;
@@ -128,7 +136,7 @@ export function deriveEventPermissions(params: {
     
     // AUDIT_SUBMIT
     const canSubmit = (auditState === 'checked_in' || auditState === 'CHECKED_IN') && 
-                      !event.submittedAt;
+                      !Boolean(event.submittedAt);
     
     permissions.push({
       action: 'AUDIT_SUBMIT',
@@ -137,7 +145,7 @@ export function deriveEventPermissions(params: {
         ? undefined
         : !(auditState === 'checked_in' || auditState === 'CHECKED_IN')
         ? 'Audit must be checked in before submission'
-        : event.submittedAt
+        : Boolean(event.submittedAt)
         ? 'Audit has already been submitted'
         : 'Audit is not ready for submission'
     });

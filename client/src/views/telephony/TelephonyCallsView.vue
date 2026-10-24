@@ -89,6 +89,7 @@ import { useI18n } from 'vue-i18n';
 import TelephonyNav from '@/components/telephony/TelephonyNav.vue';
 import PhoneLink from '@/components/telephony/PhoneLink.vue';
 import { listCalls } from '@/utils/telephonyApi';
+import { formatUserDateTime } from '@/utils/localeFormat';
 import { useTelephonySoftphone } from '@/composables/useTelephonySoftphone';
 
 const { t } = useI18n();
@@ -144,7 +145,7 @@ function formatDuration(seconds) {
 function formatDate(value) {
   if (!value) return '—';
   try {
-    return new Date(value).toLocaleString();
+    return formatUserDateTime(value);
   } catch {
     return '—';
   }

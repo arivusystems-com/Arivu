@@ -1,4 +1,5 @@
 <script setup>
+defineOptions({ name: 'LoginView' });
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useColorMode } from '@/composables/useColorMode';

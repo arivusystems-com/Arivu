@@ -23,6 +23,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
+import { formatUserDate } from '@/utils/localeFormat';
 import { useOnboarding } from '@/composables/useOnboarding';
 import { captureLearningModuleVisited } from '@/config/posthogLearning';
 import LearningPageHeader from './components/LearningPageHeader.vue';
@@ -38,7 +39,7 @@ function formatDue(dueAt) {
   if (!dueAt) return '';
   const d = new Date(dueAt);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString();
+  return formatUserDate(d);
 }
 
 function cardMeta(row) {

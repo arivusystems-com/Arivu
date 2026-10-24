@@ -647,8 +647,8 @@
                       <p class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ getUserDisplayName(getSelectedUser('auditor')) }}
                       </p>
-                      <p v-if="getSelectedUser('auditor').email" class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ getSelectedUser('auditor').email }}
+                      <p v-if="getSelectedUser('auditor')?.email" class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ getSelectedUser('auditor')?.email }}
                       </p>
                     </div>
                   </div>
@@ -740,8 +740,8 @@
                       <p class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ getUserDisplayName(getSelectedUser('reviewer')) }}
                       </p>
-                      <p v-if="getSelectedUser('reviewer').email" class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ getSelectedUser('reviewer').email }}
+                      <p v-if="getSelectedUser('reviewer')?.email" class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ getSelectedUser('reviewer')?.email }}
                       </p>
                     </div>
                   </div>
@@ -829,8 +829,8 @@
                       <p class="text-sm font-medium text-gray-900 dark:text-white">
                         {{ getUserDisplayName(getSelectedUser('correctiveOwner')) }}
                       </p>
-                      <p v-if="getSelectedUser('correctiveOwner').email" class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ getSelectedUser('correctiveOwner').email }}
+                      <p v-if="getSelectedUser('correctiveOwner')?.email" class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ getSelectedUser('correctiveOwner')?.email }}
                       </p>
                     </div>
                   </div>
@@ -1455,7 +1455,6 @@ type OrganizationLite = {
   name?: string;
   email?: string;
   address?: string;
-  [key: string]: any;
 };
 
 type UserLite = {
@@ -1464,7 +1463,6 @@ type UserLite = {
   lastName?: string;
   username?: string;
   email?: string;
-  [key: string]: any;
 };
 
 type AuditFormLite = {
@@ -1473,9 +1471,32 @@ type AuditFormLite = {
   description?: string;
   status?: string;
   formType?: string;
-  sections?: any[];
-  [key: string]: any;
+  sections?: unknown[];
 };
+
+interface AuditEventPayload {
+  eventType: string;
+  auditorId: string | null;
+  correctiveOwnerId: string | null;
+  startDateTime: string | null;
+  endDateTime: string | null;
+  linkedFormId: string | null;
+  geoRequired: true;
+  eventName?: string;
+  reviewerId?: string | null;
+  orgList?: Array<{ organizationId: string; sequence: number }>;
+  relatedToId?: string;
+}
+
+interface AuditApiError {
+  message?: string;
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+  };
+}
 
 type StepDefinition = {
   step: AuditScheduleStep;
@@ -1615,20 +1636,27 @@ const selectedOrganizations = computed(() => {
 // - No map picker
 // - No GEO radius or accuracy
 // - No full Organization edit form
-const isBlankString = (v: any): boolean => {
-  return v == null || (typeof v === 'string' && v.trim().length === 0);
+const isBlankString = (value: unknown): boolean => {
+  return value == null || (typeof value === 'string' && value.trim().length === 0);
 };
 
-const getOrganizationById = (orgId: string): any | null => {
+function scheduleRefId(id: unknown): string | null {
+  if (id == null || id === '') return null;
+  if (typeof id === 'string') return id;
+  if (typeof id === 'number' || typeof id === 'boolean') return String(id);
+  if (typeof id === 'object') {
+    const record = id as { _id?: unknown; id?: unknown; toString?: () => string };
+    const nested = record._id ?? record.id;
+    if (nested != null && nested !== '') return String(nested);
+    if (typeof record.toString === 'function') return String(record.toString());
+  }
+  return String(id);
+}
+
+const getOrganizationById = (orgId: string): OrganizationLite | { _id?: string; name?: string; address?: string } | null => {
   if (!orgId) return null;
 
-  const normalizeId = (id: any): string | null => {
-    if (!id) return null;
-    if (typeof id === 'string') return id;
-    if (typeof id === 'object' && (id._id || id.id)) return String(id._id || id.id);
-    if (typeof id === 'object' && typeof id.toString === 'function') return String(id.toString());
-    return String(id);
-  };
+  const normalizeId = scheduleRefId;
 
   const target = normalizeId(orgId);
 
@@ -1740,11 +1768,12 @@ const saveAddress = async () => {
 
     closeAddressEditor();
     // Automatically resume scheduling by removing the blocking prerequisite.
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AuditScheduleSurface] Error saving address:', error);
+    const apiError = error as AuditApiError;
     addressSaveError.value =
-      error.response?.data?.message ||
-      error.message ||
+      apiError.response?.data?.message ||
+      apiError.message ||
       'Unable to save address. Please try again.';
   } finally {
     savingAddress.value = false;
@@ -1799,7 +1828,7 @@ const isOrganizationSelected = (orgId: string): boolean => {
 };
 
 // Toggle organization selection
-const toggleOrganization = (org: any) => {
+const toggleOrganization = (org: OrganizationLite) => {
   const orgId = org._id;
   
   if (isSingleOrgAudit.value) {
@@ -1831,10 +1860,10 @@ const getOrganizationName = (orgId: string): string => {
   if (!orgId) return 'Unknown Organization';
   
   // Normalize ID for comparison (handle both string and ObjectId)
-  const normalizeId = (id: any): string => {
-    if (!id) return '';
+  const normalizeId = (id: unknown): string => {
+    if (id == null || id === '') return '';
     if (typeof id === 'string') return id;
-    if (typeof id === 'object' && id.toString) return id.toString();
+    if (typeof id === 'object' && 'toString' in id && typeof id.toString === 'function') return String(id.toString());
     return String(id);
   };
   
@@ -2021,14 +2050,14 @@ const handleUserSearch = (role: string) => {
 };
 
 // Get user display name
-const getUserDisplayName = (user: any): string => {
+const getUserDisplayName = (user: UserLite | null | undefined): string => {
   if (!user) return '';
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
   return name || user.username || user.email || user._id || 'Unknown User';
 };
 
 // Get user initials for avatar
-const getUserInitials = (user: any): string => {
+const getUserInitials = (user: UserLite | null | undefined): string => {
   if (!user) return '?';
   const name = getUserDisplayName(user);
   const words = name.split(' ').filter(Boolean);
@@ -2039,7 +2068,7 @@ const getUserInitials = (user: any): string => {
 };
 
 // Get selected user object
-const getSelectedUser = (role: string): any => {
+const getSelectedUser = (role: string): UserLite | null => {
   let userId: string | null = null;
   if (role === 'auditor') userId = draft.value.auditorId;
   else if (role === 'reviewer') userId = draft.value.reviewerId;
@@ -2440,7 +2469,7 @@ const handleFormSearch = () => {
 };
 
 // Select form
-const selectForm = (form: any) => {
+const selectForm = (form: AuditFormLite) => {
   // ARCHITECTURE NOTE: Save form ID to draft
   draft.value.linkedFormId = form._id;
   formSearchQuery.value = '';
@@ -2585,7 +2614,7 @@ const scheduleAudit = async () => {
     
     // ARCHITECTURE NOTE: Build event payload according to audit type
     // Single-org audits use relatedToId, beat audits use orgList
-    const eventPayload: any = {
+    const eventPayload: AuditEventPayload = {
       // Title strategy:
       // - If user did NOT customize, omit `eventName` and let backend generate the default.
       // - If user explicitly customized, send the custom title (non-empty).
@@ -2653,11 +2682,12 @@ const scheduleAudit = async () => {
     } else {
       scheduleError.value = response.message || response.error || 'Failed to schedule audit. Please try again.';
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error scheduling audit:', error);
-    scheduleError.value = error.response?.data?.message || 
-                         error.response?.data?.error || 
-                         error.message || 
+    const apiError = error as AuditApiError;
+    scheduleError.value = apiError.response?.data?.message ||
+                         apiError.response?.data?.error ||
+                         apiError.message ||
                          'An error occurred while scheduling the audit. Please try again.';
   } finally {
     scheduling.value = false;

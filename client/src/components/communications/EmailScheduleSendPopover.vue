@@ -112,6 +112,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { formatUserDateTime } from '@/utils/localeFormat';
 import { ChevronDownIcon, XMarkIcon, CalendarDaysIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
@@ -197,7 +198,7 @@ function formatTimeHint(d) {
       minute: '2-digit'
     }).format(d);
   } catch {
-    return d.toLocaleString();
+    return formatUserDateTime(d);
   }
 }
 

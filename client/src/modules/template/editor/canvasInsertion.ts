@@ -1,5 +1,5 @@
 import type { Component, Editor } from 'grapesjs';
-import { elementToMergeTokens, mergeTokensToChipHtml } from '@/utils/builderMergeTagHtml';
+import { mergeTokensToChipHtml } from '@/utils/builderMergeTagHtml';
 import { dismissCanvasInlineEditing, hideRteToolbar } from './rteToolbar';
 import { formatMergeToken } from './mergeTokens';
 import { isEditableTextComponent, readTextContent } from './textContent';
@@ -102,14 +102,6 @@ function hasTextInsertContext(editor: Editor): boolean {
 function readHostTokenText(component: Component): string {
   if (isTableCellComponent(component)) return readCellText(component);
   return readTextContent(component);
-}
-
-function syncHostFromDom(component: Component, element: HTMLElement): void {
-  if (isTableCellComponent(component)) {
-    writeCellText(component, elementToMergeTokens(element));
-    return;
-  }
-  syncComponentContentFromDom(element, component);
 }
 
 function snapshotCanvasTextSelection(editor: Editor, force = false): void {

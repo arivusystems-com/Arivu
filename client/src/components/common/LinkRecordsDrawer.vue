@@ -153,13 +153,15 @@ import { useAuthStore } from '@/stores/authRegistry';
 import { getRecordLabel } from '@/utils/recordDisplay';
 import { formatUserDate } from '@/utils/localeFormat';
 
-const RECORD_TYPE_OPTIONS_DEFAULT = [
-  { key: 'organizations', label: 'Organization' },
-  { key: 'people', label: 'Contact' },
-  { key: 'deals', label: 'Deal' },
-  { key: 'tasks', label: 'Task' },
-  { key: 'events', label: 'Event' }
-];
+function defaultRecordTypeOptions() {
+  return [
+    { key: 'organizations', label: t('forms.settingsLinkOrganization') },
+    { key: 'people', label: t('deals.sysFieldContactId') },
+    { key: 'deals', label: t('forms.settingsLinkDeal') },
+    { key: 'tasks', label: t('forms.settingsLinkTask') },
+    { key: 'events', label: t('forms.settingsLinkEvent') }
+  ];
+}
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -263,7 +265,7 @@ const recordTypeOptions = computed(() => {
   if (props.supplementRecordTypes?.length) {
     return mergeRecordTypeOptions([], props.supplementRecordTypes);
   }
-  return RECORD_TYPE_OPTIONS_DEFAULT;
+  return defaultRecordTypeOptions();
 });
 
 // Auth role

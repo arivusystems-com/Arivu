@@ -394,7 +394,7 @@ const linkedOrgIds = computed(() => {
 const peopleOptions = computed(() => {
   const all = props.people || [];
   const fid = contextOrgIdForPeopleFilter.value;
-  let list = fid
+  const list = fid
     ? all.filter((p) => {
         const oid = personOrgId(p);
         return oid && String(oid) === String(fid);
@@ -637,7 +637,7 @@ function removeOrg(entry) {
 
 function enforceSinglePrimaryState() {
   let changed = false;
-  let nextPeople = dealPeople.value.map((p) => {
+  const nextPeople = dealPeople.value.map((p) => {
     const role = normalizeDealPersonRole(p.role);
     if (role !== p.role) {
       changed = true;
@@ -645,7 +645,7 @@ function enforceSinglePrimaryState() {
     }
     return { ...p };
   });
-  let nextOrganizations = dealOrganizations.value.map((o) => ({ ...o }));
+  const nextOrganizations = dealOrganizations.value.map((o) => ({ ...o }));
 
   // Primary is independent of role — count all isPrimary rows
   const peoplePrimaryIndexes = [];

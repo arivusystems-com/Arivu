@@ -9,7 +9,6 @@ import {
   PUBLIC_AUTH_LOCALE_NAMESPACES,
   PSEUDO_BASE_LANGUAGE,
   PSEUDO_LANGUAGES,
-  SHARED_NAMESPACES,
   type DeferredLocaleNamespace,
   type I18nLanguage,
   type SharedNamespace,

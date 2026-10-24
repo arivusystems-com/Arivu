@@ -1,3 +1,4 @@
+import type { Component } from 'vue';
 import {
   AdjustmentsHorizontalIcon,
   ArchiveBoxIcon,
@@ -69,7 +70,7 @@ type IconLookupItem = {
   id?: string;
 };
 
-const MODULE_ICON_MAP: Record<string, any> = {
+const MODULE_ICON_MAP: Record<string, Component> = {
   attention: ExclamationTriangleIcon,
   inbox: InboxIcon,
   astra: SparklesIcon,
@@ -137,7 +138,7 @@ const MODULE_ICON_MAP: Record<string, any> = {
   ...MODULE_ICON_COMPONENTS
 };
 
-const RAW_ICON_MAP: Record<string, any> = {
+const RAW_ICON_MAP: Record<string, Component> = {
   users: UsersIcon,
   user: UserGroupIcon,
   'building-office': BuildingOfficeIcon,
@@ -204,7 +205,7 @@ const RAW_ICON_MAP: Record<string, any> = {
   lms: AcademicCapIcon,
   bookmark: BookmarkIcon,
   ...Object.fromEntries(
-    Object.entries(MODULE_ICON_IDS).map(([moduleKey, iconId]) => [moduleKey, MODULE_ICON_COMPONENTS[moduleKey]])
+    Object.entries(MODULE_ICON_IDS).map(([moduleKey, _iconId]) => [moduleKey, MODULE_ICON_COMPONENTS[moduleKey]])
   )
 };
 
@@ -228,13 +229,13 @@ const EMOJI_ICON_MAP: Record<string, string> = {
   '💳': 'credit-card'
 };
 
-export function getIconComponent(icon?: string, moduleKey?: string): any {
+export function getIconComponent(icon?: string, moduleKey?: string): Component {
   const resolvedId = resolveStoredModuleIconId(icon, moduleKey);
   const normalized = String(EMOJI_ICON_MAP[icon || ''] || resolvedId || icon || '').toLowerCase();
   return RAW_ICON_MAP[normalized] || Squares2X2Icon;
 }
 
-export function getNavigationIconComponent(item: IconLookupItem): any {
+export function getNavigationIconComponent(item: IconLookupItem): Component {
   const moduleKey = String(item.moduleKey || '').toLowerCase();
   // Shared platform key `cases`: Helpdesk tickets vs Audit findings (also moduleKey `cases`).
   if (moduleKey === 'cases') {

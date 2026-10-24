@@ -7,7 +7,7 @@
 type SettingsAccessCtx = {
   isOwner: boolean;
   role: string | null | undefined;
-  permissions: Record<string, any> | null | undefined;
+  permissions: unknown;
   entitledAddons?: { ai?: boolean } | null;
   inventoryEnabled?: boolean;
   userType?: string | null;
@@ -38,13 +38,21 @@ function isPrivilegedSettingsRole(role: string | null | undefined): boolean {
   return normalized === 'admin' || normalized === 'owner' || normalized === 'administrator';
 }
 
-function hasWorkspaceSettingsAdminAccess(permissions: Record<string, any> | null | undefined): boolean {
-  const settings = permissions?.settings || {};
+function readPermission(permissions: unknown, path: readonly string[]): unknown {
+  let current = permissions;
+  for (const key of path) {
+    if (typeof current !== 'object' || current === null) return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+function hasWorkspaceSettingsAdminAccess(permissions: unknown): boolean {
   return Boolean(
-    settings.edit
-    || settings.customizeFields
-    || settings.manageUsers
-    || settings.manageIntegrations
+    readPermission(permissions, ['settings', 'edit'])
+    || readPermission(permissions, ['settings', 'customizeFields'])
+    || readPermission(permissions, ['settings', 'manageUsers'])
+    || readPermission(permissions, ['settings', 'manageIntegrations'])
   );
 }
 
@@ -61,11 +69,10 @@ export function canManageWebforms(
   if (ctx.isOwner || isPrivilegedSettingsRole(ctx.role)) return true;
   if (hasWorkspaceSettingsAdminAccess(ctx.permissions)) return true;
 
-  const webforms = ctx.permissions?.webforms || {};
-  if (action === 'view') return Boolean(webforms.view);
-  if (action === 'create') return Boolean(webforms.create);
-  if (action === 'edit') return Boolean(webforms.edit);
-  if (action === 'delete') return Boolean(webforms.delete);
+  if (action === 'view') return Boolean(readPermission(ctx.permissions, ['webforms', 'view']));
+  if (action === 'create') return Boolean(readPermission(ctx.permissions, ['webforms', 'create']));
+  if (action === 'edit') return Boolean(readPermission(ctx.permissions, ['webforms', 'edit']));
+  if (action === 'delete') return Boolean(readPermission(ctx.permissions, ['webforms', 'delete']));
   return false;
 }
 
@@ -105,42 +112,42 @@ export function canAccessSettingsTab(
   if (ctx.isOwner) return true;
   if (isPrivilegedSettingsRole(ctx.role)) return true;
 
-  const p = ctx.permissions?.settings || {};
+  const settingsFlag = (key: string) => readPermission(ctx.permissions, ['settings', key]);
 
   switch (tabId) {
     case 'organization':
-      return Boolean(p.edit || p.view);
+      return Boolean(settingsFlag('edit') || settingsFlag('view'));
     case 'currency':
-      return Boolean(p.edit || p.view);
+      return Boolean(settingsFlag('edit') || settingsFlag('view'));
     case 'users-access':
-      return Boolean(p.manageUsers);
+      return Boolean(settingsFlag('manageUsers'));
     case 'core-modules':
-      return Boolean(p.customizeFields || p.edit);
+      return Boolean(settingsFlag('customizeFields') || settingsFlag('edit'));
     case 'applications':
-      return Boolean(p.edit);
+      return Boolean(settingsFlag('edit'));
     case 'addons':
-      return Boolean(p.edit || p.manageBilling);
+      return Boolean(settingsFlag('edit') || settingsFlag('manageBilling'));
     case 'catalog':
-      return Boolean(p.edit);
+      return Boolean(settingsFlag('edit'));
     case 'inventory':
-      return Boolean(p.edit);
+      return Boolean(settingsFlag('edit'));
     case 'subscriptions':
-      return Boolean(p.manageBilling);
+      return Boolean(settingsFlag('manageBilling'));
     case 'security':
-      return Boolean(p.edit);
+      return Boolean(settingsFlag('edit'));
     case 'integrations':
-      return Boolean(p.manageIntegrations || p.edit);
+      return Boolean(settingsFlag('manageIntegrations') || settingsFlag('edit'));
     case 'ai':
-      return Boolean(p.manageIntegrations || p.edit);
+      return Boolean(settingsFlag('manageIntegrations') || settingsFlag('edit'));
     case 'automation':
-      return Boolean(p.edit);
+      return Boolean(settingsFlag('edit'));
     case 'webforms':
       return canManageWebforms(ctx, 'view');
     case 'performance':
       return Boolean(
-        p.edit ||
-        ctx.permissions?.performance?.targets?.view ||
-        ctx.permissions?.performance?.targets?.create
+        settingsFlag('edit') ||
+        readPermission(ctx.permissions, ['performance', 'targets', 'view']) ||
+        readPermission(ctx.permissions, ['performance', 'targets', 'create'])
       );
     case 'business-hours':
       return true;
@@ -174,13 +181,6 @@ const SETTINGS_TAB_IDS = [
 ] as const;
 
 /** True if the user should see the Settings entry or any settings section (not only Overview). */
-export function hasAnySettingsAccess(ctx: {
-  isOwner: boolean;
-  role: string | null | undefined;
-  permissions: Record<string, any> | null | undefined;
-  entitledAddons?: { ai?: boolean } | null;
-  inventoryEnabled?: boolean;
-  userType?: string | null;
-}): boolean {
+export function hasAnySettingsAccess(ctx: SettingsAccessCtx): boolean {
   return SETTINGS_TAB_IDS.some((id) => canAccessSettingsTab(id, ctx));
 }

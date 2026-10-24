@@ -443,7 +443,15 @@ const handleSubmit = async () => {
 
     // Prepare payload - only include allowed fields
     // Send KEY to backend - backend projection resolver will validate and map to label
-    const payload: Record<string, any> = {
+    const payload: {
+      eventName: string;
+      eventType: string;
+      startDateTime: string;
+      endDateTime: string;
+      location: string | null;
+      assignedTo: string | null;
+      status?: string;
+    } = {
       eventName: form.value.eventName.trim(),
       eventType: selectedEventType.key, // Send key (MEETING) - backend will map to label (Meeting)
       startDateTime: new Date(form.value.startDateTime).toISOString(),

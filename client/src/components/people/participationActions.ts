@@ -17,7 +17,7 @@ export interface ParticipationAction {
   label: string;
   actionType: 'create-deal' | 'create-task' | 'create-case' | 'schedule-meeting' | 'convert' | 'edit' | 'edit-details' | 'view';
   moduleKey?: string; // For navigation-based actions
-  prefillData?: Record<string, any>; // Data to prefill in creation forms
+  prefillData?: Record<string, unknown>; // Data to prefill in creation forms
 }
 
 export interface ParticipationActions {

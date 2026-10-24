@@ -130,7 +130,6 @@ export async function verifyDynamicSidebar() {
 
 // Also export a simpler check function
 export function quickCheck() {
-  const { useAppShellStore } = require('@/stores/appShell');
   const store = useAppShellStore();
   
   const isWorking = store.isLoaded && store.availableApps.length > 0;

@@ -42,7 +42,8 @@
               <div>
                 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsActivityTitleLabel') }}</label>
                 <input
-                  v-model="action.title"
+                  :value="action.title"
+                  @input="patchAction({ title: $event.target.value })"
                   @change="$emit('refresh-key')"
                   class="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700 text-sm"
                   :placeholder="t('settings.modFieldsActivityTitlePh')"
@@ -51,7 +52,8 @@
               <div>
                 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsActionTypeLabel') }}</label>
                 <HeadlessSelect
-                  v-model="action.actionType"
+                  :model-value="action.actionType"
+                  @update:model-value="patchAction({ actionType: $event })"
                   :options="actionTypes"
                   teleport
                   :options-class="modalSelectOptionsClass"
@@ -63,7 +65,8 @@
                 <input
                   type="number"
                   min="0"
-                  v-model.number="action.dueInDays"
+                  :value="action.dueInDays"
+                  @input="patchAction({ dueInDays: numberFromInput($event.target.value) })"
                   class="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700 text-sm"
                 />
                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ t('settings.modFieldsDueSameDayHint') }}</p>
@@ -71,12 +74,12 @@
               <div>
                 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsAssignmentLabel') }}</label>
                 <HeadlessSelect
-                  v-model="action.assignment.type"
+                  :model-value="action.assignment.type"
                   :options="assignmentOptions"
                   teleport
                   :options-class="modalSelectOptionsClass"
                   button-class="!bg-white dark:!bg-gray-900/80 !border !border-gray-200 dark:!border-gray-700 !rounded-lg"
-                  @update:model-value="onAssignmentTypeChange"
+                  @update:model-value="onAssignmentTypeInput"
                 />
                 <HeadlessSelect
                   v-if="action.assignment.type === 'specific_user'"
@@ -122,18 +125,19 @@
             </div>
             <div class="flex flex-wrap items-center gap-6">
               <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                <HeadlessCheckbox v-model="action.required" checkbox-class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                <HeadlessCheckbox :model-value="action.required" @update:model-value="patchAction({ required: $event })" checkbox-class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                 {{ t('settings.modFieldsRequiredCompleteStage') }}
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                <HeadlessCheckbox v-model="action.autoCreate" checkbox-class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                <HeadlessCheckbox :model-value="action.autoCreate" @update:model-value="patchAction({ autoCreate: $event })" checkbox-class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                 {{ t('settings.modFieldsAutoCreateStageStart') }}
               </label>
             </div>
             <div>
               <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsDescriptionLabel') }}</label>
               <textarea
-                v-model="action.description"
+                :value="action.description"
+                @input="patchAction({ description: $event.target.value })"
                 rows="3"
                 class="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700 text-sm"
                 :placeholder="t('settings.modFieldsActivityDescriptionPh')"
@@ -183,18 +187,19 @@
                 <div>
                   <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsTriggerTypeLabel') }}</label>
                   <HeadlessSelect
-                    v-model="action.trigger.type"
+                    :model-value="action.trigger.type"
                     :options="triggerOptions"
                     teleport
                     :options-class="modalSelectOptionsClass"
                     button-class="!bg-white dark:!bg-gray-900/80 !border !border-gray-200 dark:!border-gray-700 !rounded-lg"
-                    @update:model-value="() => $emit('trigger-type-change', action)"
+                    @update:model-value="onTriggerTypeInput"
                   />
                 </div>
                 <div v-if="action.trigger.type === 'after_action'">
                   <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsWaitForActivity') }}</label>
                   <HeadlessSelect
-                    v-model="action.trigger.sourceActionKey"
+                    :model-value="action.trigger.sourceActionKey"
+                    @update:model-value="patchTrigger({ sourceActionKey: $event })"
                     :options="actionOptions"
                     allow-empty
                     :empty-label="t('settings.modFieldsSelectActivityPh')"
@@ -231,7 +236,8 @@
               <div v-if="action.trigger.type === 'custom'" class="space-y-2">
                 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('settings.modFieldsCustomTriggerDetails') }}</label>
                 <textarea
-                  v-model="action.trigger.description"
+                  :value="action.trigger.description"
+                  @input="patchTrigger({ description: $event.target.value })"
                   rows="3"
                   class="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700 text-sm"
                   :placeholder="t('settings.modFieldsCustomTriggerPh')"
@@ -485,6 +491,9 @@ const emit = defineEmits([
   'discard',
   'remove',
   'refresh-key',
+  'patch-action',
+  'patch-assignment',
+  'patch-trigger',
   'trigger-type-change',
   'trigger-delay-amount',
   'trigger-delay-unit',
@@ -497,6 +506,24 @@ const emit = defineEmits([
   'add-resource',
   'remove-resource'
 ]);
+
+function patchAction(partial) {
+  emit('patch-action', partial);
+}
+
+function patchAssignment(partial) {
+  emit('patch-assignment', partial);
+}
+
+function patchTrigger(partial) {
+  emit('patch-trigger', partial);
+}
+
+function numberFromInput(raw) {
+  if (raw === '' || raw == null) return raw;
+  const parsed = Number(raw);
+  return Number.isNaN(parsed) ? raw : parsed;
+}
 
 const { t } = useI18n();
 
@@ -575,6 +602,16 @@ const assignmentTargetPlaceholder = computed(() => {
   }
   return t('settings.modFieldsSelectFieldPh');
 });
+
+function onAssignmentTypeInput(value) {
+  patchAssignment({ type: value });
+  onAssignmentTypeChange();
+}
+
+function onTriggerTypeInput(value) {
+  patchTrigger({ type: value });
+  emit('trigger-type-change', props.action);
+}
 
 function onAssignmentTypeChange() {
   if (!props.action?.assignment) return;

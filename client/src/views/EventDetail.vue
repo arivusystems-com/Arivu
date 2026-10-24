@@ -650,19 +650,19 @@
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-600 dark:text-gray-400">{{ t('events.eventDetailCompleted') }}</span>
                 <span class="font-medium text-green-600 dark:text-green-400">
-                  {{ event.orgList.filter((o: any) => o.status === 'COMPLETED').length }}
+                  {{ event.orgList.filter((org) => org.status === 'COMPLETED').length }}
                 </span>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-600 dark:text-gray-400">{{ t('events.eventDetailInProgress') }}</span>
                 <span class="font-medium text-blue-600 dark:text-blue-400">
-                  {{ event.orgList.filter((o: any) => o.status === 'IN_PROGRESS').length }}
+                  {{ event.orgList.filter((org) => org.status === 'IN_PROGRESS').length }}
                 </span>
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-600 dark:text-gray-400">{{ t('events.eventDetailPending') }}</span>
                 <span class="font-medium text-gray-600 dark:text-gray-400">
-                  {{ event.orgList.filter((o: any) => o.status === 'PENDING').length }}
+                  {{ event.orgList.filter((org) => org.status === 'PENDING').length }}
                 </span>
               </div>
             </div>
@@ -803,7 +803,81 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const event = ref<any>(null);
+interface DetailGeoPoint {
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+interface DetailCheckPoint {
+  timestamp?: string | number | Date | null;
+  location?: DetailGeoPoint | null;
+}
+
+interface DetailAuditEntry {
+  action: string;
+  from?: string;
+  to?: string;
+  timestamp?: string | number | Date | null;
+}
+
+interface DetailLinkedRef {
+  _id?: string;
+  name?: string;
+}
+
+interface DetailEvent {
+  _id?: string;
+  eventId?: string;
+  eventName?: string;
+  title?: string;
+  type?: string;
+  eventType?: string;
+  status?: string | null;
+  color?: string;
+  auditState?: string;
+  startDateTime?: string | null;
+  startDate?: string | null;
+  endDateTime?: string | null;
+  endDate?: string | null;
+  location?: string;
+  tags?: string[];
+  notes?: string;
+  geoRequired?: boolean;
+  timeSpent?: number;
+  isMultiOrg?: boolean;
+  relatedToId?: unknown;
+  linkedFormId?: string | DetailLinkedRef | null;
+  checkIn?: DetailCheckPoint | null;
+  checkOut?: DetailCheckPoint | null;
+  auditorId?: unknown;
+  assignedTo?: unknown;
+  organizer?: unknown;
+  createdAt?: unknown;
+  createdBy?: unknown;
+  executionStartTime?: unknown;
+  executionStartedAt?: unknown;
+  executionEndTime?: unknown;
+  completedAt?: unknown;
+  completedBy?: unknown;
+  cancelledAt?: unknown;
+  cancelledBy?: unknown;
+  cancellationReason?: unknown;
+  submittedAt?: unknown;
+  submittedBy?: unknown;
+  auditHistory?: DetailAuditEntry[];
+  orgList?: Array<{ status?: string }>;
+  kpiActuals?: {
+    orderCount?: number;
+    orderValue?: unknown;
+    visitsCompleted?: number;
+    ordersCreated?: number;
+  };
+  metadata?: {
+    formResponses?: string[];
+  };
+}
+
+const event = ref<DetailEvent | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showNoteForm = ref(false);
@@ -1184,12 +1258,13 @@ function getActivityActor(activity: EventActivity): string | undefined {
 const isEventLocked = computed(() => {
   if (!event.value) return false;
   // Lock editing when audit event is checked in, approved, or closed
-  return event.value.auditState === 'checked_in' || 
+  const auditLabels = ['Internal Audit', 'External Audit — Single Org', 'External Audit Beat'];
+  return event.value.auditState === 'checked_in' ||
          event.value.auditState === 'submitted' ||
          event.value.auditState === 'approved' ||
          event.value.auditState === 'closed' ||
-         (['Internal Audit', 'External Audit — Single Org', 'External Audit Beat'].includes(event.value.eventType) && 
-          event.value.auditState && 
+         (auditLabels.includes(event.value.eventType || '') &&
+          Boolean(event.value.auditState) &&
           event.value.auditState !== 'Ready to start');
 });
 
@@ -1202,8 +1277,8 @@ const isAuditor = computed(() => {
   if (!currentUser) return false;
   
   // Prefer explicit auditorId; fall back to assignedTo for legacy records
-  const auditorId = event.value.auditorId?._id || event.value.auditorId || event.value.assignedTo?._id || event.value.assignedTo;
-  return auditorId && auditorId.toString() === currentUser._id.toString();
+  const auditorId = refIdString(event.value.auditorId) || refIdString(event.value.assignedTo);
+  return auditorId !== '' && auditorId === String(currentUser._id);
 });
 
 // Legacy computed - use isAuditEvent instead (derived from EventTypeDefinition)
@@ -1211,12 +1286,23 @@ const isAuditEventType = computed(() => {
   return isAuditEvent.value;
 });
 
-const primaryOwnerUser = computed(() => {
+interface DetailPerson {
+  firstName?: string;
+  lastName?: string;
+}
+
+function asDetailPerson(value: unknown): DetailPerson | null {
+  if (!value || typeof value !== 'object') return null;
+  return value as DetailPerson;
+}
+
+const primaryOwnerUser = computed((): DetailPerson | null => {
   if (!event.value) return null;
   // For audits: show auditorId (fallback to assignedTo for legacy)
-  if (isAuditEventType.value) return event.value.auditorId || event.value.assignedTo || event.value.organizer || null;
-  // For non-audits: show assignedTo
-  return event.value.assignedTo || event.value.organizer || null;
+  const owner = isAuditEventType.value
+    ? event.value.auditorId || event.value.assignedTo || event.value.organizer
+    : event.value.assignedTo || event.value.organizer;
+  return asDetailPerson(owner);
 });
 
 const primaryOwnerLabel = computed(() => (isAuditEventType.value ? 'Auditor' : 'Event Owner'));
@@ -1262,9 +1348,9 @@ const fetchEvent = async () => {
     } else {
       error.value = 'Event not found';
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error fetching event:', err);
-    error.value = err?.message || 'Failed to load event';
+    error.value = err instanceof Error && err.message ? err.message : 'Failed to load event';
   } finally {
     loading.value = false;
   }
@@ -1331,18 +1417,24 @@ const addNote = async () => {
   }
 };
 
-const formatDateTime = (date: any) => {
-  return dateUtils.format(date, 'MMM D, YYYY h:mm A');
+function toDateInput(value: unknown): string | number | Date | null {
+  if (value == null) return null;
+  if (typeof value === 'string' || typeof value === 'number' || value instanceof Date) return value;
+  return null;
+}
+
+const formatDateTime = (date: unknown) => {
+  return dateUtils.format(toDateInput(date), 'MMM D, YYYY h:mm A');
 };
 
-const formatTimeAgo = (date: any) => {
-  return dateUtils.fromNow(date);
+const formatTimeAgo = (date: unknown) => {
+  return dateUtils.fromNow(toDateInput(date));
 };
 
 const getDuration = () => {
   if (!event.value) return '';
-  const start = new Date(event.value.startDateTime || event.value.startDate);
-  const end = new Date(event.value.endDateTime || event.value.endDate);
+  const start = new Date(event.value.startDateTime || event.value.startDate || '');
+  const end = new Date(event.value.endDateTime || event.value.endDate || '');
   const duration = dateUtils.duration(end, start);
   
   if (duration.asHours() < 1) {
@@ -1355,33 +1447,51 @@ const getDuration = () => {
 };
 
 const viewFormResponse = () => {
-  if (!hasFormResponse.value || !event.value.metadata.formResponses) return;
-  
-  // Get the first form response ID
-  const responseId = event.value.metadata.formResponses[0];
-  const formId = event.value.linkedFormId?._id || event.value.linkedFormId;
-  
+  const responses = event.value?.metadata?.formResponses;
+  if (!hasFormResponse.value || !responses?.length) return;
+
+  const responseId = responses[0];
+  const formId = refIdString(event.value?.linkedFormId);
+
   if (formId && responseId) {
     router.push(`/forms/${formId}/responses/${responseId}`);
   }
 };
 
-const getInitials = (user: any) => {
-  if (!user) return '';
-  return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`;
+function refIdString(value: unknown): string {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as { _id?: unknown; id?: unknown };
+    const id = record._id ?? record.id;
+
+    if (typeof id === 'string' || typeof id === 'number') {
+      return String(id);
+    }
+  }
+
+  return '';
+}
+
+const getInitials = (user: unknown) => {
+  if (!user || typeof user !== 'object') return '';
+  const record = user as { firstName?: string; lastName?: string };
+  return `${record.firstName?.[0] || ''}${record.lastName?.[0] || ''}`;
 };
 
-const getOrgName = (org: any) => {
+const getOrgName = (org: unknown) => {
   if (!org) return 'N/A';
-  if (typeof org === 'object' && org.name) {
+  if (typeof org === 'object' && 'name' in org && typeof org.name === 'string' && org.name) {
     return org.name;
   }
   return 'Organization';
 };
 
-const getFormName = (form: any) => {
+const getFormName = (form: unknown) => {
   if (!form) return 'N/A';
-  if (typeof form === 'object' && form.name) {
+  if (typeof form === 'object' && 'name' in form && typeof form.name === 'string' && form.name) {
     return form.name;
   }
   return 'Form';
@@ -1390,8 +1500,10 @@ const getFormName = (form: any) => {
 const openForm = () => {
   if (event.value?.linkedFormId) {
     const eventIdValue = event.value.eventId || event.value._id;
-    const formId = event.value.linkedFormId;
-    
+    const linkedForm = event.value.linkedFormId;
+    const formId = typeof linkedForm === 'string' ? linkedForm : linkedForm?._id;
+    if (!formId) return;
+
     // Get responseId from event metadata if available
     let responseId = null;
     if (event.value.metadata?.formResponses && event.value.metadata.formResponses.length > 0) {
@@ -1427,7 +1539,7 @@ const openForm = () => {
 };
 
 // Audit state badge classes (for audit events only)
-const getAuditStateBadgeClass = (state: any) => {
+const getAuditStateBadgeClass = (state: unknown) => {
   if (!state) return '';
   
   const normalizedState = String(state).trim();
@@ -1458,7 +1570,7 @@ const getAuditStateBadgeClass = (state: any) => {
 };
 
 // Format audit state for display (capitalize and add spaces)
-const formatAuditState = (state: any) => {
+const formatAuditState = (state: unknown) => {
   if (!state) return '';
   
   // Handle camelCase/snake_case states
@@ -1523,10 +1635,11 @@ const getAuditProgress = () => {
   return Math.round((idx / (steps.length - 1)) * 100);
 };
 
-const formatDuration = (seconds: any) => {
-  if (!seconds) return '0m';
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
+const formatDuration = (seconds: unknown) => {
+  const total = typeof seconds === 'number' ? seconds : Number(seconds);
+  if (!Number.isFinite(total) || total <= 0) return '0m';
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
   }
@@ -1556,7 +1669,7 @@ const formResponseCount = computed(() => {
 });
 
 // Status badge classes for system-controlled status (Planned, Completed, Cancelled)
-const getStatusBadgeClass = (status: any) => {
+const getStatusBadgeClass = (status: unknown) => {
   // Normalize status to handle both old and new values during migration
   const normalizedStatus = status ? String(status).trim() : 'Planned';
   
@@ -1626,7 +1739,7 @@ onMounted(async () => {
     }
     
     // Assert: No execution mutation functions exist
-    // @ts-ignore - checking for non-existent functions
+    // @ts-expect-error startExecution must not exist on this surface
     const hasStartExecution = typeof startExecution !== 'undefined';
     console.assert(
       !hasStartExecution,

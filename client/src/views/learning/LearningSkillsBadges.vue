@@ -138,6 +138,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import apiClient from '@/utils/apiClient';
+import { formatUserDate } from '@/utils/localeFormat';
 import { useNotifications } from '@/composables/useNotifications';
 import { useLearningRole } from '@/composables/useLearningRole';
 import LearningPageHeader from './components/LearningPageHeader.vue';
@@ -166,7 +167,7 @@ function formatDate(value) {
   try {
     return d(new Date(value), 'short');
   } catch {
-    return new Date(value).toLocaleDateString();
+    return formatUserDate(value);
   }
 }
 

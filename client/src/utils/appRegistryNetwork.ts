@@ -3,7 +3,7 @@
  * Cached by appShell store — import this only for uncached fetches / tests.
  */
 
-import type { AppRegistry } from '@/types/sidebar.types';
+import type { AppRegistry, AppRegistryModule } from '@/types/sidebar.types';
 import apiClient from '@/utils/apiClient';
 import {
   resolvePortalModulePermission,
@@ -11,7 +11,40 @@ import {
   isPortalDocumentsModuleKey
 } from '@/utils/portalModulePermissions';
 
-function resolveModulePermission(appKey: string, moduleKey: string): string | undefined {
+interface RegistryModuleSource {
+  moduleKey?: string;
+  label?: string;
+  singularLabel?: string;
+  pluralLabel?: string;
+  listLabel?: string;
+  createLabel?: string;
+  tenantLabel?: boolean;
+  routeBase?: string;
+  icon?: string;
+  sidebarOrder?: number;
+  appKey?: string;
+  showInSidebar?: boolean;
+  navigationCore?: boolean;
+  navigationEntity?: boolean;
+  excludeFromApps?: boolean;
+  system?: boolean;
+  coreEntity?: boolean;
+  list?: AppRegistryModule['list'];
+}
+
+interface RawRegistryApp {
+  appKey: string;
+  name?: string;
+  defaultRoute?: string;
+  sidebarOrder?: number;
+  icon?: string;
+}
+
+function isRegistryModuleSource(value: unknown): value is RegistryModuleSource {
+  return typeof value === 'object' && value !== null;
+}
+
+function resolveModulePermission(appKey: string, moduleKey: string | undefined): string | undefined {
   const normalizedAppKey = String(appKey || '').toUpperCase();
   const normalizedModuleKey = String(moduleKey || '').toLowerCase();
 
@@ -29,10 +62,10 @@ function resolveModulePermission(appKey: string, moduleKey: string): string | un
   return `${moduleKey}.view`;
 }
 
-function mapRawModulesToRegistryModules(app: { appKey: string }, modulesData: any[]): any[] {
-  if (!modulesData?.length) return [];
+function mapRawModulesToRegistryModules(app: { appKey: string }, modulesData: unknown): AppRegistryModule[] {
+  if (!Array.isArray(modulesData) || !modulesData.length) return [];
 
-  let modules = modulesData.map((module: any) => {
+  const modules = modulesData.filter(isRegistryModuleSource).map((module): AppRegistryModule => {
     const normalizedAppKey = String(app.appKey || '').toUpperCase();
     const normalizedModuleKey = String(module.moduleKey || '').toLowerCase();
     let route = module.routeBase || `/${module.moduleKey}`;
@@ -112,8 +145,8 @@ function mapRawModulesToRegistryModules(app: { appKey: string }, modulesData: an
     }
 
     return {
-      moduleKey: module.moduleKey,
-      label: normalizedLabel,
+      moduleKey: module.moduleKey ?? '',
+      label: normalizedLabel ?? '',
       singularLabel: module.singularLabel,
       pluralLabel: module.pluralLabel,
       listLabel: module.listLabel,
@@ -570,8 +603,9 @@ function injectPortalResponsesModule(registry: AppRegistry): void {
   app.modules.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 }
 
-function addPlatformModulesToRegistry(registry: AppRegistry, entityModules: any[] | undefined): void {
-  if (!entityModules?.length) return;
+function addPlatformModulesToRegistry(registry: AppRegistry, entityModules: unknown): void {
+  if (!Array.isArray(entityModules) || !entityModules.length) return;
+  const sources = entityModules.filter(isRegistryModuleSource);
 
   // App-scoped projections (Audit /audit/responses, etc.) must not suppress platform entity nav.
   const moduleKeysOwnedByBusinessApps = new Set<string>();
@@ -584,9 +618,9 @@ function addPlatformModulesToRegistry(registry: AppRegistry, entityModules: any[
     }
   }
 
-  const platformModulesRaw = entityModules.map((module: any) => ({
-    moduleKey: module.moduleKey,
-    label: module.label,
+  const platformModulesRaw = sources.map((module): AppRegistryModule => ({
+    moduleKey: module.moduleKey ?? '',
+    label: module.label ?? '',
     singularLabel: module.singularLabel,
     pluralLabel: module.pluralLabel,
     listLabel: module.listLabel,
@@ -636,9 +670,9 @@ function applyPortalModulePermissions(registry: AppRegistry): void {
 }
 
 function buildRegistryFromPayload(payload: {
-  apps?: any[];
-  modulesByAppKey?: Record<string, any[]>;
-  entityModules?: any[];
+  apps?: RawRegistryApp[];
+  modulesByAppKey?: Record<string, RegistryModuleSource[]>;
+  entityModules?: unknown;
 }): AppRegistry {
   const apps = payload.apps || [];
   const registry: AppRegistry = {};
@@ -743,11 +777,15 @@ export async function fetchAppRegistryFromNetwork(): Promise<AppRegistry> {
       return {};
     }
 
-    const apps = appsResponse.data;
-
-    const modulesByAppKey: Record<string, any[]> = {};
+    const modulesByAppKey: Record<string, RegistryModuleSource[]> = {};
+    const appsPayload: unknown = appsResponse.data;
+    const apps = Array.isArray(appsPayload)
+      ? appsPayload.filter((app): app is RawRegistryApp => (
+          typeof app === 'object' && app !== null && typeof (app as RawRegistryApp).appKey === 'string'
+        ))
+      : [];
     await Promise.all(
-      apps.map(async (app: any) => {
+      apps.map(async (app) => {
         try {
           const modulesResponse = await apiClient(`/ui/apps/${app.appKey}/modules`, REGISTRY_FETCH_INIT);
           if (modulesResponse.success && modulesResponse.data) {

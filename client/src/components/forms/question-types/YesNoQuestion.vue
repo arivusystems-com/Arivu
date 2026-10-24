@@ -132,7 +132,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update', 'evidence-update']);
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const evidenceData = ref({
   comment: '',
@@ -171,35 +171,44 @@ const showEvidence = computed(() => {
   return hasEvidenceConfig.value && props.value && activeEvidenceRule.value !== null;
 });
 
-// Check for evidence validation errors
-const hasEvidenceErrors = computed(() => {
-  if (!activeEvidenceRule.value) return false;
-  
+function syncEvidenceErrors() {
   const rule = activeEvidenceRule.value;
-  
+  if (!rule) return;
+
   if (rule.comment.required === 'required' && !evidenceData.value.comment.trim()) {
     evidenceErrors.value.comment = t('forms.evidenceCommentRequired');
-    return true;
-  } else {
-    evidenceErrors.value.comment = '';
+    return;
   }
-  
+  evidenceErrors.value.comment = '';
+
   if (rule.image.required === 'required' && !evidenceData.value.image) {
     evidenceErrors.value.image = t('forms.evidenceImageRequired');
-    return true;
-  } else {
-    evidenceErrors.value.image = '';
+    return;
   }
-  
+  evidenceErrors.value.image = '';
+
   if (rule.video.required === 'required' && !evidenceData.value.video) {
     evidenceErrors.value.video = t('forms.evidenceVideoRequired');
-    return true;
-  } else {
-    evidenceErrors.value.video = '';
+    return;
   }
-  
-  return false;
-});
+  evidenceErrors.value.video = '';
+}
+
+watch(
+  () => [
+    activeEvidenceRule.value,
+    evidenceData.value.comment,
+    evidenceData.value.image,
+    evidenceData.value.video,
+    locale.value
+  ],
+  syncEvidenceErrors,
+  { immediate: true }
+);
+
+const hasEvidenceErrors = computed(() =>
+  Boolean(evidenceErrors.value.comment || evidenceErrors.value.image || evidenceErrors.value.video)
+);
 
 const handleAnswerChange = (answer) => {
   emit('update', answer);

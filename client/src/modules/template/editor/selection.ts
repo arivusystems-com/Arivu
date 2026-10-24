@@ -1,8 +1,8 @@
 import type { Component, Editor } from 'grapesjs';
 import { getPrintAreaComponent, PRINT_AREA_ATTR, PRINT_AREA_TYPE, resolveInsertTarget } from './printArea';
 import { insertMergeIntoCanvasText, hasPendingCanvasTextInsert } from './canvasInsertion';
-import { formatMergeToken, parseMergePathFromContent } from './mergeTokens';
-import { isComponentDomFocused, readTextContent, writeTextContent } from './textContent';
+import { formatMergeToken } from './mergeTokens';
+import { readTextContent, writeTextContent } from './textContent';
 import { insertMergeIntoTableCell } from './tableSheetEditor';
 import { resolveAssetDownloadUrl } from '../composables/useCompanyLogoAsset';
 import { applyImageSrcToComponent } from './canvasImageSrc';

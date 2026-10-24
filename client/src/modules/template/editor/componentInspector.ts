@@ -128,7 +128,6 @@ function resolveSpecializedKind(component: Component | null | undefined): Inspec
 function resolveGenericKind(component: Component | null | undefined): InspectorKind {
   if (!component) return 'generic';
 
-  const attrs = component.getAttributes?.() || {};
   const tag = String(component.get('tagName') || '').toLowerCase();
 
   if (isImageComponent(component)) return 'image';

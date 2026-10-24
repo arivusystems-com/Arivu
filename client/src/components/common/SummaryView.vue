@@ -522,7 +522,8 @@
                     : ''
                 ]"
               >
-                <DynamicFormField 
+<DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                   :field="fieldData.field"
                   :value="fieldData.value"
                   @update:value="updateField(fieldData.key, $event)"
@@ -699,7 +700,8 @@
                   </div>
                 </div>
                 <!-- Regular field rendering -->
-                <DynamicFormField 
+<DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                   v-else
                   :field="fieldData.field"
                   :value="fieldData.value"
@@ -1355,7 +1357,7 @@
                             </span>
                             {{ ' ' }}
                             <span class="mr-0.5">
-                              <template v-for="(tag, tagIdx) in activityItem.tags" :key="tag.name">
+                              <template v-for="tag in activityItem.tags" :key="tag.name">
                                 <span :class="['inline-flex items-center gap-x-1.5 rounded-full px-2 py-1 text-xs font-medium', getDefaultTagChipClass(tag)]">
                                   <svg :class="[getDefaultTagDotClass(tag), 'size-1.5']" viewBox="0 0 6 6" aria-hidden="true">
                                     <circle cx="3" cy="3" r="3" />
@@ -1670,6 +1672,7 @@ import { useAuthStore } from '@/stores/authRegistry';
 import { useTabs } from '@/composables/useTabs';
 import PermissionButton from '@/components/common/PermissionButton.vue';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import DependencyPopupModal from '@/components/common/DependencyPopupModal.vue';
 import HeadlessCheckbox from '@/components/ui/HeadlessCheckbox.vue';
 import BadgeCell from '@/components/common/table/BadgeCell.vue';
@@ -1705,6 +1708,11 @@ import { HeartIcon as HeartIconSolid, TagIcon as TagIconSolid, ChatBubbleLeftEll
 
 import { useNotifications } from '@/composables/useNotifications';
 import { formatUserDate, formatUserDateTime } from '@/utils/localeFormat';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
+
 const { t } = useI18n();
 const notifications = useNotifications();
 
@@ -1734,7 +1742,12 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['close', 'update', 'edit', 'delete', 'addRelation', 'openRelatedRecord', 'recordUpdated', 'duplicate']);
+const emit = defineEmits(['close', 'update', 'edit', 'delete', 'addRelation', 'openRelatedRecord', 'recordUpdated', 'recordField', 'duplicate']);
+
+function writeRecordField(field, value) {
+  if (!props.record || field == null) return;
+  emit('recordField', { field, value });
+}
 
 // Create a reactive reference to the record prop to ensure reactivity
 // This ensures that computed properties that depend on record fields update properly
@@ -1864,17 +1877,17 @@ const availableRelationships = computed(() => {
   
   if (props.recordType === 'organizations') {
     relationships.push(
-      { moduleKey: 'people', label: 'Contact' },
-      { moduleKey: 'deals', label: 'Deal' },
-      { moduleKey: 'tasks', label: 'Task' },
-      { moduleKey: 'events', label: 'Event' }
+      { moduleKey: 'people', label: t('deals.sysFieldContactId') },
+      { moduleKey: 'deals', label: t('forms.settingsLinkDeal') },
+      { moduleKey: 'tasks', label: t('forms.settingsLinkTask') },
+      { moduleKey: 'events', label: t('forms.settingsLinkEvent') }
     );
   } else if (props.recordType === 'people') {
     relationships.push(
-      { moduleKey: 'organizations', label: 'Organization' },
-      { moduleKey: 'deals', label: 'Deal' },
-      { moduleKey: 'tasks', label: 'Task' },
-      { moduleKey: 'events', label: 'Event' }
+      { moduleKey: 'organizations', label: t('forms.settingsLinkOrganization') },
+      { moduleKey: 'deals', label: t('forms.settingsLinkDeal') },
+      { moduleKey: 'tasks', label: t('forms.settingsLinkTask') },
+      { moduleKey: 'events', label: t('forms.settingsLinkEvent') }
     );
   }
   
@@ -3800,19 +3813,20 @@ const createWidgetElement = (widgetType) => {
         try { items = await fetchRecordsByIds('organizations', [id]); } catch {}
         if (props.recordType === 'people') {
           await apiClient.put(`/people/${props.record._id}`, { organization: null });
-          if (props.record) props.record.organization = null;
+          writeRecordField('organization', null);
         } else if (props.recordType === 'deals') {
           // Deals link to organizations via accountId
           await apiClient.put(`/deals/${props.record._id}`, { accountId: null });
-          if (props.record) props.record.accountId = null;
+          writeRecordField('accountId', null);
         } else if (props.recordType === 'tasks') {
           // Tasks link to organizations via organizationId
           await apiClient.put(`/tasks/${props.record._id}`, { organizationId: null });
-          if (props.record) props.record.organizationId = null;
+          writeRecordField('organizationId', null);
         } else if (props.recordType === 'events') {
           // Events link generically via relatedType/relatedId
           await apiClient.put(`/events/${props.record._id}`, { relatedType: null, relatedId: null });
-          if (props.record) { props.record.relatedType = null; props.record.relatedId = null; }
+          writeRecordField('relatedType', null);
+          writeRecordField('relatedId', null);
         }
         const suffixOrg = items[0]?.name ? ` - ${items[0].name}` : '';
         try { await addActivityLog(`unlinked organization${suffixOrg}`, { type: 'unlink', moduleKey: 'organizations', items }); } catch {}
@@ -3855,9 +3869,7 @@ const createWidgetElement = (widgetType) => {
           // Handle lifecycle stage updates - save immediately (no blur needed)
           if (data.field && data.value !== undefined) {
             // Update local state immediately for UI responsiveness
-            if (props.record) {
-              props.record[data.field] = data.value;
-            }
+            writeRecordField(data.field, data.value);
             
             // Save immediately by emitting update event to parent
             // This will trigger the backend save and activity logging
@@ -3969,7 +3981,7 @@ const getWidgetContent = (widgetType) => {
 const addedWidgetTypes = computed(() => {
   // Access the trigger to make this computed reactive
   // This forces Vue to track this dependency
-  widgetListUpdateTrigger.value;
+  const _widgetListRevision = widgetListUpdateTrigger.value;
   
   if (!gridStack) return [];
   
@@ -4060,8 +4072,8 @@ const getDefaultWidgetLayout = () => {
 // Check if current layout differs from default layout
 const hasLayoutChanges = computed(() => {
   // Access the trigger to make this computed reactive to layout changes
-  layoutChangeTrigger.value;
-  widgetListUpdateTrigger.value;
+  const _layoutRevision = layoutChangeTrigger.value;
+  const _widgetListRevisionForLayout = widgetListUpdateTrigger.value;
   
   if (!gridStack) return false;
   
@@ -4666,9 +4678,7 @@ const updateField = (field, value) => {
   }
   
   // Update local state immediately for UI responsiveness
-  if (props.record) {
-    props.record[field] = nextValue;
-  }
+  writeRecordField(field, nextValue);
   
   // Track pending change (store original value if this is the first change)
   if (!pendingFieldChanges.value[field]) {
@@ -4735,9 +4745,7 @@ const handleHeaderFieldChange = (field, value) => {
   }
   
   // Update local state immediately for UI responsiveness
-  if (props.record) {
-    props.record[field] = value;
-  }
+  writeRecordField(field, value);
   
   // For header field changes (lifecycle/status fields), save immediately
   // Emit update event so parent can update its record and save to backend
@@ -4993,7 +5001,7 @@ const handlePopupSave = async (updatedData) => {
       
       // Update local state immediately for UI responsiveness
       for (const [key, value] of Object.entries(updatedData)) {
-        props.record[key] = value;
+        writeRecordField(key, value);
       }
       
       // Save all fields to backend in a single API call
@@ -5068,11 +5076,12 @@ const saveFieldOnBlur = async (field) => {
   }
   
   const fieldName = formatFieldName(field);
-  let { originalValue, currentValue } = pendingChange;
+  const { originalValue } = pendingChange;
+  let { currentValue } = pendingChange;
 
   if (shouldCoercePhoneField(field)) {
     currentValue = coerceSummaryPhoneValue(field, currentValue);
-    if (props.record) props.record[field] = currentValue;
+    writeRecordField(field, currentValue);
     pendingFieldChanges.value[field] = { originalValue, currentValue };
 
     const phoneValidation = validatePhoneValue(currentValue);
@@ -5262,9 +5271,7 @@ const saveFieldOnBlur = async (field) => {
 // Discard field changes (revert to original value)
 const discardField = (field, event) => {
   // Restore original value
-  if (props.record) {
-    props.record[field] = originalFieldValues.value[field];
-  }
+  writeRecordField(field, originalFieldValues.value[field]);
   // Update the input/textarea element
   if (event && event.target) {
     event.target.value = originalFieldValues.value[field] || '';
@@ -5451,7 +5458,7 @@ const getLifecycleStatusFields = computed(() => {
       if (leadStatusField) {
         statusFields.push({
           key: 'lead_status',
-          label: 'Lead Status',
+          label: t('people.peopleDetailLeadStatus'),
           value: record.value?.lead_status, // Use reactive ref
           options: leadStatusField.options || [],
           fieldDef: leadStatusField
@@ -5465,7 +5472,7 @@ const getLifecycleStatusFields = computed(() => {
       if (contactStatusField) {
         statusFields.push({
           key: 'contact_status',
-          label: 'Contact Status',
+          label: t('people.peopleDetailContactStatus'),
           value: record.value?.contact_status, // Use reactive ref
           options: contactStatusField.options || [],
           fieldDef: contactStatusField
@@ -5483,7 +5490,7 @@ const getLifecycleStatusFields = computed(() => {
         if (customerStatusField) {
           statusFields.push({
             key: 'customerStatus',
-            label: 'Customer Status',
+            label: t('settings.modFieldsCustomerStatus'),
             value: record.value?.customerStatus, // Use reactive ref
             options: customerStatusField.options || [],
             fieldDef: customerStatusField
@@ -5497,7 +5504,7 @@ const getLifecycleStatusFields = computed(() => {
         if (partnerStatusField) {
           statusFields.push({
             key: 'partnerStatus',
-            label: 'Partner Status',
+            label: t('settings.modFieldsPartnerStatus'),
             value: record.value?.partnerStatus, // Use reactive ref
             options: partnerStatusField.options || [],
             fieldDef: partnerStatusField
@@ -5511,7 +5518,7 @@ const getLifecycleStatusFields = computed(() => {
         if (vendorStatusField) {
           statusFields.push({
             key: 'vendorStatus',
-            label: 'Vendor Status',
+            label: t('settings.modFieldsVendorStatus'),
             value: record.value?.vendorStatus, // Use reactive ref
             options: vendorStatusField.options || [],
             fieldDef: vendorStatusField
@@ -5527,7 +5534,7 @@ const getLifecycleStatusFields = computed(() => {
     if (lifecycleField) {
       statusFields.push({
         key: 'lifecycle_stage',
-        label: 'Lifecycle Stage',
+        label: t('common.lifecycleStageTitle'),
         value: record.value?.lifecycle_stage, // Use reactive ref
         options: lifecycleField.options || [],
         fieldDef: lifecycleField
@@ -5537,7 +5544,7 @@ const getLifecycleStatusFields = computed(() => {
     if (statusField) {
       statusFields.push({
         key: 'status',
-        label: 'Status',
+        label: t('common.status'),
         value: record.value?.status, // Use reactive ref
         options: statusField.options || [],
         fieldDef: statusField

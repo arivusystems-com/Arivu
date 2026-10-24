@@ -61,6 +61,8 @@ const props = defineProps({
   watchKey: { type: String, required: true }
 });
 
+const emit = defineEmits(['update:draft']);
+
 const { t } = useI18n();
 const ui = useBuilderUi();
 const editorRef = ref(null);
@@ -112,7 +114,7 @@ function onFocus() {
 function onBlur() {
   if (syncFromProps) return;
   isFocused.value = false;
-  props.field.draft = readEditorHtml();
+  emit('update:draft', readEditorHtml());
   props.field.onBlur();
 }
 

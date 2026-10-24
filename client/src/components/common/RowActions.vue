@@ -21,7 +21,7 @@
 
     <!-- Delete Button - edit permission is sufficient for marketing campaigns -->
     <button 
-      v-if="canDeleteModule(module) && canDeleteRow(row)"
+      v-if="canDeleteModule(module) && isRowDeletable(row)"
       @click.stop="$emit('delete', row)"
       class="inline-flex items-center h-8 gap-1.5 px-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors text-sm" 
       :title="t('actions.delete')"
@@ -62,7 +62,7 @@ const authStore = useAuthStore();
 
 const CAMPAIGN_DELETABLE_STATUSES = new Set(['draft', 'completed', 'cancelled', 'failed', 'archived']);
 
-function canDeleteRow(row) {
+function isRowDeletable(row) {
   if (props.module === 'campaigns') {
     return CAMPAIGN_DELETABLE_STATUSES.has(String(row?.status || ''));
   }

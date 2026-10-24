@@ -2345,6 +2345,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { MapPinIcon as MapPinSolidIcon } from '@heroicons/vue/24/solid';
 import apiClient from '@/utils/apiClient';
+import { formatDate, formatTime as formatLocaleTime } from '@/utils/localeFormat';
 import { FLOATING_OVERLAY_Z_CLASS, Z_INDEX_FLOATING_OVERLAY } from '@/constants/zIndexLayers';
 import { useAuthStore } from '@/stores/auth';
 import Avatar from '@/components/common/Avatar.vue';
@@ -3592,12 +3593,12 @@ function formatTime(iso) {
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
     const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const timeStr = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const timeStr = formatLocaleTime(d, { hour: 'numeric', minute: '2-digit' });
     if (msgDay.getTime() === todayStart.getTime()) return timeStr;
     if (msgDay.getTime() === yesterdayStart.getTime()) {
       return `${t('internalChat.yesterday')} ${timeStr}`;
     }
-    const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const dateStr = formatDate(d, { month: 'short', day: 'numeric' });
     return `${dateStr} ${timeStr}`;
   } catch {
     return '';
@@ -4552,7 +4553,6 @@ async function attachComposerFiles(files) {
 
   for (const file of toAdd) {
     // Sequential so pendingAttachments updates don't race.
-    // eslint-disable-next-line no-await-in-loop
     await attachComposerFile(file);
   }
 }

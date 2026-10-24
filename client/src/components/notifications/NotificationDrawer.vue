@@ -93,7 +93,7 @@ See `docs/architecture/notifications-hardening.md`.
               </div>
             </template>
             <template v-else-if="items.length">
-              <div v-for="(section, sectionIdx) in groupedSections" :key="section.id" class="notification-section">
+              <div v-for="section in groupedSections" :key="section.id" class="notification-section">
                 <p class="px-1 mb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-neutral-400 dark:text-neutral-500">
                   {{ t(section.labelKey) }}
                 </p>

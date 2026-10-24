@@ -290,6 +290,7 @@ import {
   formatSlotTime,
   formatSlotDate
 } from '@/utils/appointmentFormatters';
+import { formatDate } from '@/utils/localeFormat';
 
 const route = useRoute();
 const slug = computed(() => route.params.slug);
@@ -382,7 +383,7 @@ const dateOptions = computed(() => {
     const key = d.toISOString().slice(0, 10);
     out.push({
       key,
-      weekday: d.toLocaleDateString(undefined, { weekday: 'short' }),
+      weekday: formatDate(d, { weekday: 'short' }),
       day: d.getDate()
     });
   }

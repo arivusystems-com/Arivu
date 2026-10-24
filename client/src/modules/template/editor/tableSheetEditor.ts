@@ -46,7 +46,6 @@ interface FrameHandlers {
 }
 
 let activeEditor: ActiveSheetEditor | null = null;
-let lastSelectedTableCell: Component | null = null;
 
 const boundEditors = new WeakMap<Editor, FrameHandlers>();
 
@@ -101,23 +100,6 @@ function focusEditableEnd(element: HTMLElement): void {
   const selection = win.getSelection();
   selection?.removeAllRanges();
   selection?.addRange(range);
-}
-
-function retainCaretInElement(element: HTMLElement): void {
-  const win = frameWindow(element);
-  element.focus();
-  const selection = win.getSelection();
-  if (!selection) return;
-
-  if (selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    range.collapse(false);
-    selection.removeAllRanges();
-    selection.addRange(range);
-    return;
-  }
-
-  focusEditableEnd(element);
 }
 
 function insertTextInElement(element: HTMLElement, text: string): void {
@@ -459,7 +441,6 @@ export function bindTableSheetEditor(editor: Editor): void {
     }
     const cell = resolveTableCellComponent(component);
     if (cell) {
-      lastSelectedTableCell = cell;
       if (!activeEditor || activeEditor.cell !== cell) {
         paintTableCellContent(cell);
       }

@@ -21,7 +21,6 @@ export function createTabsAccidentalInsertGuardPlugin() {
       }
 
       const oldBlocks = collectTabsBlocks(oldState.doc);
-      const newBlocks = collectTabsBlocks(newState.doc);
       const tr = newState.tr;
       let changed = false;
       let tabsIndex = 0;

@@ -950,5 +950,13 @@
   "accessChipMarketingHint": {
     "message": "Open marketing subscriptions",
     "description": "Marketing status chip tooltip on people record title row"
+  },
+  "stageReadyToClose": {
+    "message": "Ready to close",
+    "description": "People lead lifecycle stage when no module options are configured"
+  },
+  "stageComplete": {
+    "message": "Complete",
+    "description": "Default lifecycle stage when a record has no module stages"
   }
 }

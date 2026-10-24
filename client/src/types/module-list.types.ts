@@ -185,7 +185,7 @@ export interface ListFilter {
   }>;
   
   /** Optional default value */
-  defaultValue?: any;
+  defaultValue?: unknown;
   
   /** Optional display order */
   order?: number;

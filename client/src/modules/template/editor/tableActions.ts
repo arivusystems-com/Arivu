@@ -9,23 +9,19 @@ import {
   buildTableGrid,
   createTableCellDefinition,
   defaultCellMarkup,
-  findCellInGrid,
   findComponentById,
   findTableRoot,
   getAnchorCell,
   getCellAt,
   getTableCellContext,
   isTableCellComponent,
-  paintTableCellContent,
   readCellText,
   repaintTableCells,
   resolveTableCellComponent,
   resolveTableCellFromElement,
   resolveTableCellTarget,
-  snapshotTableCellTarget,
   type TableCellTarget,
   type TableGrid,
-  type TableSection,
   writeCellText
 } from './tableModel';
 import { isTableSheetEditing } from './tableSheetEditor';
@@ -208,15 +204,6 @@ export function getNormalizedSelection(grid: TableGrid): {
   };
 }
 
-function findSection(table: Component, section: TableSection): Component {
-  for (const child of table.components()) {
-    if (String(child.get('tagName') || '').toLowerCase() === section) {
-      return child;
-    }
-  }
-  return table.append(`<${section}></${section}>`)[0] as Component;
-}
-
 function insertRowCells(row: Component, colCount: number, isHeader: boolean): void {
   for (let i = 0; i < colCount; i += 1) {
     row.append(createTableCellDefinition(isHeader));
@@ -334,14 +321,6 @@ export function insertRowBelow(cell: Component): void {
   if (!ctx || !table) return;
   insertRowAt(table, ctx.row.rowIndex, 'below');
 }
-
-function insertRowRelative(cell: Component, position: 'above' | 'below'): void {
-  const ctx = getTableCellContext(cell);
-  const table = findTableRoot(cell);
-  if (!ctx || !table) return;
-  insertRowAt(table, ctx.row.rowIndex, position);
-}
-
 
 export function deleteRow(cell: Component): void {
   const ctx = getTableCellContext(cell);
@@ -603,7 +582,6 @@ export function getTableActionState(cell: Component): {
   if (!table) return null;
 
   const grid = buildTableGrid(table);
-  const ctx = findCellInGrid(grid, cell);
 
   return {
     canMerge: isMultiCellSelection(grid),

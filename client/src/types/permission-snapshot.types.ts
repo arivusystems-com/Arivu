@@ -46,11 +46,7 @@ export function createPermissionSnapshot(user: {
   role?: string;
   roleId?: string;
   roles?: string[];
-  permissions?: Record<string, any> | {
-    [module: string]: {
-      [action: string]: boolean;
-    };
-  };
+  permissions?: Record<string, boolean | Record<string, boolean | Record<string, boolean>>>;
   isOwner?: boolean;
 }): PermissionSnapshot {
   const userId = user._id || user.id || 'unknown';

@@ -79,12 +79,13 @@
  * ============================================================================
  */
 
-import type { ModuleKey } from './FieldRegistry';
 import {
+  MODULE_KEYS,
   getFieldMetadataMap,
   getFieldsForModule,
+  type ModuleKey,
 } from './FieldRegistry';
-import type { BaseFieldMetadata, BaseFieldOwner } from './BaseFieldModel';
+import type { BaseFieldOwner } from './BaseFieldModel';
 
 // =============================================================================
 // TYPES
@@ -423,9 +424,6 @@ export function getEditableFieldsForRoleAcrossModules(
   role: UserRole,
   options: EditabilityOptions = {}
 ): Record<ModuleKey, string[]> {
-  // Import MODULE_KEYS dynamically to avoid circular dependency
-  const { MODULE_KEYS } = require('./FieldRegistry');
-  
   const result: Record<string, string[]> = {};
   
   for (const moduleKey of MODULE_KEYS) {
@@ -448,9 +446,6 @@ export function findModulesWhereFieldIsEditable(
   role: UserRole,
   options: EditabilityOptions = {}
 ): ModuleKey[] {
-  // Import MODULE_KEYS dynamically to avoid circular dependency
-  const { MODULE_KEYS } = require('./FieldRegistry');
-  
   return MODULE_KEYS.filter((moduleKey: ModuleKey) => 
     canEditField(moduleKey as ModuleKey, fieldKey, role, options)
   ) as ModuleKey[];

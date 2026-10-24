@@ -321,6 +321,7 @@
         v-if="context.kind === 'rich-text'"
         :field="richTextContent"
         :watch-key="targetKey"
+        @update:draft="richTextContent.draft = $event"
       />
       <div v-else>
         <label class="mb-1 block" :class="ui.label">{{ t('templates.builderFieldText') }}</label>

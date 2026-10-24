@@ -409,7 +409,9 @@ const availableParticipationApps = computed((): PeopleParticipationAppKey[] => {
   }
   const enabledKeys = new Set(
     enabled
-      .filter((app) => app?.status === 'ACTIVE')
+      .filter((app): app is { appKey?: string; status?: string } => (
+        typeof app === 'object' && app != null && app.status === 'ACTIVE'
+      ))
       .map((app) => String(app.appKey).toUpperCase())
   );
   return PEOPLE_PARTICIPATION_APP_KEYS.filter((k) => enabledKeys.has(k));
@@ -562,7 +564,7 @@ function fieldKeyMatchesSearch(key: string): boolean {
     (f: { key?: string; label?: string }) =>
       String(f?.key || '').toLowerCase() === String(key).toLowerCase()
   );
-  const label = String(getFieldDisplayLabel(field) || field?.label || key).toLowerCase();
+  const label = String(getFieldDisplayLabel(field ?? null) || field?.label || key).toLowerCase();
   return label.includes(q) || String(key).toLowerCase().includes(q);
 }
 
@@ -608,8 +610,38 @@ function setAppForm(appKey: string, value: AppSectionModelValue) {
   appForms.value = { ...appForms.value, [appKey]: value };
 }
 
+interface QuickCreateField {
+  key?: string;
+  label?: string;
+  dataType?: string;
+  defaultValue?: unknown;
+  owner?: string;
+  metadata?: { owner?: string };
+  [key: string]: unknown;
+}
+
+interface QuickCreateModule {
+  quickCreate?: Array<string | { key?: string }>;
+  quickCreateLayout?: { version: number; rows: unknown[] };
+  fields?: QuickCreateField[];
+  fieldLayout?: unknown;
+}
+
+interface PeopleQuickCreateApiError {
+  message?: string;
+  response?: {
+    status?: number;
+    statusText?: string;
+    data?: {
+      error?: string;
+      message?: string;
+      errors?: Record<string, string>;
+    };
+  };
+}
+
 // People module fetched when drawer opens (Settings → People → Quick Create + app participation fields).
-const peopleModuleOverride = ref<any>(null);
+const peopleModuleOverride = ref<QuickCreateModule | null>(null);
 const peopleModuleLoading = ref(false);
 
 // Fetch people module from quick-create endpoint (single source: Settings → People → Quick Create).
@@ -644,10 +676,10 @@ watch(() => props.isOpen, async (open) => {
 }, { immediate: true });
 
 // Form state
-const formData = ref<Record<string, any>>({});
+const formData = ref<Record<string, unknown>>({});
 const errors = ref<Record<string, string>>({});
 const saving = ref(false);
-const moduleDefinition = ref<any>(null);
+const moduleDefinition = ref<QuickCreateModule | null>(null);
 
 /** True after real user interaction (backdrop/Escape blocked); not set by programmatic DynamicForm sync */
 const userHasEdited = ref(false);
@@ -841,7 +873,7 @@ function validateForm() {
   errors.value = {};
   if (!moduleDefinition.value?.fields) return;
 
-  const moduleFields = moduleDefinition.value.fields as any[];
+  const moduleFields = moduleDefinition.value.fields;
   const activeCoreFieldKeys = new Set(getActiveCoreFieldKeys().map((k) => String(k).toLowerCase()));
 
   for (const field of moduleFields) {
@@ -859,7 +891,7 @@ function validateForm() {
 
     const value = field.key in formData.value
       ? formData.value[field.key]
-      : getFormFieldValue(formData.value, field.key, field, { moduleKey: 'people' });
+      : getFormFieldValue(formData.value, field.key, { key: field.key }, { moduleKey: 'people' });
     const isEmpty = value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0);
     if (isEmpty) {
       (errors.value as Record<string, string>)[field.key] = `${field.label || field.key} is required`;
@@ -886,7 +918,7 @@ function validateForm() {
 
       const value = field.key in appForm
         ? appForm[field.key]
-        : getFormFieldValue(appForm, field.key, field, { moduleKey: 'people' });
+        : getFormFieldValue(appForm, field.key, { key: field.key }, { moduleKey: 'people' });
       const isEmpty = value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0);
       if (isEmpty) {
         (errors.value as Record<string, string>)[appErrorKey(appKey, field.key)] = `${field.label || field.key} is required`;
@@ -936,11 +968,11 @@ const handleDialogClose = () => {
   requestClose();
 };
 
-const updateFormData = (data: Record<string, any>) => {
+const updateFormData = (data: Record<string, unknown>) => {
   formData.value = { ...data };
 };
 
-const onFormReady = (module: any) => {
+const onFormReady = (module: QuickCreateModule) => {
   moduleDefinition.value = module;
   if (isEditMode.value && editRecordSeeded.value) return;
 
@@ -955,19 +987,18 @@ const onFormReady = (module: any) => {
   const allFieldKeys = fullMode.value
     ? getActiveCoreFieldKeys()
     : [...coreQuickCreateFieldsOverride.value];
-  const initialForm: Record<string, any> = {};
+  const initialForm: Record<string, unknown> = {};
   if (module?.fields) {
     for (const field of module.fields) {
-      if (allFieldKeys.includes(field.key)) {
-        if (field.defaultValue !== null && field.defaultValue !== undefined) {
-          initialForm[field.key] = field.defaultValue;
-        } else if (field.dataType === 'Multi-Picklist' || field.key === 'tags') {
-          initialForm[field.key] = [];
-        } else if (field.dataType === 'Checkbox') {
-          initialForm[field.key] = false;
-        } else {
-          initialForm[field.key] = '';
-        }
+      if (!field.key || !allFieldKeys.includes(field.key)) continue;
+      if (field.defaultValue !== null && field.defaultValue !== undefined) {
+        initialForm[field.key] = field.defaultValue;
+      } else if (field.dataType === 'Multi-Picklist' || field.key === 'tags') {
+        initialForm[field.key] = [];
+      } else if (field.dataType === 'Checkbox') {
+        initialForm[field.key] = false;
+      } else {
+        initialForm[field.key] = '';
       }
     }
   }
@@ -1249,7 +1280,7 @@ const handleSubmit = async () => {
       }
     
   } catch (error: unknown) {
-    const err = error as any;
+    const err = error as PeopleQuickCreateApiError;
     console.error('[PeopleQuickCreate] ❌ Error creating person:', error);
     console.error('[PeopleQuickCreate] Error details:', {
       message: err?.message,

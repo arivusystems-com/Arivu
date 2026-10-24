@@ -17,9 +17,19 @@
  * ============================================================================
  */
 
+export interface PeopleHistoryMetadata {
+  appKey?: string;
+  peopleType?: string;
+  updatedFields?: string[];
+  appContext?: string;
+  to?: string;
+  subject?: string;
+  from?: string;
+}
+
 export interface HistoryEventMapping {
   action: string;
-  displayText: (metadata: any, appContext?: string) => string;
+  displayText: (metadata: PeopleHistoryMetadata | null | undefined, appContext?: string) => string;
   appContext?: string; // If action is app-specific
 }
 
@@ -279,7 +289,7 @@ export const PEOPLE_HISTORY_EVENTS: Record<string, HistoryEventMapping> = {
  */
 export function getHistoryDisplayText(
   action: string,
-  metadata: any = {},
+  metadata: PeopleHistoryMetadata | null | undefined = {},
   appContext?: string | null
 ): string {
   // Check for exact match first

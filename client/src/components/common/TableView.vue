@@ -1031,12 +1031,12 @@ const LOAD_MORE_ROOT_MARGIN_PX = 160
 const leftEdgeColumnIndex = ref<number | null>(null)
 const rightEdgeColumnIndex = ref<number | null>(null)
 const isScrolledHorizontally = ref(false)
-const sampleColumns: ColumnDef[] = [
+const sampleColumns = computed<ColumnDef[]>(() => [
   { key: 'id', label: 'ID', sortable: true },
-  { key: 'name', label: 'Name', sortable: true },
-  { key: 'email', label: 'Email', sortable: true },
-  { key: 'status', label: 'Status', sortable: true }
-]
+  { key: 'name', label: t('common.columnName'), sortable: true },
+  { key: 'email', label: t('common.columnEmail'), sortable: true },
+  { key: 'status', label: t('common.status'), sortable: true }
+])
 
 const providedRows = computed<RowData[]>(() => {
   if (props.rows && props.rows.length > 0) {
@@ -1052,7 +1052,7 @@ const displayColumns = computed((): ColumnDef[] => {
   const columns = Array.isArray(props.columns) ? props.columns : []
   // When tableId exists, never use sampleColumns - wait for real columns so we don't
   // overwrite persisted widths with placeholder keys (id, name, email, status)
-  const base = columns.length > 0 ? columns : props.tableId ? [] : sampleColumns
+  const base = columns.length > 0 ? columns : props.tableId ? [] : sampleColumns.value
   if (isMobileCardLayout.value && base.length > 0) {
     return base.slice(0, 1)
   }

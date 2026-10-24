@@ -17,13 +17,13 @@
             v-if="isColumnCollapsed(stage)"
             class="kanban-column-collapsed flex-none rounded-xl flex flex-col shadow-sm border border-gray-100 dark:border-gray-700/80 overflow-hidden shrink-0"
             :style="{ ...getColumnBgStyle(stage), width: collapsedColumnWidthPx, minWidth: collapsedColumnWidthPx, maxWidth: collapsedColumnWidthPx }"
-            :class="getStageColor(stage) ? '' : 'bg-white dark:bg-gray-800/80'"
+            :class="resolveStageColor(stage) ? '' : 'bg-white dark:bg-gray-800/80'"
             :data-stage="stage"
           >
             <div
               class="flex flex-col items-center gap-2 py-3 px-1"
-              :style="getStageColor(stage) ? { backgroundColor: getStageColor(stage) } : {}"
-              :class="!getStageColor(stage) && 'bg-gray-100 dark:bg-gray-700/80'"
+              :style="resolveStageColor(stage) ? { backgroundColor: resolveStageColor(stage) } : {}"
+              :class="!resolveStageColor(stage) && 'bg-gray-100 dark:bg-gray-700/80'"
             >
               <!-- Vertical label: height grows with stage name length (rotated text extent) -->
               <div
@@ -32,7 +32,7 @@
               >
                 <span
                   class="font-semibold text-xs whitespace-nowrap w-full"
-                  :class="getStageColor(stage) ? 'text-white/95' : 'text-gray-700 dark:text-gray-200'"
+                  :class="resolveStageColor(stage) ? 'text-white/95' : 'text-gray-700 dark:text-gray-200'"
                   style="display: inline-block; transform: rotate(90deg); transform-origin: center center;"
                 >
                   {{ stage }}
@@ -41,7 +41,7 @@
               <span
                 :class="[
                   'text-xs font-bold tabular-nums inline-block',
-                  getStageColor(stage) ? 'text-white/90' : 'text-gray-600 dark:text-gray-300'
+                  resolveStageColor(stage) ? 'text-white/90' : 'text-gray-600 dark:text-gray-300'
                 ]"
                 style="transform: rotate(-90deg); transform-origin: center center;"
               >
@@ -50,7 +50,7 @@
               <button
                 type="button"
                 class="p-1.5 rounded-lg shrink-0  hover:bg-white dark:hover:bg-gray-500/80 text-gray-600 dark:text-gray-300 transition-colors"
-                :class="getStageColor(stage) ? 'text-white/90 bg-white/30 dark:bg-gray-600/30 hover:bg-white/50 dark:hover:bg-gray-500/50' : ''"
+                :class="resolveStageColor(stage) ? 'text-white/90 bg-white/30 dark:bg-gray-600/30 hover:bg-white/50 dark:hover:bg-gray-500/50' : ''"
                 :aria-label="t('common.kanbanExpandColumn')"
                 @click="expandColumn(stage)"
               >
@@ -65,36 +65,36 @@
             v-else
             class="kanban-column flex-none rounded-xl flex flex-col shadow-sm border border-gray-100 dark:border-gray-700/80 overflow-hidden"
             :style="{ ...getColumnBgStyle(stage), width: columnWidthPx, minWidth: columnWidthPx, maxWidth: columnWidthPx }"
-            :class="!getStageColor(stage) && 'bg-white dark:bg-gray-800/80'"
+            :class="!resolveStageColor(stage) && 'bg-white dark:bg-gray-800/80'"
             :data-stage="stage"
             :data-stage-index="idx"
           >
             <!-- Pill-shaped column header (uses picklist color when available) -->
             <div
               class="px-4 py-3 flex items-center justify-between gap-2 shrink-0"
-              :style="getStageColor(stage) ? { backgroundColor: getStageColor(stage) } : {}"
-              :class="!getStageColor(stage) && 'bg-gray-100 dark:bg-gray-700/80'"
+              :style="resolveStageColor(stage) ? { backgroundColor: resolveStageColor(stage) } : {}"
+              :class="!resolveStageColor(stage) && 'bg-gray-100 dark:bg-gray-700/80'"
             >
               <slot
                 name="column-header"
                 :stage="stage"
                 :count="(columnLists[stage] || []).length"
                 :stats="getColumnStats ? getColumnStats(stage) : undefined"
-                :stage-color="getStageColor(stage)"
+                :stage-color="resolveStageColor(stage)"
                 :is-first="idx === 0"
                 :is-last="idx === stages.length - 1"
               >
                 <div
                   :class="[
                     'flex items-center gap-2.5 px-3 py-1.5 rounded-full min-w-0',
-                    getStageColor(stage) ? 'bg-white/20 text-white' : 'bg-white/80 dark:bg-gray-600/80 text-gray-700 dark:text-gray-200'
+                    resolveStageColor(stage) ? 'bg-white/20 text-white' : 'bg-white/80 dark:bg-gray-600/80 text-gray-700 dark:text-gray-200'
                   ]"
                 >
                   <span class="font-semibold text-sm truncate">{{ stage }}</span>
                   <span
                     :class="[
                       'flex-shrink-0 text-xs font-bold tabular-nums',
-                      getStageColor(stage) ? 'text-white/90' : 'text-gray-600 dark:text-gray-300'
+                      resolveStageColor(stage) ? 'text-white/90' : 'text-gray-600 dark:text-gray-300'
                     ]"
                   >
                     {{ (columnLists[stage] || []).length }}
@@ -108,7 +108,7 @@
               class="p-3 overflow-y-auto flex flex-col"
               :class="[
                 statsOpen ? 'max-h-[calc(100vh-380px)]' : 'max-h-[calc(100vh-260px)]',
-                !getStageColor(stage) && 'bg-white dark:bg-gray-800/50'
+                !resolveStageColor(stage) && 'bg-white dark:bg-gray-800/50'
               ]"
               :style="getColumnBgStyle(stage)"
             >
@@ -140,7 +140,7 @@
                     </slot>
                   </div>
                   <div v-if="$slots['add-item']" class="shrink-0">
-                    <slot name="add-item" :stage="stage" :count="(columnLists[stage] || []).length" :is-empty="(columnLists[stage] || []).length === 0" :stage-color="getStageColor(stage)" />
+                    <slot name="add-item" :stage="stage" :count="(columnLists[stage] || []).length" :is-empty="(columnLists[stage] || []).length === 0" :stage-color="resolveStageColor(stage)" />
                   </div>
                 </template>
               </draggable>
@@ -206,7 +206,7 @@ function getCollapsedLabelMinHeight(stage) {
   return `${px}px`;
 }
 
-function getStageColor(stage) {
+function resolveStageColor(stage) {
   return props.getStageColor ? props.getStageColor(stage) : null;
 }
 
@@ -220,7 +220,7 @@ function hexToRgba(hex, alpha) {
 }
 
 function getColumnBgStyle(stage) {
-  const color = getStageColor(stage);
+  const color = resolveStageColor(stage);
   if (!color) return {};
   return { backgroundColor: hexToRgba(color, 0.03) };
 }

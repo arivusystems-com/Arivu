@@ -1,5 +1,3 @@
-import type { FilterOperatorId } from '@/platform/filters/filterOperators';
-
 export type FilterLogic = 'AND' | 'OR';
 
 export interface FilterRuleRef {

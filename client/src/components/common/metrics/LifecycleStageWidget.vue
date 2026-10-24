@@ -180,49 +180,49 @@ const stages = computed(() => {
     const type = getPeopleSalesRole();
     if (type === 'Lead') {
       return [
-        { value: 'New', label: 'New' },
-        { value: 'Discovery', label: 'Discovery' },
-        { value: 'Proposal', label: 'Proposal' },
-        { value: 'Negotiation', label: 'Negotiation' },
-        { value: 'Ready to close', label: 'Ready to close' }
+        { value: 'New', label: t('deals.stageNew') },
+        { value: 'Discovery', label: t('deals.stageDiscovery') },
+        { value: 'Proposal', label: t('deals.stageProposal') },
+        { value: 'Negotiation', label: t('deals.stageNegotiation') },
+        { value: 'Ready to close', label: t('people.stageReadyToClose') }
       ];
     } else if (type === 'Contact') {
       return [
-        { value: 'New', label: 'New' },
-        { value: 'Active', label: 'Active' },
-        { value: 'Nurturing', label: 'Nurturing' },
-        { value: 'Customer', label: 'Customer' }
+        { value: 'New', label: t('deals.stageNew') },
+        { value: 'Active', label: t('organizations.listViewActive') },
+        { value: 'Nurturing', label: t('people.peopleDetailNurturing') },
+        { value: 'Customer', label: t('deals.dealRelationshipRoleCustomer') }
       ];
     }
   } else if (props.recordType === 'organizations') {
     const types = props.record.types || [];
     if (types.includes('Customer')) {
       return [
-        { value: 'Prospect', label: 'Prospect' },
-        { value: 'Evaluation', label: 'Evaluation' },
-        { value: 'Negotiation', label: 'Negotiation' },
-        { value: 'Customer', label: 'Customer' }
+        { value: 'Prospect', label: t('organizations.stageProspect') },
+        { value: 'Evaluation', label: t('organizations.stageEvaluation') },
+        { value: 'Negotiation', label: t('deals.stageNegotiation') },
+        { value: 'Customer', label: t('deals.dealRelationshipRoleCustomer') }
       ];
     } else if (types.includes('Partner')) {
       return [
-        { value: 'Potential', label: 'Potential' },
-        { value: 'Discussing', label: 'Discussing' },
-        { value: 'Partner', label: 'Partner' }
+        { value: 'Potential', label: t('organizations.stagePotential') },
+        { value: 'Discussing', label: t('organizations.stageDiscussing') },
+        { value: 'Partner', label: t('deals.dealRelationshipRolePartner') }
       ];
     } else if (types.includes('Vendor')) {
       return [
-        { value: 'Potential', label: 'Potential' },
-        { value: 'Evaluating', label: 'Evaluating' },
-        { value: 'Vendor', label: 'Vendor' }
+        { value: 'Potential', label: t('organizations.stagePotential') },
+        { value: 'Evaluating', label: t('organizations.stageEvaluating') },
+        { value: 'Vendor', label: t('deals.dealRelationshipRoleVendor') }
       ];
     }
   }
   
   // Default stages
   return [
-    { value: 'New', label: 'New' },
-    { value: 'In Progress', label: 'In Progress' },
-    { value: 'Complete', label: 'Complete' }
+    { value: 'New', label: t('deals.stageNew') },
+    { value: 'In Progress', label: t('forms.correctiveStatusInProgress') },
+    { value: 'Complete', label: t('people.stageComplete') }
   ];
 });
 

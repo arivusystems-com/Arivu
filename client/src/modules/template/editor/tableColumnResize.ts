@@ -23,11 +23,9 @@ const IFRAME_LAYER_ID = 'arivu-table-col-resize-layer';
 const HANDLE_CLASS = 'arivu-table-col-resize-handle';
 
 let mountedCell: Component | null = null;
-let mountedTable: Component | null = null;
 let mountedLineItemRoot: Component | null = null;
-let mountedPairCol = -1;
 let overlayHandle: HTMLButtonElement | null = null;
-let lineItemHandles = new Map<number, HTMLButtonElement>();
+const lineItemHandles = new Map<number, HTMLButtonElement>();
 let activeEditor: Editor | null = null;
 let resizeActive = false;
 let overlayLayer: HTMLDivElement | null = null;
@@ -124,9 +122,7 @@ function removeAllOverlayHandles(): void {
   lineItemHandles.forEach((handle) => handle.remove());
   lineItemHandles.clear();
   mountedCell = null;
-  mountedTable = null;
   mountedLineItemRoot = null;
-  mountedPairCol = -1;
 }
 
 function createResizeHandle(
@@ -160,9 +156,7 @@ function createResizeHandle(
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    mountedTable = table;
     mountedLineItemRoot = lineItemRoot;
-    mountedPairCol = pairCol;
     beginTableColumnResize(activeEditor, table, pairCol, event.clientX, lineItemRoot);
   });
   return handle;
@@ -198,8 +192,6 @@ function layoutOverlayHandle(
 
   positionResizeHandle(overlayHandle, border);
   mountedCell = cell;
-  mountedTable = table;
-  mountedPairCol = border.pairCol;
 }
 
 function layoutLineItemResizeHandles(
@@ -211,7 +203,6 @@ function layoutLineItemResizeHandles(
   overlayHandle?.remove();
   overlayHandle = null;
   mountedCell = null;
-  mountedPairCol = -1;
 
   const layer = ensureIframeLayer(editor);
   if (!layer) return;
@@ -238,7 +229,6 @@ function layoutLineItemResizeHandles(
     }
   });
 
-  mountedTable = table;
   mountedLineItemRoot = lineItemRoot;
 }
 

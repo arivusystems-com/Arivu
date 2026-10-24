@@ -16,7 +16,7 @@ export type CaseFieldIntent = BaseFieldIntent;
 export type CaseFieldScope = BaseFieldScope;
 export type CaseFilterType = BaseFilterType;
 
-export interface CaseFieldMetadata extends BaseFieldMetadata {}
+export type CaseFieldMetadata = BaseFieldMetadata;
 
 export const CASE_FIELD_METADATA: Record<string, CaseFieldMetadata> = {
   // System and audit fields

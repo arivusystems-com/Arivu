@@ -374,6 +374,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'TrashView' });
 import { useI18n } from 'vue-i18n';
 
 import { useNotifications } from '@/composables/useNotifications';
@@ -591,7 +592,7 @@ async function loadItems(page = 1) {
     };
     if (filterModule.value) params.moduleKey = filterModule.value;
     if (filterDeletedBy.value) params.deletedBy = filterDeletedBy.value;
-    let from = filterDeletedFrom.value;
+    const from = filterDeletedFrom.value;
     let to = filterDeletedTo.value;
     if (from && to && to < from) to = from;
     if (from) params.deletedFrom = from;
@@ -640,7 +641,7 @@ function trashFilterPayload() {
   const payload = {};
   if (filterModule.value) payload.moduleKey = filterModule.value;
   if (filterDeletedBy.value) payload.deletedBy = filterDeletedBy.value;
-  let from = filterDeletedFrom.value;
+  const from = filterDeletedFrom.value;
   let to = filterDeletedTo.value;
   if (from && to && to < from) to = from;
   if (from) payload.deletedFrom = from;

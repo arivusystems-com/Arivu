@@ -5,7 +5,6 @@
 import type {
   BaseFieldMetadata,
   BaseFieldOwner,
-  BaseFieldIntent,
   BaseFieldScope,
   BaseFilterType,
 } from './BaseFieldModel';

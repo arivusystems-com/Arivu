@@ -36,7 +36,7 @@ interface CacheKey {
 /**
  * Generate a deterministic hash from an object
  */
-function hashObject(obj: any): string {
+function hashObject(obj: object): string {
   // Simple hash function for objects
   // In production, consider using a more robust hashing library
   const str = JSON.stringify(obj, Object.keys(obj).sort());
@@ -107,7 +107,7 @@ interface CacheEntry<T> {
  * Builder cache with LRU eviction
  */
 class BuilderCache {
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private maxSize: number = 100; // Maximum cache entries
   private ttl: number = 5 * 60 * 1000; // 5 minutes TTL
 
@@ -160,7 +160,7 @@ class BuilderCache {
    * Clear cache entries for a specific registry hash
    */
   clearByRegistryHash(registryHash: string): void {
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, _entry] of this.cache.entries()) {
       const cacheKey: CacheKey = JSON.parse(key);
       if (cacheKey.registryHash === registryHash) {
         this.cache.delete(key);
@@ -172,7 +172,7 @@ class BuilderCache {
    * Clear cache entries for a specific permission hash
    */
   clearByPermissionHash(permissionHash: string): void {
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, _entry] of this.cache.entries()) {
       const cacheKey: CacheKey = JSON.parse(key);
       if (cacheKey.permissionHash === permissionHash) {
         this.cache.delete(key);

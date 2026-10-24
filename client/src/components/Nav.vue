@@ -1,4 +1,5 @@
 <script setup>
+defineOptions({ name: 'AppNav' });
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authRegistry';
 import { useAppShellStore } from '@/stores/appShell';
@@ -181,7 +182,7 @@ const applyAppLensToSidebarStructure = (targetAppKey) => {
       dashboard: {
         kind: 'app',
         id: targetAppKey,
-        label: 'Dashboard',
+        label: t('navigation.dashboard'),
         route: app.dashboardRoute,
         icon: targetAppKey === 'AUDIT' ? 'presentation-chart' : 'squares'
       },

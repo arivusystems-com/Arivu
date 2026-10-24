@@ -173,7 +173,7 @@ function buildExportLogText(log: EmailHtmlZipLogEntry[]): string {
 
 export async function buildEmailHtmlZip(
   documentHtml: string,
-  baseName: string
+  _baseName: string
 ): Promise<EmailHtmlZipExportResult> {
   const zip = new JSZip();
   const log: EmailHtmlZipLogEntry[] = [];

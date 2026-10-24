@@ -58,6 +58,7 @@
               <ProductConfigOptionPicker
                 :options="sortedOptions"
                 :selections="selections"
+                @update:selection="onSelectionChange"
                 @change="scheduleValidate"
               />
 
@@ -155,6 +156,10 @@ const { result, scheduleValidate, validate, clearValidationTimer } = useProductC
 const { badgeClass, badgeLabel } = useProductConfigValidationBadge(result, hasOptions);
 
 const canConfirm = computed(() => Boolean(activeConfig.value && result.value?.valid));
+
+function onSelectionChange(optionName, value) {
+  selections[optionName] = value;
+}
 
 function onConfigSelect(value) {
   selectedConfigId.value = value ? String(value) : '';

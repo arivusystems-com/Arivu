@@ -235,7 +235,7 @@ export function validateAppRegistry(appRegistry: AppRegistry): ValidationResult 
 
           // Validate actions
           const validateActions = (
-            actions: any[] | undefined,
+            actions: Array<{ key?: unknown; label?: unknown }> | undefined,
             actionType: string
           ) => {
             if (!actions || !Array.isArray(actions)) return;

@@ -95,7 +95,7 @@ const props = defineProps({
   selectOptionsClass: { type: String, default: 'z-[10060]' },
 });
 
-const emit = defineEmits(['change']);
+const emit = defineEmits(['change', 'update:selection']);
 
 const { t } = useI18n();
 
@@ -105,13 +105,13 @@ function dropdownOptions(opt) {
   return optionValues(opt).map((value) => ({ value, label: value }));
 }
 
-function emitChange() {
+function emitSelection(optionName, value) {
+  emit('update:selection', optionName, value);
   emit('change');
 }
 
 function onCheckboxChange(optionName, checked) {
-  props.selections[optionName] = Boolean(checked);
-  emitChange();
+  emitSelection(optionName, Boolean(checked));
 }
 
 function onMultiCheckboxChange(optionName, value, checked) {
@@ -121,17 +121,14 @@ function onMultiCheckboxChange(optionName, value, checked) {
   } else {
     arr = arr.filter((entry) => entry !== value);
   }
-  props.selections[optionName] = arr;
-  emitChange();
+  emitSelection(optionName, arr);
 }
 
 function onSingleSelectChange(optionName, value) {
-  props.selections[optionName] = value;
-  emitChange();
+  emitSelection(optionName, value);
 }
 
 function onDropdownChange(optionName, value) {
-  props.selections[optionName] = value || '';
-  emitChange();
+  emitSelection(optionName, value || '');
 }
 </script>

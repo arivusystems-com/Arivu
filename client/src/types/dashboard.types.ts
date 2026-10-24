@@ -157,8 +157,8 @@ export interface DashboardWidget {
   /** Display title */
   title: string;
   
-  /** Widget data (structure depends on type) */
-  data: any;
+  /** Widget data (structure depends on type; builders leave this empty until the API fills it) */
+  data: unknown;
   
   /** Permission required to view this widget */
   permission?: string;

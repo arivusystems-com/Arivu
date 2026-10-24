@@ -714,6 +714,7 @@
                     :options="namedOptions"
                     :selections="previewSelections"
                     card-class="bg-white dark:bg-gray-800"
+                    @update:selection="onPreviewSelection"
                     @change="runPreviewValidate"
                   />
                   <ProductConfigValidationPanel :result="previewResult" />
@@ -896,6 +897,10 @@ function buildPreviewValidateRequest() {
 function queuePreviewValidate() {
   if (!showForm.value) return;
   scheduleValidate(buildPreviewValidateRequest);
+}
+
+function onPreviewSelection(optionName, value) {
+  previewSelections[optionName] = value;
 }
 
 async function runPreviewValidate() {

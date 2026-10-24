@@ -111,6 +111,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'RecordNotes' });
 import { useI18n } from 'vue-i18n';
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';

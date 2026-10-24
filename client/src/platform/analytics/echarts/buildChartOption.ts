@@ -5,7 +5,6 @@ import {
   type AnalyticsChartThemeMode,
 } from './analyticsChartTheme';
 import {
-  buildBarSeriesItemStyle,
   buildCategoryAxis,
   buildChartAnimationBase,
   buildIndexedBarItemStyle,

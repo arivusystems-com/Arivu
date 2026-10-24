@@ -37,7 +37,7 @@ import { hasModuleListConfig } from '@/platform/modules/moduleListRegistry';
 /**
  * Get fallback columns for common modules when list config is missing
  */
-function getFallbackColumns(moduleKey: string): Array<{
+type FallbackColumn = {
   key: string;
   label: string;
   dataType: ColumnDataType;
@@ -46,8 +46,10 @@ function getFallbackColumns(moduleKey: string): Array<{
   permission?: string;
   fieldPath?: string;
   order?: number;
-}> {
-  const fallbacks: Record<string, Array<any>> = {
+};
+
+function getFallbackColumns(moduleKey: string): FallbackColumn[] {
+  const fallbacks: Record<string, FallbackColumn[]> = {
     people: [
       { key: 'name', label: 'Full Name', dataType: 'text', sortable: true, order: 1 },
       { key: 'sales_type', label: 'Participation', dataType: 'status', sortable: true, order: 2 },

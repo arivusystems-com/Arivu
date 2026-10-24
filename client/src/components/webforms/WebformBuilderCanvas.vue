@@ -75,7 +75,7 @@
                 </div>
               </template>
 
-              <template #item="{ element: field, index }">
+              <template #item="{ element: field }">
                 <div
                   :class="[
                     fieldSpanClass(field),

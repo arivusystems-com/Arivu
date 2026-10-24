@@ -13,8 +13,42 @@
  * fully reusable across all modules.
  */
 
+import { normalizeFiltersForAPI, normalizeFiltersForUI, type FilterConfig, type FilterValue } from '@/platform/filters/filterNormalizer';
 import { getItemFieldMetadata } from '@/platform/fields/itemFieldModel';
-import { dateFilterValueToParams } from '@/utils/dateFilterOptions';
+import { dateFilterValueToParams, type DateFilterValue } from '@/utils/dateFilterOptions';
+
+/** List filters are scalar values or date-filter objects. `_special` is a string marker. */
+export type ModuleListFilterValue = FilterValue | DateFilterValue;
+export type ModuleListFilterMap = Record<string, ModuleListFilterValue | undefined>;
+
+export interface ModuleListAssignee {
+  _id?: string;
+  id?: string;
+}
+
+/** Fields the list statistics readers actually touch. */
+export interface ModuleListRow {
+  status?: string | null;
+  assignedTo?: string | ModuleListAssignee | null;
+  organization?: string | { _id?: string } | null;
+  isActive?: boolean | null;
+  subscription?: { tier?: string | null; status?: string | null } | null;
+  slaBreached?: boolean | string | null;
+  dueDate?: string | number | Date | null;
+  startDateTime?: string | number | Date | null;
+  amount?: string | number | null;
+  grandTotal?: string | number | null;
+  lifecycle_state?: string | null;
+  item_type?: string | null;
+}
+
+export interface ModuleListColumn {
+  key: string;
+  label?: string;
+  visible?: boolean;
+  locked?: boolean;
+  [extra: string]: unknown;
+}
 import { applyInventoryCapabilityToModuleListConfig } from '@/utils/inventoryCapability';
 
 export interface DefaultColumnConfig {
@@ -47,12 +81,12 @@ export interface StatisticsConfig {
   scope?: 'view' | 'query';
   /** Optional dynamic card set from active view + filters */
   resolveStats?: (
-    filters: Record<string, any>,
+    filters: ModuleListFilterMap,
     activeViewId?: string | null
   ) => StatisticsConfig['stats'];
   /** Function to compute statistics from currently loaded rows; pass totalRecords for full-query totals */
   computeFunction: (
-    data: any[],
+    data: ModuleListRow[],
     currentUserId?: string,
     context?: ModuleListStatisticsContext
   ) => Record<string, number>;
@@ -63,7 +97,7 @@ export type PeopleListAppContext = 'ALL' | 'SALES' | 'HELPDESK';
 export interface SystemView {
   id: string;
   name: string;
-  filters: Record<string, any>;
+  filters: ModuleListFilterMap;
   isDefault?: boolean;
   /** People list only: app scope for columns, field defs, and participation filtering. */
   peopleContext?: PeopleListAppContext;
@@ -81,18 +115,18 @@ export interface ModuleListConfig {
   /** API endpoint (relative to /api) */
   apiEndpoint: string;
   /** Function to normalize filters before sending to API */
-  normalizeFilters?: (filters: Record<string, any>, currentUserId?: string) => Record<string, any>;
+  normalizeFilters?: (filters: ModuleListFilterMap, currentUserId?: string) => ModuleListFilterMap;
   /** Function to normalize filters from saved view before applying */
-  normalizeViewFilters?: (filters: Record<string, any>, currentUserId?: string) => Record<string, any>;
+  normalizeViewFilters?: (filters: ModuleListFilterMap, currentUserId?: string) => ModuleListFilterMap;
 }
 
 /**
  * Build default columns for a module
  */
 export function buildDefaultColumns(
-  allAvailableColumns: any[],
+  allAvailableColumns: ModuleListColumn[],
   config: DefaultColumnConfig
-): any[] {
+): ModuleListColumn[] {
   const { defaultVisibleColumns, excludedFromDefault = [], lockedColumn } = config;
   const processedColumns = [];
   const processedKeys = new Set();
@@ -162,7 +196,7 @@ export function buildDefaultColumns(
  * Compute People statistics
  */
 function computePeopleStatistics(
-  data: any[],
+  data: ModuleListRow[],
   currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -206,7 +240,7 @@ function computePeopleStatistics(
  * Compute Marketing campaigns statistics
  */
 function computeCampaignsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -233,7 +267,7 @@ function computeCampaignsStatistics(
  * Compute Analytics reports statistics
  */
 function computeReportsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -258,7 +292,7 @@ function computeReportsStatistics(
  * Compute Analytics widgets statistics
  */
 function computeWidgetsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -283,7 +317,7 @@ function computeWidgetsStatistics(
  * Compute Analytics dashboards statistics
  */
 function computeDashboardsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -308,7 +342,7 @@ function computeDashboardsStatistics(
  * Compute Organizations statistics
  */
 function computeOrganizationsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -356,10 +390,10 @@ function computeOrganizationsStatistics(
  * Uses filterType from field definitions to normalize filters
  */
 function createGenericFilterNormalizer(_moduleKey: string) {
-  return (filters: Record<string, any>, currentUserId?: string): Record<string, any> => {
+  return (filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap => {
     // Try to get filter configs from field definitions
     // For now, use known filter types based on common patterns
-    const filterConfigs: Array<{ key: string; filterType: string }> = [];
+    const filterConfigs: FilterConfig[] = [];
     
     // Common filter patterns across modules
     if (filters.assignedTo !== undefined) {
@@ -374,8 +408,11 @@ function createGenericFilterNormalizer(_moduleKey: string) {
     
     // Use generic normalizer
     try {
-      const { normalizeFiltersForAPI } = require('@/platform/filters/filterNormalizer');
-      return normalizeFiltersForAPI(filters, filterConfigs, currentUserId);
+      return normalizeFiltersForAPI(
+        filters as Record<string, FilterValue | undefined>,
+        filterConfigs,
+        currentUserId
+      );
     } catch {
       // Fallback to basic normalization
       const normalized = { ...filters };
@@ -395,8 +432,8 @@ function createGenericFilterNormalizer(_moduleKey: string) {
  * Generic view filter normalizer
  */
 function createGenericViewFilterNormalizer(_moduleKey: string) {
-  return (filters: Record<string, any>, currentUserId?: string): Record<string, any> => {
-    const filterConfigs: Array<{ key: string; filterType: string }> = [];
+  return (filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap => {
+    const filterConfigs: FilterConfig[] = [];
     
     if (filters.assignedTo !== undefined) {
       filterConfigs.push({ key: 'assignedTo', filterType: 'user' });
@@ -409,8 +446,11 @@ function createGenericViewFilterNormalizer(_moduleKey: string) {
     }
     
     try {
-      const { normalizeFiltersForUI } = require('@/platform/filters/filterNormalizer');
-      return normalizeFiltersForUI(filters, filterConfigs, currentUserId);
+      return normalizeFiltersForUI(
+        filters as Record<string, FilterValue | undefined>,
+        filterConfigs,
+        currentUserId
+      );
     } catch {
       // Fallback to basic normalization
       const normalized = { ...filters };
@@ -429,7 +469,7 @@ function createGenericViewFilterNormalizer(_moduleKey: string) {
 /**
  * Normalize People filters (backward compatibility)
  */
-function normalizePeopleFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizePeopleFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = createGenericFilterNormalizer('people')(filters, currentUserId);
   const out = { ...normalized };
   // Saved views / legacy UI may still store `type`; API accepts `sales_type` only
@@ -443,21 +483,21 @@ function normalizePeopleFilters(filters: Record<string, any>, currentUserId?: st
 /**
  * Normalize Organizations filters (backward compatibility)
  */
-function normalizeOrganizationsFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeOrganizationsFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   return createGenericFilterNormalizer('organizations')(filters, currentUserId);
 }
 
 /**
  * Normalize People view filters (backward compatibility)
  */
-function normalizePeopleViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizePeopleViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   return createGenericViewFilterNormalizer('people')(filters, currentUserId);
 }
 
 /**
  * Normalize Organizations view filters (backward compatibility)
  */
-function normalizeOrganizationsViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeOrganizationsViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   return createGenericViewFilterNormalizer('organizations')(filters, currentUserId);
 }
 
@@ -531,7 +571,7 @@ export function resolvePeopleListAppContext(
  * Normalize Tasks filters
  * Expands date filter objects into API params: {field}Preset, {field}Op, {field}From, {field}To, {field}Days
  */
-function normalizeTasksFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeTasksFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   // Normalize assignedTo
@@ -560,7 +600,7 @@ function normalizeTasksFilters(filters: Record<string, any>, currentUserId?: str
 /**
  * Normalize Tasks view filters (from saved views)
  */
-function normalizeTasksViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeTasksViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   // Only normalize if assignedTo is actually present
@@ -577,7 +617,7 @@ function normalizeTasksViewFilters(filters: Record<string, any>, currentUserId?:
  * Task summary cards — All Tasks vs My Tasks (no redundant Assigned to Me).
  */
 function resolveTasksStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMyTasks =
@@ -595,7 +635,7 @@ function resolveTasksStatsConfig(
 }
 
 function isMyAssigneeScope(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null,
   myViewIds: string[] = []
 ): boolean {
@@ -604,7 +644,7 @@ function isMyAssigneeScope(
 
 /** People: drop Assigned to Me; hide Unassigned on My People. */
 function resolvePeopleStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['assigned-to-me']);
@@ -622,7 +662,7 @@ function resolvePeopleStatsConfig(
 
 /** Organizations: drop Assigned to Me; hide Unassigned on My Organizations. */
 function resolveOrganizationsStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['assigned-to-me']);
@@ -640,7 +680,7 @@ function resolveOrganizationsStatsConfig(
 
 /** Events: drop Past + My Events on All; My Events headline when scoped to me. */
 function resolveEventsStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['my-events']);
@@ -656,7 +696,7 @@ function resolveEventsStatsConfig(
 
 /** Deals: pipeline-focused; same cards on My Deals (query-scoped). */
 function resolveDealsStatsConfig(
-  _filters: Record<string, any> = {},
+  _filters: ModuleListFilterMap = {},
   _activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   return [
@@ -669,7 +709,7 @@ function resolveDealsStatsConfig(
 
 /** Quotes: drop My Quotes card on All; headline My Quotes when scoped. */
 function resolveQuotesStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['my-quotes']);
@@ -685,7 +725,7 @@ function resolveQuotesStatsConfig(
 
 /** Sales orders: actionable fulfillment strip (not every status). */
 function resolveSalesOrdersStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['my-orders']);
@@ -733,7 +773,7 @@ function resolveItemsStatsConfig(): StatisticsConfig['stats'] {
 
 /** Invoices: actionable status strip. */
 function resolveInvoicesStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['my-invoices']);
@@ -751,7 +791,7 @@ const OPEN_CASE_STATUSES = ['New', 'Assigned', 'In Progress', 'On Hold', 'Waitin
 
 /** Cases: queue triage strip — Total/My, Open, Unassigned, SLA Breached. */
 function resolveCasesStatsConfig(
-  filters: Record<string, any> = {},
+  filters: ModuleListFilterMap = {},
   activeViewId?: string | null
 ): StatisticsConfig['stats'] {
   const isMy = isMyAssigneeScope(filters, activeViewId, ['my-cases']);
@@ -768,7 +808,7 @@ function resolveCasesStatsConfig(
 }
 
 function computeCasesStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -800,7 +840,7 @@ function computeCasesStatistics(
 }
 
 function computeTasksStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -841,7 +881,7 @@ function computeTasksStatistics(
  * Compute Events statistics
  */
 function computeEventsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -901,7 +941,7 @@ function computeEventsStatistics(
 /**
  * Normalize Events filters
  */
-function normalizeEventsFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeEventsFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   // Client-only marker for dynamic date system views — never send to API
@@ -950,7 +990,7 @@ function normalizeEventsFilters(filters: Record<string, any>, currentUserId?: st
 /**
  * Normalize Events view filters (from saved views)
  */
-function normalizeEventsViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeEventsViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   // Normalize assignedTo for UI display
@@ -979,7 +1019,7 @@ function normalizeEventsViewFilters(filters: Record<string, any>, currentUserId?
  * Compute Deals statistics (from list data; server may also return stats)
  */
 function computeDealsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -1019,7 +1059,7 @@ function computeDealsStatistics(
 /**
  * Normalize Deals filters
  */
-function normalizeDealsFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeDealsFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if ('assignedTo' in normalized) {
@@ -1042,7 +1082,7 @@ function normalizeDealsFilters(filters: Record<string, any>, currentUserId?: str
 /**
  * Normalize Deals view filters (from saved views)
  */
-function normalizeDealsViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeDealsViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if ('assignedTo' in normalized) {
@@ -1063,7 +1103,7 @@ const ACCEPTED_QUOTE_STATUSES = new Set(['Accepted', 'Partially Accepted']);
  * Compute Quotes statistics (from list data; uses totalRecords for headline count when paged)
  */
 function computeQuotesStatistics(
-  data: any[],
+  data: ModuleListRow[],
   currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -1084,7 +1124,7 @@ function computeQuotesStatistics(
       myQuotesFromRows++;
     }
 
-    const status = quote.status;
+    const status = typeof quote.status === 'string' ? quote.status : '';
     const amount = Number(quote.grandTotal) || 0;
 
     if (!CLOSED_QUOTE_STATUSES.has(status)) {
@@ -1107,7 +1147,7 @@ function computeQuotesStatistics(
 /**
  * Normalize Quotes filters
  */
-function normalizeCampaignsFilters(filters: Record<string, any>): Record<string, any> {
+function normalizeCampaignsFilters(filters: ModuleListFilterMap): ModuleListFilterMap {
   const normalized = { ...filters };
   if ('status' in normalized && (normalized.status === '' || normalized.status == null)) {
     delete normalized.status;
@@ -1115,7 +1155,7 @@ function normalizeCampaignsFilters(filters: Record<string, any>): Record<string,
   return normalized;
 }
 
-function normalizeReportsFilters(filters: Record<string, any>): Record<string, any> {
+function normalizeReportsFilters(filters: ModuleListFilterMap): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if (normalized.mine === true || normalized.mine === 'true') {
@@ -1152,7 +1192,7 @@ function normalizeReportsFilters(filters: Record<string, any>): Record<string, a
   return normalized;
 }
 
-function normalizeWidgetsFilters(filters: Record<string, any>): Record<string, any> {
+function normalizeWidgetsFilters(filters: ModuleListFilterMap): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if (normalized.mine === true || normalized.mine === 'true') {
@@ -1171,7 +1211,7 @@ function normalizeWidgetsFilters(filters: Record<string, any>): Record<string, a
   return normalized;
 }
 
-function normalizeDashboardsFilters(filters: Record<string, any>): Record<string, any> {
+function normalizeDashboardsFilters(filters: ModuleListFilterMap): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if (normalized.mine === true || normalized.mine === 'true') {
@@ -1190,7 +1230,7 @@ function normalizeDashboardsFilters(filters: Record<string, any>): Record<string
   return normalized;
 }
 
-function normalizeQuotesFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeQuotesFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if ('assignedTo' in normalized) {
@@ -1208,7 +1248,7 @@ function normalizeQuotesFilters(filters: Record<string, any>, currentUserId?: st
   return normalized;
 }
 
-function normalizeSalesOrdersFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeSalesOrdersFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
   if ('assignedTo' in normalized) {
     if (normalized.assignedTo === 'me' && currentUserId) {
@@ -1223,7 +1263,7 @@ function normalizeSalesOrdersFilters(filters: Record<string, any>, currentUserId
   return normalized;
 }
 
-function normalizeSalesOrdersViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeSalesOrdersViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
   if ('assignedTo' in normalized) {
     if (normalized.assignedTo === currentUserId) {
@@ -1239,7 +1279,7 @@ function normalizeSalesOrdersViewFilters(filters: Record<string, any>, currentUs
  * Sales order list statistics — prefer server listStatistics; fallback from page data.
  */
 function computeSalesOrdersStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -1255,7 +1295,7 @@ function computeSalesOrdersStatistics(
     cancelled: 0
   };
 
-  data.forEach((order: any) => {
+  data.forEach((order) => {
     const status = String(order.status || '');
     if (status === 'Draft') stats.draft++;
     else if (status === 'Confirmed') stats.confirmed++;
@@ -1277,7 +1317,7 @@ function computeSalesOrdersStatistics(
   return stats;
 }
 
-function normalizeInvoicesFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeInvoicesFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
   if ('assignedTo' in normalized) {
     if (normalized.assignedTo === 'me' && currentUserId) {
@@ -1292,7 +1332,7 @@ function normalizeInvoicesFilters(filters: Record<string, any>, currentUserId?: 
   return normalized;
 }
 
-function normalizeInvoicesViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeInvoicesViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
   if ('assignedTo' in normalized) {
     if (normalized.assignedTo === currentUserId) {
@@ -1305,7 +1345,7 @@ function normalizeInvoicesViewFilters(filters: Record<string, any>, currentUserI
 }
 
 function computeInvoicesStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -1320,7 +1360,7 @@ function computeInvoicesStatistics(
     void: 0
   };
 
-  data.forEach((invoice: any) => {
+  data.forEach((invoice) => {
     const status = String(invoice.status || '');
     if (status === 'Draft') stats.draft++;
     else if (status === 'Pending Approval') stats.pendingApproval++;
@@ -1335,7 +1375,7 @@ function computeInvoicesStatistics(
 /**
  * Normalize Quotes view filters (from saved views)
  */
-function normalizeQuotesViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeQuotesViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   if ('assignedTo' in normalized) {
@@ -1353,7 +1393,7 @@ function normalizeQuotesViewFilters(filters: Record<string, any>, currentUserId?
  * Compute Items statistics
  */
 function computeItemsStatistics(
-  data: any[],
+  data: ModuleListRow[],
   _currentUserId?: string,
   context?: ModuleListStatisticsContext
 ): Record<string, number> {
@@ -1391,7 +1431,7 @@ function computeItemsStatistics(
 /**
  * Normalize Items filters
  */
-function normalizeItemsFilters(filters: Record<string, any>, _currentUserId?: string): Record<string, any> {
+function normalizeItemsFilters(filters: ModuleListFilterMap, _currentUserId?: string): ModuleListFilterMap {
   const normalized = { ...filters };
 
   // Normalize lifecycle_state filter
@@ -1428,7 +1468,7 @@ function normalizeItemsFilters(filters: Record<string, any>, _currentUserId?: st
 /**
  * Normalize Items view filters (from saved views)
  */
-function normalizeItemsViewFilters(filters: Record<string, any>, currentUserId?: string): Record<string, any> {
+function normalizeItemsViewFilters(filters: ModuleListFilterMap, currentUserId?: string): ModuleListFilterMap {
   // Same as normalizeItemsFilters for Items
   return normalizeItemsFilters(filters, currentUserId);
 }

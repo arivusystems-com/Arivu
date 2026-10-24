@@ -23625,5 +23625,33 @@
   "assignRulesTypeAndPressEnter": {
     "message": "जोड़ने के लिए टाइप करें और Enter दबाएँ।",
     "description": "Assignment rules: empty multi-value picker hint"
+  },
+  "modFieldsValueTrue": {
+    "message": "true",
+    "description": "Checkbox dependency option label; the stored value stays true"
+  },
+  "modFieldsValueFalse": {
+    "message": "false",
+    "description": "Checkbox dependency option label; the stored value stays false"
+  },
+  "modFieldsItemTypeService": {
+    "message": "Service",
+    "description": "Default item type name; the stored value stays Service"
+  },
+  "modFieldsItemTypeSerializedProduct": {
+    "message": "Serialized Product",
+    "description": "Default item type name; the stored value stays Serialized Product"
+  },
+  "modFieldsItemTypeNonStockProduct": {
+    "message": "Non-Stock Product",
+    "description": "Default item type name; the stored value stays Non-Stock Product"
+  },
+  "modFieldsNewStatus": {
+    "message": "New Status",
+    "description": "Default name for a new item status before the user renames it"
+  },
+  "modFieldsNewActivity": {
+    "message": "New activity",
+    "description": "Default playbook activity title; the stored value stays New activity"
   }
 }

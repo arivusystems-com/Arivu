@@ -83,6 +83,7 @@
                               />
                             </template>
                             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                               v-else
                               :field="field"
                               :value="formData[field.key]"
@@ -151,6 +152,7 @@
                               />
                             </template>
                             <DynamicFormField
+@picklist-option-created="onPicklistOptionCreated"
                               v-else
                               :field="field"
                               :value="formData[field.key]"
@@ -201,6 +203,7 @@ import { useI18n } from 'vue-i18n';
 import { ref, computed, watch } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import DynamicFormField from '@/components/common/DynamicFormField.vue';
+import { appendCreatedPicklistOption } from '@/utils/picklistInlineOptionCreate';
 import WorkspaceScopedDrawerShell from '@/components/common/WorkspaceScopedDrawerShell.vue';
 import TaskDescriptionEditor from '@/components/record-page/TaskDescriptionEditor.vue';
 import TaskRelatedToField from '@/components/tasks/TaskRelatedToField.vue';
@@ -212,6 +215,10 @@ import { getFieldDependencyState, applyPicklistDependencyValueClears } from '@/u
 import { useAuthStore } from '@/stores/authRegistry';
 import { getTaskFieldMetadata } from '@/platform/fields/taskFieldModel';
 import { isSystemField as isSystemFieldFromEngine, canEditField } from '@/platform/fields/fieldCapabilityEngine';
+
+function onPicklistOptionCreated(payload) {
+  appendCreatedPicklistOption(payload?.field, payload?.option);
+}
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },

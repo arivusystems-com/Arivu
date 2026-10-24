@@ -44,6 +44,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import TelephonyNav from '@/components/telephony/TelephonyNav.vue';
 import { listRecordings } from '@/utils/telephonyApi';
+import { formatUserDateTime } from '@/utils/localeFormat';
 import { getApiUrlForFetch } from '@/config/apiBase';
 
 const { t } = useI18n();
@@ -65,7 +66,7 @@ function formatDuration(seconds) {
 function formatDate(value) {
   if (!value) return '—';
   try {
-    return new Date(value).toLocaleString();
+    return formatUserDateTime(value);
   } catch {
     return '—';
   }

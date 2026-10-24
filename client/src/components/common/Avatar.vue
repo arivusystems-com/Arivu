@@ -19,6 +19,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'UserAvatar' });
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 import { UserIcon } from '@heroicons/vue/24/outline';

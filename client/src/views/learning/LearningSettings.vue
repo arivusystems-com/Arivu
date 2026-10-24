@@ -260,6 +260,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RadioGroup, RadioGroupOption } from '@headlessui/vue';
 import apiClient from '@/utils/apiClient';
+import { formatNumber } from '@/utils/localeFormat';
 import { useAuthStore } from '@/stores/auth';
 import { useNotifications } from '@/composables/useNotifications';
 import LearningPageHeader from './components/LearningPageHeader.vue';
@@ -320,7 +321,7 @@ const seatPercent = computed(() => {
 
 function formatPaise(paise) {
   const rupees = Math.round(Number(paise || 0) / 100);
-  return `₹${rupees.toLocaleString('en-IN')}/mo`;
+  return `₹${formatNumber(rupees)}/mo`;
 }
 
 async function load() {

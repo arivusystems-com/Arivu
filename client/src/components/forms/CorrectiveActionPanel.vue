@@ -34,7 +34,7 @@
       <!-- Failed Questions with Corrective Actions -->
       <div v-else class="space-y-4">
         <div
-          v-for="(question, index) in failedQuestions"
+          v-for="question in failedQuestions"
           :key="question.questionId"
           class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
         >

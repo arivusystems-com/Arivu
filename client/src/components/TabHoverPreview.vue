@@ -123,7 +123,6 @@ const { t, te } = useI18n();
 const cardRef = ref(null);
 const visible = ref(false);
 const cardWidth = ref(240);
-const caretOffsetX = ref(0);
 const tooltipId = `tab-preview-${Math.random().toString(36).slice(2, 9)}`;
 
 let showTimer = null;
@@ -163,9 +162,14 @@ function alertDotClass(kind) {
   return 'bg-amber-500';
 }
 
-const cardStyle = computed(() => {
+const cardPlacement = computed(() => {
   const anchor = props.anchorEl;
-  if (!anchor || !visible.value) return { top: '-9999px', left: '-9999px' };
+  if (!anchor || !visible.value) {
+    return {
+      style: { top: '-9999px', left: '-9999px' },
+      caretOffset: 0
+    };
+  }
 
   const rect = anchor.getBoundingClientRect();
   const gap = props.gap;
@@ -179,17 +183,20 @@ const cardStyle = computed(() => {
   // Keep the caret pointing at the tab even when the card is viewport-clamped.
   const rawOffset = centerX - left;
   const maxOffset = Math.max(0, halfWidth - 18);
-  caretOffsetX.value = Math.max(-maxOffset, Math.min(rawOffset, maxOffset));
-
   return {
-    top: `${top}px`,
-    left: `${left}px`,
-    transform: 'translateX(-50%)',
+    style: {
+      top: `${top}px`,
+      left: `${left}px`,
+      transform: 'translateX(-50%)'
+    },
+    caretOffset: Math.max(-maxOffset, Math.min(rawOffset, maxOffset))
   };
 });
 
+const cardStyle = computed(() => cardPlacement.value.style);
+
 const caretStyle = computed(() => ({
-  left: `calc(50% + ${caretOffsetX.value}px)`,
+  left: `calc(50% + ${cardPlacement.value.caretOffset}px)`,
 }));
 
 const measureCard = async () => {

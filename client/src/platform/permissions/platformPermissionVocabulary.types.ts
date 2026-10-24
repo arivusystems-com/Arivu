@@ -100,9 +100,8 @@ if (process.env.NODE_ENV === 'development') {
 
   // Export validation function for use in development
   // This allows other code to validate permissions if needed
-  // @ts-ignore - intentionally available only in dev
   if (typeof window !== 'undefined') {
-    // @ts-ignore
-    window.__validatePlatformPermission = validatePermission
+    (window as Window & { __validatePlatformPermission?: typeof validatePermission }).__validatePlatformPermission =
+      validatePermission
   }
 }

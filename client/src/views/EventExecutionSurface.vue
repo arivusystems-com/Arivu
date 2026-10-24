@@ -677,8 +677,27 @@ const authStore = useAuthStore();
 const loading = ref(true);
 const error = ref<string | null>(null);
 const executionContext = ref<EventExecutionContext | null>(null);
+interface ExecutionEvent {
+  _id?: string;
+  id?: string;
+  eventType?: string;
+  status?: string | null;
+  executionStatus?: string | null;
+  startDateTime?: string | null;
+  startDate?: string | null;
+  executionStartTime?: string | Date | null;
+  executionStartedAt?: string | Date | null;
+  createdBy?: unknown;
+  assignedTo?: unknown;
+  auditorId?: unknown;
+  reviewerId?: unknown;
+  correctiveOwnerId?: unknown;
+  auditState?: string;
+  submittedAt?: unknown;
+}
+
 // Store event data for state machine derivation
-const event = ref<any>(null);
+const event = ref<ExecutionEvent | null>(null);
 
 // Audit event state
 const auditState = ref<string | null>(null);
@@ -702,12 +721,31 @@ const executionError = ref<string | null>(null);
  * Some endpoints return populated refs (e.g. linkedFormId: { _id, name }).
  * We must never route with an object id ("/forms/[object Object]").
  */
-const normalizeId = (v: any): string | null => {
-  if (!v) return null;
-  if (typeof v === 'string') return v;
-  if (typeof v === 'object') return v._id || v.id || (typeof v.toString === 'function' ? v.toString() : null);
-  return String(v);
+function idText(value: unknown): string | null {
+  if (typeof value === 'string') return value || null;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return null;
+}
+
+const normalizeId = (value: unknown): string | null => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') {
+    const record = value as { _id?: unknown; id?: unknown; toString?: () => unknown };
+    const nested = idText(record._id) || idText(record.id);
+    if (nested) return nested;
+    if (typeof record.toString === 'function') {
+      const text = record.toString();
+      return typeof text === 'string' ? text : null;
+    }
+  }
+  return null;
 };
+
+function asExecutionError(err: unknown): Parameters<typeof mapExecutionError>[0] {
+  return err as Parameters<typeof mapExecutionError>[0];
+}
 
 /**
  * ============================================================================
@@ -886,9 +924,10 @@ const fetchExecutionContext = async () => {
     } else {
       error.value = response.message || 'Failed to load event execution context';
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[EventExecutionSurface] Error fetching execution context:', err);
-    error.value = err.response?.data?.message || err.message || 'An error occurred while loading the event';
+    const apiErr = asExecutionError(err);
+    error.value = apiErr?.response?.data?.message || apiErr?.message || 'An error occurred while loading the event';
   } finally {
     loading.value = false;
   }
@@ -1460,10 +1499,10 @@ const handleCheckIn = async () => {
       // Map backend error to user-friendly message
       executionError.value = mapExecutionError({ response: { data: { message: response.message } } });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[EventExecutionSurface] Check-in error:', err);
     // Map backend error to user-friendly message
-    executionError.value = mapExecutionError(err);
+    executionError.value = mapExecutionError(asExecutionError(err));
   } finally {
     checkingIn.value = false;
   }
@@ -1559,10 +1598,10 @@ const handleStartEvent = async () => {
       // Map backend error to user-friendly message
       executionError.value = mapExecutionError({ response: { data: { message: response.message } } });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[EventExecutionSurface] Start event error:', err);
     // Map backend error to user-friendly message
-    executionError.value = mapExecutionError(err);
+    executionError.value = mapExecutionError(asExecutionError(err));
   } finally {
     starting.value = false;
   }
@@ -1633,10 +1672,10 @@ const handleCompleteEvent = async () => {
       // Map backend error to user-friendly message
       executionError.value = mapExecutionError({ response: { data: { message: response.message } } });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[EventExecutionSurface] Complete event error:', err);
     // Map backend error to user-friendly message
-    executionError.value = mapExecutionError(err);
+    executionError.value = mapExecutionError(asExecutionError(err));
   } finally {
     completing.value = false;
   }
@@ -1699,10 +1738,10 @@ const handleCancelEvent = async () => {
       // Map backend error to user-friendly message
       executionError.value = mapExecutionError({ response: { data: { message: response.message } } });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[EventExecutionSurface] Cancel event error:', err);
     // Map backend error to user-friendly message
-    executionError.value = mapExecutionError(err);
+    executionError.value = mapExecutionError(asExecutionError(err));
   } finally {
     completing.value = false;
   }

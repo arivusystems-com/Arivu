@@ -3022,5 +3022,13 @@
   "approvalInboxChanges": {
     "message": "परिवर्तन",
     "description": "Approval inbox: quote change summary label"
+  },
+  "columnName": {
+    "message": "Name",
+    "description": "Generic table column label"
+  },
+  "columnEmail": {
+    "message": "Email",
+    "description": "Generic table column label"
   }
 }

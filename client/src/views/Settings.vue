@@ -203,6 +203,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'SettingsView' });
 import { ref, computed, h, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';

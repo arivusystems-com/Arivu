@@ -48,7 +48,6 @@
 import type {
   BaseFieldMetadata,
   BaseFieldOwner,
-  BaseFieldIntent,
   BaseFieldScope,
   BaseFilterType,
 } from './BaseFieldModel';
@@ -723,4 +722,4 @@ export const DEAL_FIELDS: DealFieldMetadata[] = Object.entries(DEAL_FIELD_METADA
     ...metadata,
     fieldKey: fieldName,
   } as DealFieldMetadata & { fieldKey: string }))
-  .map(({ fieldKey, ...metadata }) => metadata as DealFieldMetadata);
+  .map(({ fieldKey: _fieldKey, ...metadata }) => metadata as DealFieldMetadata);

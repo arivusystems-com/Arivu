@@ -114,8 +114,8 @@
                             @update:formData="updateFormData"
                             @ready="onFormReady"
                           >
-                            <template v-if="isCommercialLinesForm" #lines>
-                              <div class="space-y-3">
+                            <template v-if="isCommercialLinesForm || moduleKey === 'deals'" #lines>
+                              <div v-if="isCommercialLinesForm" class="space-y-3">
                                 <h3 class="text-sm font-semibold tracking-wide text-gray-900 dark:text-white uppercase">
                                   {{ t(commercialLinesConfig.linesTitleKey) }}
                                 </h3>
@@ -157,20 +157,8 @@
                                   {{ isCommercialLinesEdit ? t(commercialLinesConfig.loadFailedKey) : t(commercialLinesConfig.draftFailedKey) }}
                                 </p>
                               </div>
-                            </template>
-                            <template v-if="moduleKey === 'deals'" #deal_relationships>
-                              <DealRelationshipEditor
-                                v-if="!effectiveQuickCreateMode || fullMode"
-                                ref="relationshipEditorRef"
-                                v-model="dealRelationships"
-                                :people="dealPeopleList"
-                                :organizations="dealOrgList"
-                                :read-only="false"
-                              />
-                            </template>
-                            <template v-if="moduleKey === 'deals'" #lines>
                               <DealLinesSection
-                                v-if="!effectiveQuickCreateMode || fullMode"
+                                v-else-if="moduleKey === 'deals' && (!effectiveQuickCreateMode || fullMode)"
                                 ref="dealLinesSectionRef"
                                 :record="isEditing ? record : null"
                                 :draft-mode="!isEditing"
@@ -182,32 +170,38 @@
                                 @updated="handleDealLinesUpdated"
                               />
                             </template>
-                            <template v-if="isPurchaseReturnModule && !isEditing" #after-quick-create>
+                            <template v-if="moduleKey === 'deals'" #deal_relationships>
+                              <DealRelationshipEditor
+                                v-if="!effectiveQuickCreateMode || fullMode"
+                                ref="relationshipEditorRef"
+                                v-model="dealRelationships"
+                                :people="dealPeopleList"
+                                :organizations="dealOrgList"
+                                :read-only="false"
+                              />
+                            </template>
+                            <template
+                              v-if="!isEditing && (isPurchaseReturnModule || isDeliveryReturnModule || isDeliveryNoteModule || isReceiptNoteModule || isStockAdjustmentModule || isStockTransferModule)"
+                              #after-quick-create
+                            >
                               <PurchaseReturnCreateSourcesPanel
+                                v-if="isPurchaseReturnModule"
                                 ref="purchaseReturnSourcesRef"
                                 :vendor-id="formData.vendorId"
                               />
-                            </template>
-                            <template v-if="isDeliveryReturnModule && !isEditing" #after-quick-create>
                               <DeliveryReturnCreateSourcesPanel
+                                v-else-if="isDeliveryReturnModule"
                                 ref="deliveryReturnSourcesRef"
                                 :customer-id="formData.customerId"
                               />
-                            </template>
-                            <template v-if="isDeliveryNoteModule && !isEditing" #after-quick-create>
                               <DeliveryNoteCreateSourcesPanel
+                                v-else-if="isDeliveryNoteModule"
                                 ref="deliveryNoteSourcesRef"
                                 :customer-id="formData.customerId"
                               />
-                            </template>
-                            <template v-if="isReceiptNoteModule && !isEditing" #after-quick-create>
-                              <ReceiptNoteCreatePanel ref="receiptNoteCreateRef" />
-                            </template>
-                            <template v-if="isStockAdjustmentModule && !isEditing" #after-quick-create>
-                              <StockAdjustmentCreatePanel ref="stockAdjustmentCreateRef" />
-                            </template>
-                            <template v-if="isStockTransferModule && !isEditing" #after-quick-create>
-                              <StockTransferCreatePanel ref="stockTransferCreateRef" />
+                              <ReceiptNoteCreatePanel v-else-if="isReceiptNoteModule" ref="receiptNoteCreateRef" />
+                              <StockAdjustmentCreatePanel v-else-if="isStockAdjustmentModule" ref="stockAdjustmentCreateRef" />
+                              <StockTransferCreatePanel v-else-if="isStockTransferModule" ref="stockTransferCreateRef" />
                             </template>
                           </DynamicForm>
                     </div>
@@ -1250,6 +1244,61 @@ const moduleOverrideLoading = ref(false);
 // Return a stable reference when pipeline and module are unchanged to avoid recursive updates
 // (DynamicForm re-applies on override change -> ready -> initializeForm -> formData -> computed -> loop).
 const dealOverrideCache = { mod: null, pipelineKey: undefined, quickMode: undefined, result: null };
+const dealStageOverride = ref(null);
+
+watch(
+  () => {
+    const mod = moduleOverrideFromSettings.value;
+    const isDeals = String(props.moduleKey || '').toLowerCase() === 'deals';
+    const pipelineSettings = isDeals && mod && Array.isArray(mod.pipelineSettings) ? mod.pipelineSettings : null;
+    const active = Boolean(isDeals && mod && pipelineSettings && pipelineSettings.length > 0);
+    return [
+      active,
+      active ? mod : null,
+      active ? formData.value?.pipeline : undefined,
+      active ? effectiveQuickCreateMode.value && !fullMode.value : false,
+      pipelineSettings
+    ];
+  },
+  ([active, mod, pipelineKey, quickMode, pipelineSettings]) => {
+    if (!active || !mod || !pipelineSettings) {
+      dealStageOverride.value = null;
+      return;
+    }
+    if (
+      dealOverrideCache.mod === mod &&
+      dealOverrideCache.pipelineKey === pipelineKey &&
+      dealOverrideCache.quickMode === quickMode &&
+      dealOverrideCache.result
+    ) {
+      dealStageOverride.value = dealOverrideCache.result;
+      return;
+    }
+    const pipeline = pipelineKey
+      ? pipelineSettings.find((p) => String(p?.key ?? '').trim() === String(pipelineKey).trim())
+      : null;
+    const stages = pipeline?.stages ?? [];
+    const stageOptions = stages.map((s) => {
+      const name = (s?.name ?? '').trim();
+      return name ? { value: name, label: name, color: (s.color && /^#[0-9A-Fa-f]{6}$/.test(String(s.color).trim())) ? String(s.color).trim() : null } : null;
+    }).filter(Boolean);
+    const fields = (mod.fields || []).map((f) => {
+      if ((f?.key || '').toString().toLowerCase() !== 'stage') return f;
+      return { ...f, options: stageOptions };
+    });
+    const result = { ...mod, fields };
+    if (quickMode) {
+      result.quickCreateLayout = { version: 1, rows: [] };
+    }
+    dealOverrideCache.mod = mod;
+    dealOverrideCache.pipelineKey = pipelineKey;
+    dealOverrideCache.quickMode = quickMode;
+    dealOverrideCache.result = result;
+    dealStageOverride.value = result;
+  },
+  { immediate: true }
+);
+
 const effectiveModuleOverrideForDrawer = computed(() => {
   const mod = moduleOverrideFromSettings.value;
   if (!mod) return mod;
@@ -1326,41 +1375,8 @@ const effectiveModuleOverrideForDrawer = computed(() => {
 
   if (moduleKeyLower !== 'deals') return mod;
   const pipelineSettings = mod.pipelineSettings;
-  const pipelineKey = formData.value?.pipeline;
-  const quickMode = effectiveQuickCreateMode.value && !fullMode.value;
   if (!Array.isArray(pipelineSettings) || pipelineSettings.length === 0) return mod;
-  // Return cached override when module and pipeline key are unchanged
-  if (
-    dealOverrideCache.mod === mod &&
-    dealOverrideCache.pipelineKey === pipelineKey &&
-    dealOverrideCache.quickMode === quickMode &&
-    dealOverrideCache.result
-  )
-    return dealOverrideCache.result;
-  const pipeline = pipelineKey
-    ? pipelineSettings.find((p) => String(p?.key ?? '').trim() === String(pipelineKey).trim())
-    : null;
-  const stages = pipeline?.stages ?? [];
-  const stageOptions = stages.map((s) => {
-    const name = (s?.name ?? '').trim();
-    return name ? { value: name, label: name, color: (s.color && /^#[0-9A-Fa-f]{6}$/.test(String(s.color).trim())) ? String(s.color).trim() : null } : null;
-  }).filter(Boolean);
-  const fields = (mod.fields || []).map((f) => {
-    if ((f?.key || '').toString().toLowerCase() !== 'stage') return f;
-    return { ...f, options: stageOptions };
-  });
-  const result = { ...mod, fields };
-  // Deal quick create should strictly follow the quickCreate list only.
-  // If advanced layout rows are present, they can include non-quick-create fields.
-  // Clear layout in quick mode so DynamicForm renders from quickCreate keys.
-  if (quickMode) {
-    result.quickCreateLayout = { version: 1, rows: [] };
-  }
-  dealOverrideCache.mod = mod;
-  dealOverrideCache.pipelineKey = pipelineKey;
-  dealOverrideCache.quickMode = quickMode;
-  dealOverrideCache.result = result;
-  return result;
+  return dealStageOverride.value || mod;
 });
 
 // Deal relationship editor state (when moduleKey=deals)
@@ -1538,8 +1554,8 @@ function syncLegacyLookupsIntoDealRelationships() {
   if (!preferredPersonId && !preferredOrganizationId) return;
 
   const current = dealRelationships.value || { dealPeople: [], dealOrganizations: [] };
-  let dealPeople = Array.isArray(current.dealPeople) ? current.dealPeople.map((p) => ({ ...p })) : [];
-  let dealOrganizations = Array.isArray(current.dealOrganizations)
+  const dealPeople = Array.isArray(current.dealPeople) ? current.dealPeople.map((p) => ({ ...p })) : [];
+  const dealOrganizations = Array.isArray(current.dealOrganizations)
     ? current.dealOrganizations.map((o) => ({ ...o }))
     : [];
 

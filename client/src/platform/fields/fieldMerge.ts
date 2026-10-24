@@ -360,7 +360,7 @@ function hydrateRuntimeFieldConfig(moduleKey: string, fields: MergeableField[]):
 
     // Items: ensure critical picklists have options even if tenant config wiped them.
     if (keyLower === 'item_type') {
-      const existing = Array.isArray((f as any).options) ? (f as any).options : [];
+      const existing = Array.isArray(f.options) ? f.options : [];
       if (!existing.length) {
         return {
           ...f,
@@ -371,7 +371,7 @@ function hydrateRuntimeFieldConfig(moduleKey: string, fields: MergeableField[]):
     }
 
     if (keyLower === 'lifecycle_state') {
-      const existing = Array.isArray((f as any).options) ? (f as any).options : [];
+      const existing = Array.isArray(f.options) ? f.options : [];
       if (!existing.length) {
         return {
           ...f,
